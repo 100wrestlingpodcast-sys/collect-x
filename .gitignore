@@ -1,0 +1,9 @@
+# System Files
+.DS_Store
+Thumbs.db
+
+# IDE and Sandbox logs
+.system_generated/
+*.log
+.agents/
+.gemini/

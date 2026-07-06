@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COLLECT X - Figuras Coleccionables de Acción y Anime</title>
+  <meta name="description" content="Encuentra figuras de acción retro, Funko Pop, Wrestling, Anime, Marvel, DC y ediciones autografiadas en la plataforma líder de coleccionables.">
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Lucide Icons for clean look -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="#" class="logo-container" onclick="router.navigate('')">
+      <div class="logo-collectx">
+        <div class="logo-collect-txt">COLLECT<span>X</span></div>
+        <div class="logo-tagline-txt">The Marketplace for Collectors</div>
+      </div>
+    </a>
+    
+    <div class="nav-search">
+      <input type="text" id="search-input" placeholder="Buscar figuras de acción, Funko, cómics..." onkeypress="handleSearchKeyPress(event)">
+      <button onclick="triggerSearch()"><i data-lucide="search" style="width:1.1rem;height:1.1rem;"></i></button>
+    </div>
+    
+    <div class="nav-links">
+      <a class="nav-link" id="nav-btn-marketplace" onclick="router.navigate('')">
+        <i data-lucide="shopping-bag" style="width:1.1rem;height:1.1rem;"></i>
+        <span>Marketplace</span>
+      </a>
+      
+      <a class="nav-link" id="nav-btn-favorites" onclick="router.navigate('favorites')">
+        <div class="nav-btn-icon">
+          <i data-lucide="heart" style="width:1.1rem;height:1.1rem;"></i>
+          <span class="badge-count" id="favorites-badge" style="display:none;">0</span>
+        </div>
+        <span>Favoritos</span>
+      </a>
+      
+      <a class="nav-link" id="nav-btn-cart" onclick="toggleCartDrawer(true)">
+        <div class="nav-btn-icon">
+          <i data-lucide="shopping-cart" style="width:1.1rem;height:1.1rem;"></i>
+          <span class="badge-count" id="cart-badge" style="display:none;">0</span>
+        </div>
+        <span>Carrito</span>
+      </a>
+
+      <!-- Dynamic navigation links for dashboards, shown based on current logged in user -->
+      <a class="nav-link" id="nav-btn-seller" onclick="router.navigate('seller')" style="display:none;">
+        <i data-lucide="layout-dashboard" style="width:1.1rem;height:1.1rem;"></i>
+        <span>Panel Vendedor</span>
+      </a>
+      
+      <a class="nav-link" id="nav-btn-admin" onclick="router.navigate('admin')" style="display:none;">
+        <i data-lucide="shield-check" style="width:1.1rem;height:1.1rem;"></i>
+        <span>Admin Dashboard</span>
+      </a>
+
+      <!-- Profile Menu -->
+      <div class="user-profile-menu" id="user-profile-btn" onclick="toggleProfileDropdown()">
+        <img src="" alt="Avatar" class="user-avatar" id="nav-user-avatar">
+        <span id="nav-user-name">Invitado</span>
+        <span class="user-role-badge" id="nav-user-role-badge">buyer</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Category quick bar -->
+  <div class="categories-tabs" id="categories-tabs-container">
+    <!-- Category tabs will be rendered here dynamically -->
+  </div>
+
+  <!-- Main Viewport where SPA routes inject html -->
+  <main id="app-viewport">
+    <div style="text-align:center; padding: 5rem 0; color: var(--text-secondary);">
+      <div class="spinner"></div>
+      <p style="margin-top: 1rem;">Cargando COLLECT X...</p>
+    </div>
+  </main>
+
+  <!-- Floating Quick Role Switcher for easy testing -->
+  <div class="role-switcher-floating">
+    <div class="role-switcher-title">Simulador de Roles</div>
+    <button class="role-switch-btn" id="role-btn-buyer" onclick="quickSwitchUser('usr_buyer_1')">
+      <i data-lucide="user" style="width:0.9rem;height:0.9rem;color:#60a5fa;"></i>
+      <span>Comprador (Carlos)</span>
+    </button>
+    <button class="role-switch-btn" id="role-btn-seller" onclick="quickSwitchUser('usr_seller_1')">
+      <i data-lucide="store" style="width:0.9rem;height:0.9rem;color:#34d399;"></i>
+      <span>Vendedor (Geek Empire)</span>
+    </button>
+    <button class="role-switch-btn" id="role-btn-admin" onclick="quickSwitchUser('usr_admin_1')">
+      <i data-lucide="shield" style="width:0.9rem;height:0.9rem;color:#fbbf24;"></i>
+      <span>Admin (SuperAdmin)</span>
+    </button>
+  </div>
+
+  <!-- Sliding Cart Drawer Backdrop -->
+  <div class="cart-drawer-backdrop" id="cart-drawer-backdrop" onclick="toggleCartDrawer(false)"></div>
+  
+  <!-- Sliding Cart Drawer Content -->
+  <div class="cart-drawer" id="cart-drawer-panel">
+    <div class="cart-drawer-header">
+      <h3 style="display:flex;align-items:center;gap:0.5rem;">
+        <i data-lucide="shopping-cart" style="color:var(--gold-light);"></i>
+        Tu Carrito (<span id="cart-drawer-count">0</span>)
+      </h3>
+      <button class="cart-close-btn" onclick="toggleCartDrawer(false)">&times;</button>
+    </div>
+    
+    <div class="cart-items-list" id="cart-drawer-items">
+      <!-- Cart items loaded here -->
+    </div>
+    
+    <div class="cart-drawer-footer">
+      <div class="cart-summary-line">
+        <span>Subtotal</span>
+        <span id="cart-drawer-subtotal">$0.00</span>
+      </div>
+      <div class="cart-summary-line">
+        <span>Comisión Plataforma (vendedor externo)</span>
+        <span id="cart-drawer-commissions-sim">$0.00</span>
+      </div>
+      <div class="cart-summary-line cart-total-line">
+        <span>Total Estimado</span>
+        <span id="cart-drawer-total" style="color:var(--gold-light);">$0.00</span>
+      </div>
+      <button class="btn-large primary-btn cart-checkout-btn" onclick="proceedToCheckout()">
+        <i data-lucide="credit-card"></i>
+        Proceder al Pago
+      </button>
+    </div>
+  </div>
+
+  <!-- Standard Modal Overlay -->
+  <div class="modal-overlay" id="global-modal" onclick="closeGlobalModal(event)">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Título del Modal</h3>
+        <button class="cart-close-btn" onclick="toggleGlobalModal(false)">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <!-- Dynamic modal body -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-logo">
+      <div class="logo-collectx">
+        <div class="logo-collect-txt">COLLECT<span>X</span></div>
+        <div class="logo-tagline-txt">The Marketplace for Collectors</div>
+      </div>
+    </div>
+    <p>&copy; 2026 COLLECT X. Todos los derechos reservados.</p>
+    <p style="font-size:0.8rem; margin-top:0.5rem; color:var(--text-muted);">
+      Desarrollado con fines demostrativos en entorno local. Stripe Connect e Inventario completamente simulados.
+    </p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="mock_data.js"></script>
+  
+  <!-- SPA component sub-scripts -->
+  <script src="components/marketplace.js"></script>
+  <script src="components/product.js"></script>
+  <script src="components/cart.js"></script>
+  <script src="components/admin.js"></script>
+  <script src="components/seller.js"></script>
+  
+  <!-- Main application shell router and state engine -->
+  <script src="app.js"></script>
+</body>
+</html>

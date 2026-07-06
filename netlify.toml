@@ -1,0 +1,10 @@
+# collectors-market/netlify.toml
+
+[build]
+  publish = "."
+
+# SPA redirect rule: redirects all paths to index.html for client-side routing fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
