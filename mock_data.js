@@ -44,8 +44,8 @@ const INITIAL_USERS = [
   {
     id: "usr_admin_1",
     name: "Collectors Admin",
-    email: "admin@mail.com",
-    password_hash: "admin123",
+    email: "100wrestlingpodcast@gmail.com",
+    password_hash: "admin123@",
     role: "admin",
     avatar: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=150&auto=format&fit=crop&q=80",
     created_at: "2025-12-01T08:00:00Z",

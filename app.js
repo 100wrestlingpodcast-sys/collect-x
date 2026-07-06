@@ -3,7 +3,7 @@
 // --- Persistent Database Simulator using LocalStorage ---
 const db = {
   init() {
-    if (!localStorage.getItem('cm_initialized_v2')) {
+    if (!localStorage.getItem('cm_initialized_v3')) {
       // Clean old keys if exist
       localStorage.clear();
       
@@ -30,7 +30,7 @@ const db = {
       localStorage.setItem('cm_cart', JSON.stringify([]));
       localStorage.setItem('cm_favorites', JSON.stringify([]));
       
-      localStorage.setItem('cm_initialized_v2', 'true');
+      localStorage.setItem('cm_initialized_v3', 'true');
     }
   },
   
@@ -603,15 +603,6 @@ function renderLoginFormModal() {
           <i data-lucide="log-in" style="width:1.1rem;height:1.1rem;display:inline-block;vertical-align:middle;margin-right:0.4rem;"></i>
           Iniciar Sesión
         </button>
-      </div>
-
-      <div style="margin-top:1.5rem; border-top:1px solid var(--border-color); padding-top:1.2rem;">
-        <h4 style="font-size:0.8rem; color:var(--text-primary); margin-bottom:0.75rem; text-align:center;">Credenciales de Prueba (Demo logins):</h4>
-        <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.75rem; color:var(--text-secondary); background:#fafafa; padding:0.8rem; border-radius:6px; border:1px solid var(--border-color);">
-          <div>👑 <strong>Administrador:</strong> <code>admin@mail.com</code> / <code>admin123</code></div>
-          <div>🛍️ <strong>Vendedor:</strong> <code>geek@mail.com</code> / <code>seller123</code></div>
-          <div>👤 <strong>Comprador:</strong> <code>carlos@mail.com</code> / <code>buyer123</code></div>
-        </div>
       </div>
     </div>
   `;
