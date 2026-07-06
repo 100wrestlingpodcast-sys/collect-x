@@ -756,8 +756,19 @@ function openAddProductModal() {
           <input type="number" id="frm-prod-price" placeholder="49.99">
         </div>
         <div class="checkout-input-wrapper">
-          <label>Imagen (URL)</label>
-          <input type="text" id="frm-prod-img" placeholder="https://images.unsplash.com/photo-...">
+          <label>Imagen del Artículo</label>
+          <input type="text" id="frm-prod-img" placeholder="Pegar URL de la foto..." style="margin-bottom:0.4rem;">
+          <input type="file" id="frm-prod-file-input" style="display:none;" accept="image/*" onchange="handleProductFormPhotoUpload(this, 'frm-prod-preview', 'frm-prod-img-base64', 'frm-prod-file-name', 'frm-prod-preview-container')">
+          <input type="hidden" id="frm-prod-img-base64">
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <button type="button" class="btn-small secondary-btn" onclick="document.getElementById('frm-prod-file-input').click()" style="padding: 0.45rem 0.8rem; font-size:0.75rem; display:flex; align-items:center; gap:0.3rem; width:auto; border-color:var(--border-metallic-yellow);">
+              <i data-lucide="camera" style="width:0.85rem; height:0.85rem;"></i> Subir o Tomar Foto
+            </button>
+            <span id="frm-prod-file-name" style="font-size:0.7rem; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">O toma una foto con el teléfono</span>
+          </div>
+          <div id="frm-prod-preview-container" style="display:none; margin-top:0.5rem;">
+            <img id="frm-prod-preview" src="" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1.5px solid var(--border-metallic-yellow);">
+          </div>
         </div>
       </div>
       <div class="checkout-input-wrapper">
@@ -779,7 +790,7 @@ function submitAddProduct() {
   const condition = document.getElementById('frm-prod-condition').value;
   const stock = parseInt(document.getElementById('frm-prod-stock').value) || 0;
   const price = parseFloat(document.getElementById('frm-prod-price').value) || 0.00;
-  const imgUrl = document.getElementById('frm-prod-img').value.trim() || 'https://images.unsplash.com/photo-1608889174649-414430997ee6?w=600&auto=format&fit=crop&q=80';
+  const imgUrl = document.getElementById('frm-prod-img-base64').value || document.getElementById('frm-prod-img').value.trim() || 'https://images.unsplash.com/photo-1608889174649-414430997ee6?w=600&auto=format&fit=crop&q=80';
   const desc = document.getElementById('frm-prod-desc').value.trim();
 
   // Shipping inputs
@@ -936,8 +947,19 @@ function openEditProductModal(prodId) {
           <input type="number" id="edit-prod-price" value="${p.price}">
         </div>
         <div class="checkout-input-wrapper">
-          <label>Imagen (URL)</label>
-          <input type="text" id="edit-prod-img" value="${pMed ? pMed.media_url : ''}">
+          <label>Imagen del Artículo</label>
+          <input type="text" id="edit-prod-img" value="${pMed ? pMed.media_url : ''}" placeholder="Pegar URL de la foto..." style="margin-bottom:0.4rem;">
+          <input type="file" id="edit-prod-file-input" style="display:none;" accept="image/*" onchange="handleProductFormPhotoUpload(this, 'edit-prod-preview', 'edit-prod-img-base64', 'edit-prod-file-name', 'edit-prod-preview-container')">
+          <input type="hidden" id="edit-prod-img-base64" value="${pMed ? pMed.media_url : ''}">
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <button type="button" class="btn-small secondary-btn" onclick="document.getElementById('edit-prod-file-input').click()" style="padding: 0.45rem 0.8rem; font-size:0.75rem; display:flex; align-items:center; gap:0.3rem; width:auto; border-color:var(--border-metallic-yellow);">
+              <i data-lucide="camera" style="width:0.85rem; height:0.85rem;"></i> Cambiar o Tomar Foto
+            </button>
+            <span id="edit-prod-file-name" style="font-size:0.7rem; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">O toma una foto con el teléfono</span>
+          </div>
+          <div id="edit-prod-preview-container" style="${pMed ? 'display:block;' : 'display:none;'} margin-top:0.5rem;">
+            <img id="edit-prod-preview" src="${pMed ? pMed.media_url : ''}" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1.5px solid var(--border-metallic-yellow);">
+          </div>
         </div>
       </div>
       <div class="checkout-input-wrapper">
@@ -959,7 +981,7 @@ function submitEditProduct(productId) {
   const condition = document.getElementById('edit-prod-condition').value;
   const stock = parseInt(document.getElementById('edit-prod-stock').value) || 0;
   const price = parseFloat(document.getElementById('edit-prod-price').value) || 0.00;
-  const imgUrl = document.getElementById('edit-prod-img').value.trim();
+  const imgUrl = document.getElementById('edit-prod-img-base64').value || document.getElementById('edit-prod-img').value.trim();
   const desc = document.getElementById('edit-prod-desc').value.trim();
 
   // Shipping
@@ -1015,4 +1037,27 @@ function submitEditProduct(productId) {
     alert("¡Cambios guardados con éxito! El producto volverá a revisión administrativa antes de salir a la venta.");
     renderSellerDashboard();
   }
+}
+
+function handleProductFormPhotoUpload(input, previewId, hiddenInputId, nameSpanId, containerId) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const nameSpan = document.getElementById(nameSpanId);
+  if (nameSpan) nameSpan.textContent = file.name;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64String = e.target.result;
+    
+    const hiddenInput = document.getElementById(hiddenInputId);
+    if (hiddenInput) hiddenInput.value = base64String;
+
+    const preview = document.getElementById(previewId);
+    if (preview) preview.src = base64String;
+
+    const container = document.getElementById(containerId);
+    if (container) container.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
 }
