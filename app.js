@@ -261,10 +261,10 @@ const state = {
     // Load User
     const users = db.get('users');
     const currId = db.getCurrentUserId();
-    this.currentUser = users.find(u => u.id === currId) || users[0];
+    this.currentUser = users.find(u => u.id === currId) || null;
     
     // Load Seller Profile if role is seller
-    if (this.currentUser.role === 'seller') {
+    if (this.currentUser && this.currentUser.role === 'seller') {
       const profiles = db.get('seller_profiles');
       this.sellerProfile = profiles.find(p => p.user_id === this.currentUser.id);
     } else {
