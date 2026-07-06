@@ -47,7 +47,8 @@ const db = {
   },
   
   getCurrentUserId() {
-    return localStorage.getItem('cm_current_user_id') || 'usr_buyer_1';
+    const val = localStorage.getItem('cm_current_user_id');
+    return val !== null ? val : '';
   },
   
   setCurrentUserId(id) {
