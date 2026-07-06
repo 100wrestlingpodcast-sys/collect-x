@@ -114,6 +114,13 @@ function renderCheckoutView() {
   const products = db.get('products');
   const profiles = db.get('seller_profiles');
 
+  if (!state.currentUser) {
+    alert("Inicia sesión para proceder al checkout de tu compra.");
+    renderLoginFormModal();
+    router.navigate('');
+    return;
+  }
+
   if (state.cart.length === 0) {
     viewport.innerHTML = `
       <div class="section-container" style="text-align:center; padding:5rem 0;">

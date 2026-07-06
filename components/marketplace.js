@@ -375,6 +375,12 @@ function clearAllFilters() {
 
 // --- Cart and Favorite actions ---
 function addToCart(productId) {
+  if (!state.currentUser) {
+    alert("Por favor inicia sesión para añadir artículos al carrito.");
+    renderLoginFormModal();
+    return;
+  }
+
   const products = db.get('products');
   const product = products.find(p => p.id === productId);
   if (!product) return;
@@ -401,6 +407,12 @@ function addToCart(productId) {
 }
 
 function toggleFavorite(productId) {
+  if (!state.currentUser) {
+    alert("Por favor inicia sesión para guardar productos en tus favoritos.");
+    renderLoginFormModal();
+    return;
+  }
+
   const index = state.favorites.indexOf(productId);
   if (index > -1) {
     state.favorites.splice(index, 1);

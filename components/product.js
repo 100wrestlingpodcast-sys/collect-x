@@ -63,7 +63,9 @@ function renderProductDetail(productId) {
   // Check if current user is verified buyer of this product
   const orders = db.get('orders');
   const orderItems = db.get('order_items');
-  const userOrders = orders.filter(o => o.buyer_id === state.currentUser.id && o.order_status === 'delivered');
+  const userOrders = state.currentUser
+    ? orders.filter(o => o.buyer_id === state.currentUser.id && o.order_status === 'delivered')
+    : [];
   const hasPurchased = userOrders.some(order => 
     orderItems.some(item => item.order_id === order.id && item.product_id === product.id)
   );
@@ -456,12 +458,23 @@ function drawStarRatingHtml(ratingVal) {
 
 // Buy Now shortcut
 function buyNow(productId) {
+  if (!state.currentUser) {
+    alert("Por favor inicia sesión o crea una cuenta para comprar este artículo.");
+    renderLoginFormModal();
+    return;
+  }
   addToCart(productId);
   router.navigate('checkout');
 }
 
 // Toggle favorites inside product details
 function toggleProductFavorite(productId) {
+  if (!state.currentUser) {
+    alert("Por favor inicia sesión para guardar productos en tus favoritos.");
+    renderLoginFormModal();
+    return;
+  }
+
   const index = state.favorites.indexOf(productId);
   if (index > -1) {
     state.favorites.splice(index, 1);

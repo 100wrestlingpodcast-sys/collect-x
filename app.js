@@ -326,7 +326,7 @@ const router = {
     } else if (route === 'checkout') {
       renderCheckoutView();
     } else if (route === 'admin') {
-      if (state.currentUser.role !== 'admin') {
+      if (!state.currentUser || state.currentUser.role !== 'admin') {
         alert("Acceso denegado. Se requieren privilegios de Administrador.");
         this.navigate('');
         return;
@@ -334,7 +334,7 @@ const router = {
       document.getElementById('nav-btn-admin')?.classList.add('active');
       renderAdminDashboard();
     } else if (route === 'seller') {
-      if (state.currentUser.role !== 'seller') {
+      if (!state.currentUser || state.currentUser.role !== 'seller') {
         alert("Acceso denegado. Se requiere cuenta de Vendedor.");
         this.navigate('');
         return;
@@ -450,41 +450,69 @@ function updateNavBar() {
   const navName = document.getElementById('nav-user-name');
   const navRoleBadge = document.getElementById('nav-user-role-badge');
   
-  if (navAvatar) navAvatar.src = user.avatar;
-  if (navName) navName.textContent = user.name;
-  if (navRoleBadge) {
-    navRoleBadge.className = `user-role-badge ${user.role}`;
-    navRoleBadge.textContent = user.role === 'buyer' ? 'comprador' : user.role === 'seller' ? 'vendedor' : 'admin';
-  }
-
-  // Mobile Bottom Nav Profile Avatar Update
-  const mobileNavAvatar = document.getElementById('mobile-nav-avatar');
-  if (mobileNavAvatar) {
-    mobileNavAvatar.src = user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
-  }
-
-  // Mobile Dashboard Button visibility
-  const mobileDashBtn = document.getElementById('mobile-nav-btn-dashboard');
-  if (mobileDashBtn) {
-    if (user.role === 'seller' || user.role === 'admin') {
-      mobileDashBtn.style.display = 'flex';
-    } else {
-      mobileDashBtn.style.display = 'none';
+  if (user) {
+    if (navAvatar) navAvatar.src = user.avatar;
+    if (navName) navName.textContent = user.name;
+    if (navRoleBadge) {
+      navRoleBadge.className = `user-role-badge ${user.role}`;
+      navRoleBadge.textContent = user.role === 'buyer' ? 'comprador' : user.role === 'seller' ? 'vendedor' : 'admin';
     }
+
+    // Mobile Bottom Nav Profile Avatar Update
+    const mobileNavAvatar = document.getElementById('mobile-nav-avatar');
+    if (mobileNavAvatar) {
+      mobileNavAvatar.src = user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+    }
+
+    // Mobile Dashboard Button visibility
+    const mobileDashBtn = document.getElementById('mobile-nav-btn-dashboard');
+    if (mobileDashBtn) {
+      if (user.role === 'seller' || user.role === 'admin') {
+        mobileDashBtn.style.display = 'flex';
+      } else {
+        mobileDashBtn.style.display = 'none';
+      }
+    }
+    
+    // Toggle Admin / Seller buttons
+    const adminBtn = document.getElementById('nav-btn-admin');
+    const sellerBtn = document.getElementById('nav-btn-seller');
+    
+    if (adminBtn) adminBtn.style.display = user.role === 'admin' ? 'flex' : 'none';
+    if (sellerBtn) sellerBtn.style.display = (user.role === 'seller' || user.role === 'admin') ? 'flex' : 'none';
+  } else {
+    // Guest State
+    if (navAvatar) navAvatar.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+    if (navName) navName.textContent = 'Iniciar Sesión';
+    if (navRoleBadge) {
+      navRoleBadge.className = 'user-role-badge guest';
+      navRoleBadge.textContent = 'visitante';
+    }
+
+    // Mobile Bottom Nav Profile Avatar Update
+    const mobileNavAvatar = document.getElementById('mobile-nav-avatar');
+    if (mobileNavAvatar) {
+      mobileNavAvatar.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+    }
+
+    // Mobile Dashboard Button visibility
+    const mobileDashBtn = document.getElementById('mobile-nav-btn-dashboard');
+    if (mobileDashBtn) mobileDashBtn.style.display = 'none';
+
+    // Hide dashboards buttons
+    const adminBtn = document.getElementById('nav-btn-admin');
+    const sellerBtn = document.getElementById('nav-btn-seller');
+    if (adminBtn) adminBtn.style.display = 'none';
+    if (sellerBtn) sellerBtn.style.display = 'none';
   }
-  
-  // Toggle Admin / Seller buttons
-  const adminBtn = document.getElementById('nav-btn-admin');
-  const sellerBtn = document.getElementById('nav-btn-seller');
-  
-  if (adminBtn) adminBtn.style.display = user.role === 'admin' ? 'flex' : 'none';
-  if (sellerBtn) sellerBtn.style.display = (user.role === 'seller' || user.role === 'admin') ? 'flex' : 'none';
   
   // Float switcher active classes
   document.querySelectorAll('.role-switch-btn').forEach(btn => btn.classList.remove('active'));
-  if (user.id === 'usr_buyer_1') document.getElementById('role-btn-buyer')?.classList.add('active');
-  if (user.id === 'usr_seller_1') document.getElementById('role-btn-seller')?.classList.add('active');
-  if (user.id === 'usr_admin_1') document.getElementById('role-btn-admin')?.classList.add('active');
+  if (user) {
+    if (user.id === 'usr_buyer_1') document.getElementById('role-btn-buyer')?.classList.add('active');
+    if (user.id === 'usr_seller_1') document.getElementById('role-btn-seller')?.classList.add('active');
+    if (user.id === 'usr_admin_1') document.getElementById('role-btn-admin')?.classList.add('active');
+  }
 }
 
 function routeMobileDashboard() {
