@@ -13,7 +13,20 @@ const INITIAL_USERS = [
   }
 ];
 
-const INITIAL_SELLER_PROFILES = [];
+const INITIAL_SELLER_PROFILES = [
+  {
+    id: "sel_prof_admin",
+    user_id: "usr_admin_1",
+    store_name: "COLLECT X Tienda Oficial",
+    description: "Tienda oficial de la plataforma. Artículos exclusivos y garantizados.",
+    stripe_connect_id: "acct_admin_mock_123",
+    subscription_plan: "Elite",
+    commission_rate: 0.00, // Admin pays 0% commission on sales
+    approved: true,
+    rating_average: 5.0,
+    total_sales: 0.00
+  }
+];
 const INITIAL_PRODUCTS = [];
 const INITIAL_PRODUCT_MEDIA = [];
 const INITIAL_REVIEWS = [];

@@ -27,9 +27,15 @@ function renderAdminDashboard() {
 
   viewport.innerHTML = `
     <div class="section-container">
-      <div style="margin-bottom: 1.5rem;">
-        <h2 class="section-title">Panel de Administración</h2>
-        <p style="color:var(--text-secondary); margin-top:0.25rem;">Control global del marketplace, comisiones, aprobaciones y catálogo.</p>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom: 1.5rem;">
+        <div>
+          <h2 class="section-title">Panel de Administración</h2>
+          <p style="color:var(--text-secondary); margin-top:0.25rem;">Control global del marketplace, comisiones, aprobaciones y catálogo.</p>
+        </div>
+        <button class="btn-large secondary-btn" style="width:auto; padding:0.6rem 1.2rem; font-size:0.85rem;" onclick="router.navigate('seller')">
+          <i data-lucide="store" style="width:1rem;height:1rem;display:inline-block;vertical-align:middle;margin-right:0.3rem;color:var(--gold-light);"></i>
+          Ir a Mi Tienda Vendedor
+        </button>
       </div>
 
       <div class="dashboard-shell">

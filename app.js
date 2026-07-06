@@ -3,7 +3,7 @@
 // --- Persistent Database Simulator using LocalStorage ---
 const db = {
   init() {
-    if (!localStorage.getItem('cm_initialized_v4')) {
+    if (!localStorage.getItem('cm_initialized_v5')) {
       // Clean old keys if exist
       localStorage.clear();
       
@@ -30,7 +30,7 @@ const db = {
       localStorage.setItem('cm_cart', JSON.stringify([]));
       localStorage.setItem('cm_favorites', JSON.stringify([]));
       
-      localStorage.setItem('cm_initialized_v4', 'true');
+      localStorage.setItem('cm_initialized_v5', 'true');
     }
   },
   
@@ -474,7 +474,7 @@ function updateNavBar() {
   const sellerBtn = document.getElementById('nav-btn-seller');
   
   if (adminBtn) adminBtn.style.display = user.role === 'admin' ? 'flex' : 'none';
-  if (sellerBtn) sellerBtn.style.display = user.role === 'seller' ? 'flex' : 'none';
+  if (sellerBtn) sellerBtn.style.display = (user.role === 'seller' || user.role === 'admin') ? 'flex' : 'none';
   
   // Float switcher active classes
   document.querySelectorAll('.role-switch-btn').forEach(btn => btn.classList.remove('active'));
