@@ -335,7 +335,7 @@ const router = {
       document.getElementById('nav-btn-admin')?.classList.add('active');
       renderAdminDashboard();
     } else if (route === 'seller') {
-      if (!state.currentUser || state.currentUser.role !== 'seller') {
+      if (!state.currentUser || (state.currentUser.role !== 'seller' && state.currentUser.role !== 'admin')) {
         alert("Acceso denegado. Se requiere cuenta de Vendedor.");
         this.navigate('');
         return;
