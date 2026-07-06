@@ -3,120 +3,110 @@
 // --- Cart Drawer Renderer ---
 function renderCartDrawer() {
   const container = document.getElementById('cart-drawer-items');
-  const subtotalEl = document.getElementById('cart-drawer-subtotal');
-  const commissionEl = document.getElementById('cart-drawer-commissions-sim');
-  const totalEl = document.getElementById('cart-drawer-total');
-  
   if (!container) return;
 
   const products = db.get('products');
-  const media = db.get('product_media');
-  const profiles = db.get('seller_profiles');
 
   if (state.cart.length === 0) {
     container.innerHTML = `
-      <div style="text-align:center; padding: 3rem 0; color:var(--text-muted);">
-        <i data-lucide="shopping-cart" style="width:2.5rem; height:2.5rem; margin-bottom:0.75rem; opacity:0.5;"></i>
+      <div style="text-align:center; padding:3rem 1rem; color:var(--text-secondary);">
+        <i data-lucide="shopping-cart" style="width:3rem; height:3rem; color:var(--border-metallic-yellow); margin-bottom:1rem; opacity:0.6;"></i>
         <p>Tu carrito está vacío</p>
+        <button class="btn-large primary-btn" style="margin-top:1.5rem; font-size:0.85rem;" onclick="toggleCartDrawer(false)">Continuar Comprando</button>
       </div>
     `;
-    subtotalEl.textContent = '$0.00';
-    commissionEl.textContent = '$0.00';
-    totalEl.textContent = '$0.00';
     lucide.createIcons();
     return;
   }
 
+  let cartHtml = '';
   let subtotal = 0;
-  let estimatedPlatformCommissions = 0;
 
-  const itemsHtml = state.cart.map(item => {
+  state.cart.forEach(item => {
     const p = products.find(prod => prod.id === item.product_id);
-    if (!p) return '';
+    if (p) {
+      const itemTotal = p.price * item.quantity;
+      subtotal += itemTotal;
+      const condClass = p.condition.toLowerCase().replace(/\s+/g, '');
+      const media = db.get('product_media').find(m => m.product_id === p.id);
+      const img = media ? media.media_url : 'https://images.unsplash.com/photo-1608889174649-414430997ee6?w=150&auto=format&fit=crop&q=80';
 
-    const pMedia = media.find(m => m.product_id === p.id);
-    const imgSrc = pMedia ? pMedia.media_url : 'https://images.unsplash.com/photo-1608889174649-414430997ee6?w=150&auto=format&fit=crop&q=80';
-    
-    const itemTotal = p.price * item.quantity;
-    subtotal += itemTotal;
-
-    // Calculate commission if seller is not admin
-    if (p.seller_id !== 'usr_admin_1') {
-      const prof = profiles.find(s => s.user_id === p.seller_id);
-      const rate = prof ? prof.commission_rate : 0.10; // Default 10%
-      estimatedPlatformCommissions += itemTotal * rate;
-    }
-
-    return `
-      <div class="cart-item">
-        <img src="${imgSrc}" class="cart-item-img">
-        <div class="cart-item-details">
-          <h4 class="cart-item-title">${p.title}</h4>
-          <div class="cart-item-price">$${p.price.toFixed(2)}</div>
-          <div class="cart-item-qty-row">
-            <div class="qty-counter">
-              <button class="qty-btn" onclick="updateCartQty('${item.product_id}', -1)">-</button>
-              <span class="qty-num">${item.quantity}</span>
-              <button class="qty-btn" onclick="updateCartQty('${item.product_id}', 1)">+</button>
+      cartHtml += `
+        <div class="cart-item">
+          <img src="${img}" class="cart-item-img">
+          <div class="cart-item-details">
+            <h4 class="cart-item-title" onclick="router.navigate('product/${p.id}')">${p.title}</h4>
+            <div style="display:flex; align-items:center; gap:0.5rem; margin:0.2rem 0;">
+              <span class="condition-badge ${condClass}" style="position:static; font-size:0.65rem; padding:0.1rem 0.3rem;">${p.condition}</span>
+              <span style="font-size:0.8rem; color:var(--text-muted);">x${item.quantity}</span>
             </div>
-            <button class="cart-item-remove" onclick="removeCartItem('${item.product_id}')">Eliminar</button>
+            <div style="font-weight:700; color:var(--gold-light); font-size:0.95rem;">$${p.price.toFixed(2)}</div>
           </div>
+          <button class="cart-item-remove" onclick="removeFromCart('${p.id}')" title="Eliminar de carrito">
+            <i data-lucide="trash-2" style="width:0.95rem; height:0.95rem;"></i>
+          </button>
         </div>
-      </div>
-    `;
-  }).join('');
+      `;
+    }
+  });
 
-  container.innerHTML = itemsHtml;
-  
-  // Set prices
-  subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
-  commissionEl.textContent = `$${estimatedPlatformCommissions.toFixed(2)}`;
-  totalEl.textContent = `$${subtotal.toFixed(2)}`;
+  container.innerHTML = `
+    <div class="cart-items-list">${cartHtml}</div>
+    
+    <div style="margin-top:auto; padding-top:1.5rem; border-top:1px solid var(--border-color);">
+      <div style="display:flex; justify-content:space-between; font-weight:700; font-size:1.1rem; margin-bottom:1.5rem; color:var(--text-primary);">
+        <span>Subtotal</span>
+        <span>$${subtotal.toFixed(2)}</span>
+      </div>
+      
+      <div style="display:flex; flex-direction:column; gap:0.75rem;">
+        <button class="btn-large primary-btn" onclick="router.navigate('checkout')">
+          Proceder al Checkout
+        </button>
+        <button class="btn-large secondary-btn" onclick="toggleCartDrawer(false)">
+          Seguir Comprando
+        </button>
+      </div>
+    </div>
+  `;
 
   lucide.createIcons();
 }
 
-function updateCartQty(productId, delta) {
+function addToCart(productId) {
   const products = db.get('products');
-  const product = products.find(p => p.id === productId);
-  if (!product) return;
+  const p = products.find(prod => prod.id === productId);
+  if (!p) return;
 
-  const index = state.cart.findIndex(i => i.product_id === productId);
-  if (index > -1) {
-    const newQty = state.cart[index].quantity + delta;
-    if (newQty <= 0) {
-      state.cart.splice(index, 1);
-    } else {
-      if (newQty > product.stock) {
-        alert(`Stock insuficiente. Solo quedan ${product.stock} unidades de este artículo.`);
-        return;
-      }
-      state.cart[index].quantity = newQty;
-    }
-    state.saveCart();
-    renderCartDrawer();
-  }
-}
-
-function removeCartItem(productId) {
-  const index = state.cart.findIndex(i => i.product_id === productId);
-  if (index > -1) {
-    state.cart.splice(index, 1);
-    state.saveCart();
-    renderCartDrawer();
-  }
-}
-
-function proceedToCheckout() {
-  if (state.cart.length === 0) {
-    alert("Agrega artículos al carrito antes de pagar.");
+  if (p.stock <= 0) {
+    alert("Lo sentimos, este artículo se encuentra agotado.");
     return;
   }
-  toggleCartDrawer(false);
-  router.navigate('checkout');
+
+  const existing = state.cart.find(item => item.product_id === productId);
+  if (existing) {
+    if (existing.quantity >= p.stock) {
+      alert(`No puedes añadir más piezas. Stock disponible: ${p.stock}`);
+      return;
+    }
+    existing.quantity += 1;
+  } else {
+    state.cart.push({ product_id: productId, quantity: 1 });
+  }
+
+  state.saveCart();
+  alert(`¡${p.title} añadida al carrito!`);
+  renderCartDrawer();
+  toggleCartDrawer(true);
 }
 
-// --- Checkout Page View ---
+function removeFromCart(productId) {
+  state.cart = state.cart.filter(item => item.product_id !== productId);
+  state.saveCart();
+  renderCartDrawer();
+}
+
+// --- Checkout view renderer with Shippo Integration ---
 function renderCheckoutView() {
   const viewport = document.getElementById('app-viewport');
   if (!viewport) return;
@@ -135,46 +125,96 @@ function renderCheckoutView() {
     return;
   }
 
-  // Calculate financials
-  let subtotal = 0;
-  let hasExternalSeller = false;
-  let processingFees = 0;
-  let platformCommissionTotal = 0;
-  let splitPayoutsHtml = '';
+  // 1. Gather all unique sellers from cart items
+  const cartBySeller = {};
+  state.cart.forEach(item => {
+    const p = products.find(prod => prod.id === item.product_id);
+    if (p) {
+      if (!cartBySeller[p.seller_id]) cartBySeller[p.seller_id] = [];
+      cartBySeller[p.seller_id].push({ product: p, qty: item.quantity });
+    }
+  });
 
-  // Setup arrays to loop payouts
-  const payoutsBySeller = {};
+  // 2. Load buyer addresses
+  const addresses = db.get('shipping_addresses').filter(a => a.user_id === state.currentUser.id);
+  
+  // Set default address
+  if (!window.selectedAddressId && addresses.length > 0) {
+    const defAddr = addresses.find(a => a.is_default) || addresses[0];
+    window.selectedAddressId = defAddr.id;
+  }
+  const activeAddress = addresses.find(a => a.id === window.selectedAddressId) || null;
+
+  // 3. Compute package dimensions & weight (aggregate package simulator)
+  let totalWeight = 0;
+  let maxLength = 0;
+  let maxWidth = 0;
+  let maxHeight = 0;
+  let isFragile = false;
+  let declaredValue = 0;
+  let mainCategory = "Funko Pop";
+  let sellerIdForShipping = "usr_seller_1";
 
   state.cart.forEach(item => {
     const p = products.find(prod => prod.id === item.product_id);
     if (p) {
-      const itemCost = p.price * item.quantity;
-      subtotal += itemCost;
-
-      const sellerId = p.seller_id;
-      if (!payoutsBySeller[sellerId]) {
-        payoutsBySeller[sellerId] = {
-          gross: 0,
-          commissionRate: 0.10, // Default base fee
-          sellerName: 'Collectors Shop',
-          stripeAcct: 'Cuenta Principal'
-        };
-      }
-      payoutsBySeller[sellerId].gross += itemCost;
-
-      if (sellerId !== 'usr_admin_1') {
-        hasExternalSeller = true;
-        const prof = profiles.find(s => s.user_id === sellerId);
-        if (prof) {
-          payoutsBySeller[sellerId].commissionRate = prof.commission_rate;
-          payoutsBySeller[sellerId].sellerName = prof.store_name;
-          payoutsBySeller[sellerId].stripeAcct = prof.stripe_connect_id || 'acct_Connected';
-        }
-      }
+      totalWeight += (p.weight || 8) * item.quantity;
+      maxLength = Math.max(maxLength, p.length || 6);
+      maxWidth = Math.max(maxWidth, p.width || 5);
+      maxHeight += (p.height || 4) * item.quantity; // Stack items height-wise
+      if (p.fragile) isFragile = true;
+      declaredValue += p.price * item.quantity;
+      mainCategory = p.category;
+      sellerIdForShipping = p.seller_id;
     }
   });
 
-  // Calculate discount coupon
+  const parcel = {
+    weight: totalWeight,
+    length: maxLength,
+    width: maxWidth,
+    height: maxHeight,
+    fragile: isFragile,
+    declared_value: declaredValue,
+    category: mainCategory,
+    seller_id: sellerIdForShipping
+  };
+
+  // 4. Fetch Shippo Rates based on active address
+  let shippoRatesData = null;
+  let fromAddressDetails = null;
+
+  if (activeAddress) {
+    // Locate seller's origin address
+    const allAddresses = db.get('shipping_addresses');
+    fromAddressDetails = allAddresses.find(a => a.user_id === sellerIdForShipping) || allAddresses.find(a => a.user_id === "usr_admin_1");
+    
+    // Call Shippo API Simulator
+    shippoRatesData = shippoAPI.calculateRates(parcel, fromAddressDetails, activeAddress);
+    window.currentShippoRates = shippoRatesData.rates;
+    
+    // Default selected rate
+    if (!window.selectedRateId) {
+      window.selectedRateId = shippoRatesData.recommended_rate_id;
+    }
+  }
+
+  // 5. Select active shipping rate
+  const activeRate = window.currentShippoRates ? window.currentShippoRates.find(r => r.id === window.selectedRateId) : null;
+
+  // 6. Calculate Financials
+  let subtotal = 0;
+  let platformCommissionTotal = 0;
+  let splitPayoutsHtml = '';
+
+  state.cart.forEach(item => {
+    const p = products.find(prod => prod.id === item.product_id);
+    if (p) {
+      subtotal += p.price * item.quantity;
+    }
+  });
+
+  // Coupon calculations
   const activeCoupon = window.appliedCoupon || null;
   let discount = 0;
   if (activeCoupon) {
@@ -185,109 +225,178 @@ function renderCheckoutView() {
     }
   }
 
-  // Apply discount proportionally to seller payouts for fee calculations
   const discountRatio = subtotal > 0 ? (subtotal - discount) / subtotal : 0;
-  
-  let shippingCost = subtotal > 150 ? 0.00 : 5.99; // Free shipping over $150
-  if (activeCoupon && activeCoupon.code === 'FREESHIP') {
-    shippingCost = 0.00;
-  }
 
-  const grandTotal = subtotal - discount + shippingCost;
+  // Shipping cost
+  const shippingCost = activeRate ? activeRate.shipping_cost : 0.00;
+  const insuranceCost = activeRate ? activeRate.insurance_cost : 0.00;
+  const taxesCost = (subtotal - discount) * 0.08; // 8% sales tax
 
-  // Process visual split payouts
-  let stripeProcessingFeeTotal = (grandTotal * 0.029) + 0.30;
-  
-  Object.keys(payoutsBySeller).forEach(sId => {
-    const pData = payoutsBySeller[sId];
-    // Scale gross based on discount ratio
-    const adjustedGross = pData.gross * discountRatio;
+  const grandTotal = subtotal - discount + shippingCost + insuranceCost + taxesCost;
+
+  // Stripe processing fee
+  const stripeProcessingFeeTotal = (grandTotal * 0.029) + 0.30;
+
+  // Build Stripe Connect split visualizer details
+  Object.keys(cartBySeller).forEach(sId => {
+    const items = cartBySeller[sId];
+    const sellerSub = items.reduce((sum, i) => sum + (i.product.price * i.qty), 0);
+    const sellerAdjustedGross = sellerSub * discountRatio;
     
-    let comm = 0;
-    let net = adjustedGross;
-    let desc = '';
+    let commRate = 0.10;
+    let sellerName = 'Collectors Shop';
+    let stripeAcct = 'Cuenta Principal';
 
     if (sId !== 'usr_admin_1') {
-      comm = adjustedGross * pData.commissionRate;
-      const stripeRatio = adjustedGross / (subtotal - discount || 1);
-      const shareOfStripeFee = stripeProcessingFeeTotal * stripeRatio;
-      net = adjustedGross - comm - shareOfStripeFee;
-      platformCommissionTotal += comm;
-
-      desc = `
-        <div class="stripe-flow-step">
-          <span style="color:#818cf8;"><strong>${pData.sellerName}</strong> (${pData.stripeAcct})</span>
-          <span>Recibe: <strong>$${net.toFixed(2)}</strong></span>
-        </div>
-        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top:-0.25rem; margin-bottom:0.5rem; padding-left:0.5rem;">
-          Bruto: $${pData.gross.toFixed(2)} | Comisión (${(pData.commissionRate*100).toFixed(0)}%): -$${comm.toFixed(2)} | Stripe Share: -$${shareOfStripeFee.toFixed(2)}
-        </div>
-      `;
-    } else {
-      // Store own inventory
-      net = adjustedGross; // Keeps 100% of sales
-      desc = `
-        <div class="stripe-flow-step">
-          <span style="color:#34d399;"><strong>Collectors Shop (Inventario Propio)</strong></span>
-          <span>Recibe: <strong>$${net.toFixed(2)}</strong></span>
-        </div>
-        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top:-0.25rem; margin-bottom:0.5rem; padding-left:0.5rem;">
-          El administrador recibe el 100% de esta venta.
-        </div>
-      `;
+      const prof = profiles.find(p => p.user_id === sId);
+      if (prof) {
+        commRate = prof.commission_rate;
+        sellerName = prof.store_name;
+        stripeAcct = prof.stripe_connect_id || 'acct_Connected';
+      }
     }
-    splitPayoutsHtml += desc;
+
+    const platformFee = sId === 'usr_admin_1' ? 0.00 : sellerAdjustedGross * commRate;
+    
+    // Add proportional shares
+    const stripeShare = stripeProcessingFeeTotal * (sellerAdjustedGross / (subtotal - discount || 1));
+    const sellerPayout = sellerAdjustedGross - platformFee;
+    const sellerNet = sellerAdjustedGross - platformFee - stripeShare;
+    
+    if (sId !== 'usr_admin_1') {
+      platformCommissionTotal += platformFee;
+    }
+
+    splitPayoutsHtml += `
+      <div class="stripe-flow-step">
+        <span style="color:#818cf8;"><strong>${sellerName}</strong> (${stripeAcct})</span>
+        <span>Recibe: <strong>$${sellerPayout.toFixed(2)}</strong></span>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top:-0.25rem; margin-bottom:0.5rem; padding-left:0.5rem;">
+        Monto Bruto: $${sellerSub.toFixed(2)} | Comisión (${(commRate*100).toFixed(0)}%): -$${platformFee.toFixed(2)} | Retenido en Escrow hasta Entrega.
+      </div>
+    `;
   });
 
-  // Set coupon label
   const couponText = activeCoupon 
     ? `<span style="color:#10b981;">Cupón: ${activeCoupon.code} (-$${discount.toFixed(2)})</span>`
     : '<span style="color:var(--text-muted);">Ninguno</span>';
+
+  // Address Options selector HTML
+  const addressOptionsHtml = addresses.map(addr => `
+    <option value="${addr.id}" ${addr.id === window.selectedAddressId ? 'selected' : ''}>
+      ${addr.name} - ${addr.street}, ${addr.city}, ${addr.state}
+    </option>
+  `).join('');
+
+  // Shippo rates selectors HTML
+  let ratesSelectionHtml = `
+    <div style="padding: 1.5rem; text-align:center; border: 1.5px dashed var(--border-color); border-radius:8px; color:var(--text-secondary);">
+      <i data-lucide="truck" style="width:2rem; height:2rem; margin-bottom:0.5rem; opacity:0.5;"></i>
+      <p style="font-size:0.9rem;">Por favor selecciona o añade una dirección de envío para cotizar tarifas.</p>
+    </div>
+  `;
+
+  if (shippoRatesData && shippoRatesData.rates) {
+    ratesSelectionHtml = shippoRatesData.rates.map(rate => {
+      const isRecommended = rate.id === shippoRatesData.recommended_rate_id;
+      const isSelected = rate.id === window.selectedRateId;
+
+      return `
+        <label class="shipping-rate-card ${isSelected ? 'selected' : ''}" onclick="selectShippingRate('${rate.id}')">
+          <input type="radio" name="checkout-shipping-rate" value="${rate.id}" ${isSelected ? 'checked' : ''} style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+            <div>
+              <div style="font-weight:700; display:flex; align-items:center; gap:0.4rem; color:var(--text-primary);">
+                <span>${rate.carrier} ${rate.service}</span>
+                ${isRecommended ? `<span class="status-tag approved" style="font-size:0.6rem; padding: 0.1rem 0.4rem; border-color:#d97706; color:#d97706;">Recomendado</span>` : ''}
+              </div>
+              <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.15rem;">
+                Tiempo de tránsito: ${rate.days} ${rate.days === 1 ? 'día' : 'días'} | Nivel: ${rate.tier}
+              </div>
+              ${rate.notes ? `<div style="font-size:0.75rem; color:#f59e0b; margin-top:0.25rem;">⚠️ ${rate.notes}</div>` : ''}
+            </div>
+            <div style="text-align:right;">
+              <div style="font-weight:700; color:var(--gold-light); font-size:1.1rem;">$${rate.shipping_cost.toFixed(2)}</div>
+              ${rate.insurance_cost > 0 ? `<div style="font-size:0.7rem; color:var(--text-muted);">Seguro: +$${rate.insurance_cost.toFixed(2)}</div>` : ''}
+            </div>
+          </div>
+        </label>
+      `;
+    }).join('');
+  }
+
+  // Address Details Info block
+  let activeAddressBlock = '';
+  if (activeAddress) {
+    activeAddressBlock = `
+      <div style="background:#fafafa; border:1px solid var(--border-color); border-radius:6px; padding:0.8rem; margin-top:1rem; font-size:0.85rem; line-height:1.5;">
+        <strong>Destinatario:</strong> ${activeAddress.name}<br>
+        <strong>Dirección:</strong> ${activeAddress.street}, ${activeAddress.city}, ${activeAddress.state} ${activeAddress.zip}, ${activeAddress.country}<br>
+        <strong>Teléfono:</strong> ${activeAddress.phone}
+      </div>
+    `;
+  }
 
   viewport.innerHTML = `
     <div class="section-container">
       <div style="margin-bottom: 2rem;">
         <h2>Pasarela de Pago Segura</h2>
-        <p style="color:var(--text-secondary); margin-top:0.25rem;">Completa tu orden utilizando Stripe Checkout</p>
+        <p style="color:var(--text-secondary); margin-top:0.25rem;">Completa tu orden utilizando Stripe & Shippo Integrations</p>
       </div>
 
       <div class="checkout-grid">
         <!-- Form Details -->
         <div>
-          <!-- Shipping Address -->
+          <!-- Shipping Address selection -->
           <div class="checkout-card">
-            <h3 class="checkout-subtitle">
-              <i data-lucide="map-pin" style="color:var(--primary-light);"></i>
-              Dirección de Envío
+            <h3 class="checkout-subtitle" style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="display:flex; align-items:center; gap:0.5rem;">
+                <i data-lucide="map-pin" style="color:var(--primary-light);"></i>
+                Dirección de Envío
+              </span>
+              <button class="action-btn-small approve" style="font-size:0.75rem; padding:0.3rem 0.6rem;" onclick="openNewAddressModal()">
+                + Agregar Nueva
+              </button>
             </h3>
             
-            <div class="checkout-form-group">
-              <div class="checkout-input-wrapper">
-                <label for="ship-name">Nombre Completo</label>
-                <input type="text" id="ship-name" placeholder="Carlos Mendoza" value="${state.currentUser.name}">
-              </div>
-              <div class="checkout-input-wrapper">
-                <label for="ship-email">Correo Electrónico</label>
-                <input type="email" id="ship-email" placeholder="carlos@mail.com" value="${state.currentUser.email}" disabled>
-              </div>
+            <div class="checkout-input-wrapper" style="margin-top:1rem;">
+              <label for="checkout-address-select">Selecciona una dirección guardada</label>
+              <select id="checkout-address-select" onchange="changeCheckoutAddress(this.value)" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); width:100%; border-radius:6px; padding:0.5rem; outline:none;">
+                ${addresses.length === 0 ? '<option value="">No tienes direcciones guardadas</option>' : addressOptionsHtml}
+              </select>
             </div>
             
-            <div class="checkout-form-group full-width">
-              <div class="checkout-input-wrapper">
-                <label for="ship-address">Dirección de Envío</label>
-                <input type="text" id="ship-address" placeholder="Av. Principal #456, Col. Centro">
-              </div>
-            </div>
+            ${activeAddressBlock}
+          </div>
 
-            <div class="checkout-form-group">
-              <div class="checkout-input-wrapper">
-                <label for="ship-city">Ciudad / Estado</label>
-                <input type="text" id="ship-city" placeholder="Ciudad de México">
+          <!-- Shippo Carriers Comparer -->
+          <div class="checkout-card">
+            <h3 class="checkout-subtitle">
+              <i data-lucide="truck" style="color:#f59e0b;"></i>
+              Comparador de Envíos Shippo
+            </h3>
+            
+            ${shippoRatesData && shippoRatesData.insurance_suggested ? `
+              <div class="alert-info-box" style="background:#fef3c7; border: 1px solid #fcd34d; border-radius:6px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:#b45309; display:flex; align-items:center; gap:0.5rem;">
+                <i data-lucide="shield" style="width:1.2rem; height:1.2rem; flex-shrink:0;"></i>
+                <div>
+                  <strong>Seguro Shippo Recomendado:</strong> Este paquete incluye artículos especiales o de alto valor (> $100). El costo del seguro se agregará automáticamente al transportista seleccionado para cubrir posibles daños o pérdida en el correo.
+                </div>
               </div>
-              <div class="checkout-input-wrapper">
-                <label for="ship-zip">Código Postal</label>
-                <input type="text" id="ship-zip" placeholder="06700">
+            ` : ''}
+
+            ${shippoRatesData && shippoRatesData.fragile_warning ? `
+              <div class="alert-info-box" style="background:#fee2e2; border: 1px solid #fecaca; border-radius:6px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:#b91c1c; display:flex; align-items:center; gap:0.5rem;">
+                <i data-lucide="alert-triangle" style="width:1.2rem; height:1.2rem; flex-shrink:0;"></i>
+                <div>
+                  <strong>Artículo Frágil:</strong> Se ha añadido un recargo de protección física y se aconseja seleccionar opciones de transporte prioritario.
+                </div>
               </div>
+            ` : ''}
+
+            <div style="display:flex; flex-direction:column; gap:0.75rem; margin-top:1rem;">
+              ${ratesSelectionHtml}
             </div>
           </div>
 
@@ -351,8 +460,18 @@ function renderCheckoutView() {
                 <span>${discount > 0 ? `-$${discount.toFixed(2)}` : '$0.00'}</span>
               </div>
               <div style="display:flex; justify-content:space-between; font-size:0.95rem;">
-                <span>Envío</span>
-                <span>${shippingCost === 0 ? 'Gratis' : `$${shippingCost.toFixed(2)}`}</span>
+                <span>Envío Shippo (${activeRate ? activeRate.carrier : 'Carrier'})</span>
+                <span>$${shippingCost.toFixed(2)}</span>
+              </div>
+              ${insuranceCost > 0 ? `
+                <div style="display:flex; justify-content:space-between; font-size:0.95rem; color:#b45309;">
+                  <span>Seguro de Coleccionable</span>
+                  <span>+$${insuranceCost.toFixed(2)}</span>
+                </div>
+              ` : ''}
+              <div style="display:flex; justify-content:space-between; font-size:0.95rem;">
+                <span>Impuestos (IVA 8%)</span>
+                <span>$${taxesCost.toFixed(2)}</span>
               </div>
               <div style="display:flex; justify-content:space-between; font-size:1.15rem; font-weight:700; border-top:1px dashed var(--border-color); padding-top:0.75rem; color:var(--text-primary);">
                 <span>Total a Pagar</span>
@@ -397,7 +516,7 @@ function renderCheckoutView() {
             </div>
 
             <!-- Complete Order Button -->
-            <button class="btn-large primary-btn" style="margin-top:1.5rem; padding: 1rem;" onclick="processPaymentSubmit(${grandTotal}, ${platformCommissionTotal}, ${stripeProcessingFeeTotal})">
+            <button class="btn-large primary-btn" style="margin-top:1.5rem; padding: 1rem;" onclick="processPaymentSubmit(${grandTotal}, ${platformCommissionTotal}, ${stripeProcessingFeeTotal}, ${shippingCost})">
               <i data-lucide="shield-check"></i>
               Confirmar y Pagar
             </button>
@@ -408,6 +527,106 @@ function renderCheckoutView() {
   `;
 
   lucide.createIcons();
+}
+
+function changeCheckoutAddress(addrId) {
+  window.selectedAddressId = addrId;
+  window.selectedRateId = null; // Reset selected rate to recalculate recommended
+  renderCheckoutView();
+}
+
+function selectShippingRate(rateId) {
+  window.selectedRateId = rateId;
+  renderCheckoutView();
+}
+
+function openNewAddressModal() {
+  const bodyHtml = `
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+      <div class="checkout-input-wrapper">
+        <label for="new-addr-name">Nombre Destinatario</label>
+        <input type="text" id="new-addr-name" placeholder="Carlos Mendoza">
+      </div>
+      <div class="checkout-input-wrapper">
+        <label for="new-addr-street">Dirección (Calle y Número)</label>
+        <input type="text" id="new-addr-street" placeholder="123 Collector Lane, Apt 4B">
+      </div>
+      <div class="checkout-form-group">
+        <div class="checkout-input-wrapper">
+          <label for="new-addr-city">Ciudad</label>
+          <input type="text" id="new-addr-city" placeholder="Miami">
+        </div>
+        <div class="checkout-input-wrapper">
+          <label for="new-addr-state">Estado</label>
+          <input type="text" id="new-addr-state" placeholder="FL">
+        </div>
+      </div>
+      <div class="checkout-form-group">
+        <div class="checkout-input-wrapper">
+          <label for="new-addr-zip">Código Postal</label>
+          <input type="text" id="new-addr-zip" placeholder="33101">
+        </div>
+        <div class="checkout-input-wrapper">
+          <label for="new-addr-phone">Teléfono de contacto</label>
+          <input type="text" id="new-addr-phone" placeholder="305-555-0199">
+        </div>
+      </div>
+      <button class="btn-large primary-btn" style="margin-top:1rem;" onclick="saveNewAddress()">Guardar Dirección</button>
+    </div>
+  `;
+  toggleGlobalModal(true, "Agregar Nueva Dirección de Envío", bodyHtml);
+}
+
+function saveNewAddress() {
+  const name = document.getElementById('new-addr-name').value.trim();
+  const street = document.getElementById('new-addr-street').value.trim();
+  const city = document.getElementById('new-addr-city').value.trim();
+  const stateVal = document.getElementById('new-addr-state').value.trim();
+  const zip = document.getElementById('new-addr-zip').value.trim();
+  const phone = document.getElementById('new-addr-phone').value.trim();
+
+  if (!name || !street || !city || !stateVal || !zip || !phone) {
+    alert("Por favor completa todos los campos.");
+    return;
+  }
+
+  // Address verification
+  const verification = shippoAPI.verifyAddress({ street, zip });
+  if (!verification.isValid) {
+    alert(`Error de Verificación Shippo: ${verification.error}`);
+    return;
+  }
+
+  const addresses = db.get('shipping_addresses');
+  const newAddrId = "addr_" + Date.now();
+  
+  // Set others to false if is_default is true
+  addresses.forEach(a => {
+    if (a.user_id === state.currentUser.id) a.is_default = false;
+  });
+
+  const newAddress = {
+    id: newAddrId,
+    user_id: state.currentUser.id,
+    name: name,
+    street: street,
+    city: city,
+    state: stateVal,
+    zip: zip,
+    country: "US",
+    phone: phone,
+    is_default: true
+  };
+
+  addresses.push(newAddress);
+  db.set('shipping_addresses', addresses);
+
+  window.selectedAddressId = newAddrId;
+  window.selectedRateId = null;
+
+  toggleGlobalModal(false);
+  renderCheckoutView();
+  alert("¡Dirección agregada y verificada exitosamente con Shippo!");
 }
 
 // Format Input fields
@@ -440,15 +659,19 @@ function formatExpiry(input) {
 // Simulate Quick checkout Express pay
 function simulateExpressPay(providerName) {
   alert(`Ventana de ${providerName} emergente. Autenticando biométricos...`);
-  // Prefill details and run checkout
-  document.getElementById('ship-address').value = "Av. Paseo de la Reforma #115";
-  document.getElementById('ship-city').value = "Ciudad de México";
-  document.getElementById('ship-zip').value = "06500";
+  // Check if user has shipping addresses
+  const addresses = db.get('shipping_addresses').filter(a => a.user_id === state.currentUser.id);
+  if (addresses.length > 0) {
+    const defAddr = addresses.find(a => a.is_default) || addresses[0];
+    window.selectedAddressId = defAddr.id;
+  }
+
   document.getElementById('stripe-card-num').value = "4242 4242 4242 4242";
   document.getElementById('stripe-card-expiry').value = "09/29";
   document.getElementById('stripe-card-cvc').value = "422";
   
-  alert(`¡Autenticación con ${providerName} Exitosa! Información de envío precargada. Presiona 'Confirmar y Pagar' para terminar.`);
+  renderCheckoutView();
+  alert(`¡Autenticación con ${providerName} Exitosa! Dirección de envío y tarjeta precargadas.`);
 }
 
 // Apply Coupon
@@ -474,17 +697,13 @@ function applyCouponCode() {
 }
 
 // Complete payment submit
-function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal) {
-  const name = document.getElementById('ship-name').value.trim();
-  const address = document.getElementById('ship-address').value.trim();
-  const city = document.getElementById('ship-city').value.trim();
-  const zip = document.getElementById('ship-zip').value.trim();
+function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, shippingCost) {
   const cardNum = document.getElementById('stripe-card-num').value.trim();
   const expiry = document.getElementById('stripe-card-expiry').value.trim();
   const cvc = document.getElementById('stripe-card-cvc').value.trim();
 
-  if (!name || !address || !city || !zip) {
-    alert("Por favor completa los datos de envío.");
+  if (!window.selectedAddressId) {
+    alert("Por favor selecciona o agrega una dirección de envío.");
     return;
   }
   if (!cardNum || !expiry || !cvc) {
@@ -492,7 +711,16 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal) 
     return;
   }
 
-  // Simulate Payment Intent validation
+  // Retrieve active details
+  const addresses = db.get('shipping_addresses');
+  const activeAddress = addresses.find(a => a.id === window.selectedAddressId);
+  const activeRate = window.currentShippoRates.find(r => r.id === window.selectedRateId);
+
+  if (!activeAddress || !activeRate) {
+    alert("Error de configuración de envío.");
+    return;
+  }
+
   alert("Procesando pago de Stripe en los servidores... (Simulando API call)");
   
   const orders = db.get('orders');
@@ -501,7 +729,7 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal) 
   const products = db.get('products');
   const profiles = db.get('seller_profiles');
 
-  // Create individual order structures grouped by seller (since Stripe Connect handles orders by seller/merchant)
+  // Create individual order structures grouped by seller
   const cartBySeller = {};
   state.cart.forEach(item => {
     const p = products.find(prod => prod.id === item.product_id);
@@ -556,19 +784,20 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal) 
       id: newOrderId,
       buyer_id: state.currentUser.id,
       seller_id: sellerId,
-      total_amount: sellerAdjustedGross,
+      total_amount: sellerAdjustedGross + shippingCost + (activeRate.insurance_cost || 0),
       platform_fee: platformFee,
       seller_payout: sellerPayout,
       payment_status: "paid",
-      order_status: "paid", // Initial state
+      order_status: "paid", // Paid status, needs shipment creation
       stripe_payment_intent_id: "pi_" + Math.random().toString(36).substr(2, 15),
-      tracking_number: "", // None yet
+      tracking_number: "", // Filled after transaction
       shipping_carrier: "",
       created_at: new Date().toISOString()
     };
     orders.push(newOrder);
 
     // Save Order Items
+    let maxDimensions = { length: 0, width: 0, height: 0, weight: 0, fragile: false, category: "Funko Pop" };
     items.forEach(i => {
       const newOrderItem = {
         id: "ord_it_" + Math.random().toString(36).substr(2, 9),
@@ -578,6 +807,14 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal) 
         price: i.product.price
       };
       orderItems.push(newOrderItem);
+
+      // Track dimensions for shipment record
+      maxDimensions.weight += (i.product.weight || 8) * i.qty;
+      maxDimensions.length = Math.max(maxDimensions.length, i.product.length || 6);
+      maxDimensions.width = Math.max(maxDimensions.width, i.product.width || 5);
+      maxDimensions.height += (i.product.height || 4) * i.qty;
+      if (i.product.fragile) maxDimensions.fragile = true;
+      maxDimensions.category = i.product.category;
 
       // Deduct Stock in database!
       const pIndex = products.findIndex(prod => prod.id === i.product.id);
@@ -595,15 +832,30 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal) 
       order_id: newOrderId,
       buyer_id: state.currentUser.id,
       seller_id: sellerId,
-      gross_amount: sellerAdjustedGross,
+      gross_amount: sellerAdjustedGross + shippingCost + (activeRate.insurance_cost || 0),
       platform_fee: platformFee,
       processing_fee: stripeShare,
       seller_net: sellerNet,
       payment_provider: "stripe",
-      status: "succeeded",
+      status: "succeeded", // Succeeded payout to platform, seller payout is held
       created_at: new Date().toISOString()
     };
     transactions.push(newTransaction);
+
+    // 9. Generate Shippo label transaction automatically on background
+    const allAddresses = db.get('shipping_addresses');
+    const fromAddr = allAddresses.find(a => a.user_id === sellerId) || allAddresses.find(a => a.user_id === "usr_admin_1");
+    
+    // Purchase the label via our mock secure Shippo service
+    shippoAPI.createShipmentTransaction(newOrderId, activeRate, {
+      seller_id: sellerId,
+      weight: maxDimensions.weight,
+      length: maxDimensions.length,
+      width: maxDimensions.width,
+      height: maxDimensions.height,
+      fragile: maxDimensions.fragile,
+      category: maxDimensions.category
+    }, fromAddr, activeAddress);
 
     // Update Seller Total Sales profile stats
     if (sellerId !== 'usr_admin_1') {
@@ -625,8 +877,9 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal) 
   state.cart = [];
   state.saveCart();
   window.appliedCoupon = null;
+  window.selectedRateId = null;
 
-  alert("¡Compra procesada con éxito! La transacción de Stripe y las transferencias Stripe Connect se han liquidado correctamente.");
+  alert("¡Compra procesada con éxito! Se ha cargado el pago en Stripe, transferido el split en custodia Connect y generado el Shipping Label automático en Shippo.");
   
   // Navigate to marketplace
   router.navigate('');

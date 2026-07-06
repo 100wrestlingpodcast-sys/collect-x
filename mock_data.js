@@ -92,6 +92,7 @@ const INITIAL_SELLER_PROFILES = [
   }
 ];
 
+// Product listings with added parcel weights and sizes for Shippo integrations
 const INITIAL_PRODUCTS = [
   {
     id: "prod_1",
@@ -106,7 +107,16 @@ const INITIAL_PRODUCTS = [
     status: "approved", // pending, approved, rejected, sold_out
     ebay_url: "",
     is_external_ebay: false,
-    created_at: "2026-06-10T10:00:00Z"
+    created_at: "2026-06-10T10:00:00Z",
+    // Shipping configurations
+    weight: 8.0,             // Ounces
+    length: 6.0,             // Inches
+    width: 5.0,
+    height: 4.0,
+    fragile: false,
+    insurance_required: false,
+    declared_value: 85.00,
+    shipping_origin_address_id: "addr_seller_1"
   },
   {
     id: "prod_2",
@@ -121,7 +131,15 @@ const INITIAL_PRODUCTS = [
     status: "approved",
     ebay_url: "https://www.ebay.com/itm/example-spawn-1994",
     is_external_ebay: true, // Has eBay buy option
-    created_at: "2026-06-12T15:30:00Z"
+    created_at: "2026-06-12T15:30:00Z",
+    weight: 12.0,
+    length: 8.0,
+    width: 6.0,
+    height: 3.0,
+    fragile: true,           // Fragile item!
+    insurance_required: true, // Worth > $100 -> Auto insurance
+    declared_value: 150.00,
+    shipping_origin_address_id: "addr_admin_1"
   },
   {
     id: "prod_3",
@@ -136,7 +154,15 @@ const INITIAL_PRODUCTS = [
     status: "approved",
     ebay_url: "",
     is_external_ebay: false,
-    created_at: "2026-06-15T11:20:00Z"
+    created_at: "2026-06-15T11:20:00Z",
+    weight: 10.0,
+    length: 7.0,
+    width: 5.0,
+    height: 3.0,
+    fragile: false,
+    insurance_required: false,
+    declared_value: 65.00,
+    shipping_origin_address_id: "addr_seller_2"
   },
   {
     id: "prod_4",
@@ -151,7 +177,15 @@ const INITIAL_PRODUCTS = [
     status: "approved",
     ebay_url: "",
     is_external_ebay: false,
-    created_at: "2026-06-18T09:00:00Z"
+    created_at: "2026-06-18T09:00:00Z",
+    weight: 32.0,            // Heavy item (2 lbs)
+    length: 12.0,
+    width: 10.0,
+    height: 8.0,
+    fragile: true,
+    insurance_required: true, // Worth > $100 -> Auto insurance
+    declared_value: 120.00,
+    shipping_origin_address_id: "addr_seller_1"
   },
   {
     id: "prod_5",
@@ -166,7 +200,15 @@ const INITIAL_PRODUCTS = [
     status: "approved",
     ebay_url: "",
     is_external_ebay: false,
-    created_at: "2026-06-20T17:45:00Z"
+    created_at: "2026-06-20T17:45:00Z",
+    weight: 24.0,
+    length: 10.0,
+    width: 10.0,
+    height: 10.0,
+    fragile: true,
+    insurance_required: true, // Autographed high-value item
+    declared_value: 2500.00,
+    shipping_origin_address_id: "addr_seller_2"
   },
   {
     id: "prod_6",
@@ -181,7 +223,15 @@ const INITIAL_PRODUCTS = [
     status: "approved",
     ebay_url: "",
     is_external_ebay: false,
-    created_at: "2026-06-22T14:10:00Z"
+    created_at: "2026-06-22T14:10:00Z",
+    weight: 8.0,
+    length: 9.0,
+    width: 6.0,
+    height: 2.0,
+    fragile: false,
+    insurance_required: false,
+    declared_value: 45.00,
+    shipping_origin_address_id: "addr_seller_1"
   },
   {
     id: "prod_7",
@@ -196,7 +246,15 @@ const INITIAL_PRODUCTS = [
     status: "approved",
     ebay_url: "",
     is_external_ebay: false,
-    created_at: "2026-06-24T08:15:00Z"
+    created_at: "2026-06-24T08:15:00Z",
+    weight: 48.0,
+    length: 14.0,
+    width: 12.0,
+    height: 10.0,
+    fragile: true,
+    insurance_required: true,
+    declared_value: 110.00,
+    shipping_origin_address_id: "addr_seller_2"
   },
   {
     id: "prod_8",
@@ -211,7 +269,15 @@ const INITIAL_PRODUCTS = [
     status: "pending", // Pending approval because seller and product are new
     ebay_url: "",
     is_external_ebay: false,
-    created_at: "2026-06-26T12:00:00Z"
+    created_at: "2026-06-26T12:00:00Z",
+    weight: 80.0,            // Heavy collector piece (5 lbs)
+    length: 16.0,
+    width: 12.0,
+    height: 8.0,
+    fragile: true,
+    insurance_required: true,
+    declared_value: 380.00,
+    shipping_origin_address_id: "addr_seller_3"
   },
   {
     id: "prod_9",
@@ -222,11 +288,19 @@ const INITIAL_PRODUCTS = [
     category: "NBA / Deportes",
     condition: "Usado",
     price: 95.00,
-    stock: 0, // Out of stock to test filter
+    stock: 0,
     status: "sold_out",
     ebay_url: "",
     is_external_ebay: false,
-    created_at: "2026-06-27T10:00:00Z"
+    created_at: "2026-06-27T10:00:00Z",
+    weight: 7.0,
+    length: 6.0,
+    width: 5.0,
+    height: 4.0,
+    fragile: false,
+    insurance_required: false,
+    declared_value: 95.00,
+    shipping_origin_address_id: "addr_seller_1"
   }
 ];
 
@@ -374,7 +448,6 @@ const INITIAL_SELLER_SUBSCRIPTIONS = [
   }
 ];
 
-// Initial site banners and coupons for marketing simulation
 const INITIAL_BANNERS = [
   { id: "ban_1", title: "Coleccionables Exclusivos", subtitle: "Nuevos Drops de Luffy Gear 5 en preventa exclusiva", image: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=1200&auto=format&fit=crop&q=80", link: "#category/Anime", active: true },
   { id: "ban_2", title: "Vintage Vault", subtitle: "Consigue figuras selladas de los años 90 con certificación", image: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=1200&auto=format&fit=crop&q=80", link: "#category/Figuras vintage", active: true }
@@ -383,6 +456,119 @@ const INITIAL_BANNERS = [
 const INITIAL_COUPONS = [
   { code: "COLLECTOR10", discount_type: "percentage", value: 10, min_purchase: 50.00, active: true },
   { code: "FREESHIP", discount_type: "fixed", value: 5, min_purchase: 30.00, active: true }
+];
+
+// --- Shippo Database Seeding ---
+const INITIAL_SHIPPING_ADDRESSES = [
+  {
+    id: "addr_buyer_1",
+    user_id: "usr_buyer_1",
+    name: "Carlos Mendoza (Comprador)",
+    street: "123 Collector Lane, Apt 4B",
+    city: "Miami",
+    state: "FL",
+    zip: "33101",
+    country: "US",
+    phone: "305-555-0199",
+    is_default: true
+  },
+  {
+    id: "addr_seller_1",
+    user_id: "usr_seller_1", // Geek Empire Store
+    name: "Geek Empire Warehouse",
+    street: "456 Otaku Blvd, Suite A",
+    city: "Los Angeles",
+    state: "CA",
+    zip: "90001",
+    country: "US",
+    phone: "213-555-0144",
+    is_default: true
+  },
+  {
+    id: "addr_seller_2",
+    user_id: "usr_seller_2", // Retro Hunter
+    name: "Retro Vault Shop",
+    street: "789 Vintage St",
+    city: "Austin",
+    state: "TX",
+    zip: "78701",
+    country: "US",
+    phone: "512-555-0177",
+    is_default: true
+  },
+  {
+    id: "addr_seller_3",
+    user_id: "usr_seller_3", // Newbie Seller
+    name: "Newbie Collector Home",
+    street: "101 Collector Circle",
+    city: "Chicago",
+    state: "IL",
+    zip: "60601",
+    country: "US",
+    phone: "312-555-0188",
+    is_default: true
+  },
+  {
+    id: "addr_admin_1",
+    user_id: "usr_admin_1", // Admin Shop
+    name: "COLLECT X Main Office",
+    street: "500 Commerce Rd, Floor 2",
+    city: "New York",
+    state: "NY",
+    zip: "10001",
+    country: "US",
+    phone: "212-555-0122",
+    is_default: true
+  }
+];
+
+const INITIAL_SHIPMENTS = [
+  {
+    id: "shp_1",
+    order_id: "ord_1",
+    seller_id: "usr_seller_1",
+    buyer_id: "usr_buyer_1",
+    shippo_shipment_id: "sh_mock_9876543210",
+    shippo_transaction_id: "tx_mock_9876543210",
+    carrier: "USPS",
+    service_level: "Standard (First Class)",
+    tracking_number: "USPS9876543210",
+    tracking_url: "https://goshippo.com/tracking",
+    label_url: "https://shippo-delivery-labels.s3.amazonaws.com/mock_label_firstclass.pdf",
+    shipping_cost: 5.99,
+    insurance_amount: 0.00,
+    status: "delivered", // Pendiente de label, label generado, empacado, entregado al carrier, en tránsito, entregado, problema, devuelto
+    created_at: "2026-06-12T10:05:00Z",
+    updated_at: "2026-06-15T18:30:00Z"
+  },
+  {
+    id: "shp_2",
+    order_id: "ord_2",
+    seller_id: "usr_seller_2",
+    buyer_id: "usr_buyer_1",
+    shippo_shipment_id: "sh_mock_1112223334",
+    shippo_transaction_id: "tx_mock_1112223334",
+    carrier: "FedEx",
+    service_level: "Económico (Home Delivery)",
+    tracking_number: "FEDEX555444332",
+    tracking_url: "https://goshippo.com/tracking",
+    label_url: "https://shippo-delivery-labels.s3.amazonaws.com/mock_label_fedex.pdf",
+    shipping_cost: 12.80,
+    insurance_amount: 0.00,
+    status: "entregado_al_carrier",
+    created_at: "2026-06-18T14:35:00Z",
+    updated_at: "2026-06-19T09:00:00Z"
+  }
+];
+
+const INITIAL_PACKAGE_EVIDENCE = [
+  {
+    id: "ev_1",
+    shipment_id: "shp_1",
+    seller_id: "usr_seller_1",
+    image_url: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=300&auto=format&fit=crop&q=80",
+    created_at: "2026-06-12T11:00:00Z"
+  }
 ];
 
 // Expose these as global objects for our scripts when loaded
@@ -398,3 +584,6 @@ window.INITIAL_TRANSACTIONS = INITIAL_TRANSACTIONS;
 window.INITIAL_SELLER_SUBSCRIPTIONS = INITIAL_SELLER_SUBSCRIPTIONS;
 window.INITIAL_BANNERS = INITIAL_BANNERS;
 window.INITIAL_COUPONS = INITIAL_COUPONS;
+window.INITIAL_SHIPPING_ADDRESSES = INITIAL_SHIPPING_ADDRESSES;
+window.INITIAL_SHIPMENTS = INITIAL_SHIPMENTS;
+window.INITIAL_PACKAGE_EVIDENCE = INITIAL_PACKAGE_EVIDENCE;

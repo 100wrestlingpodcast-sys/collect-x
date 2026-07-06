@@ -12,6 +12,7 @@ function renderAdminDashboard() {
   const reviews = db.get('reviews');
   const banners = db.get('banners');
   const coupons = db.get('coupons');
+  const shipments = db.get('shipments');
 
   // Sub-section tab state
   if (!window.activeAdminTab) window.activeAdminTab = 'overview';
@@ -42,8 +43,12 @@ function renderAdminDashboard() {
             <i data-lucide="user-check" style="width:1.05rem;height:1.05rem;"></i>
             Aprobaciones (${pendingProducts.length + pendingSellers.length})
           </a>
-          <a class="db-menu-item ${window.activeAdminTab === 'products' ? 'active' : ''}" onclick="setAdminTab('products')">
+          <a class="db-menu-item ${window.activeAdminTab === 'shipping' ? 'active' : ''}" onclick="setAdminTab('shipping')">
             <i data-lucide="package" style="width:1.05rem;height:1.05rem;"></i>
+            Gestión de Envíos (${shipments.length})
+          </a>
+          <a class="db-menu-item ${window.activeAdminTab === 'products' ? 'active' : ''}" onclick="setAdminTab('products')">
+            <i data-lucide="tag" style="width:1.05rem;height:1.05rem;"></i>
             Catálogo / Inventario
           </a>
           <a class="db-menu-item ${window.activeAdminTab === 'transactions' ? 'active' : ''}" onclick="setAdminTab('transactions')">
@@ -69,7 +74,7 @@ function renderAdminDashboard() {
   `;
 
   renderAdminSubTab(window.activeAdminTab, {
-    users, products, profiles, orders, transactions, reviews, banners, coupons,
+    users, products, profiles, orders, transactions, reviews, banners, coupons, shipments,
     totalSalesGross, totalCommissions, pendingOrders, pendingProducts, pendingSellers
   });
 
@@ -118,23 +123,27 @@ function renderAdminSubTab(tab, data) {
         <div class="chart-bars-wrapper">
           <div class="chart-bar-col">
             <div class="chart-bar-value" style="height: 40px;" data-val="$450.00"></div>
-            <div class="chart-bar-label">Marzo</div>
+            <div class="chart-bar-label">Ene</div>
           </div>
           <div class="chart-bar-col">
             <div class="chart-bar-value" style="height: 60px;" data-val="$680.00"></div>
-            <div class="chart-bar-label">Abril</div>
+            <div class="chart-bar-label">Feb</div>
           </div>
           <div class="chart-bar-col">
-            <div class="chart-bar-value" style="height: 85px;" data-val="$950.00"></div>
-            <div class="chart-bar-label">Mayo</div>
+            <div class="chart-bar-value" style="height: 90px;" data-val="$1,020.00"></div>
+            <div class="chart-bar-label">Mar</div>
           </div>
           <div class="chart-bar-col">
-            <div class="chart-bar-value" style="height: 110px;" data-val="$1,250.00"></div>
-            <div class="chart-bar-label">Junio</div>
+            <div class="chart-bar-value" style="height: 120px;" data-val="$1,450.00"></div>
+            <div class="chart-bar-label">Abr</div>
           </div>
           <div class="chart-bar-col">
-            <div class="chart-bar-value" style="height: 130px;" data-val="$1,580.00"></div>
-            <div class="chart-bar-label">Julio (Actual)</div>
+            <div class="chart-bar-value" style="height: 160px;" data-val="$2,100.00"></div>
+            <div class="chart-bar-label">May</div>
+          </div>
+          <div class="chart-bar-col">
+            <div class="chart-bar-value" style="height: 200px;" data-val="$2,850.00"></div>
+            <div class="chart-bar-label">Jun</div>
           </div>
         </div>
       </div>
@@ -143,85 +152,188 @@ function renderAdminSubTab(tab, data) {
   
   else if (tab === 'approvals') {
     container.innerHTML = `
-      <!-- Product Approvals -->
-      <div class="db-table-card" style="margin-bottom:2rem;">
-        <div class="db-table-header">
-          <h3 style="display:flex;align-items:center;gap:0.5rem;">
-            <i data-lucide="tag" style="color:var(--gold-light);"></i> Figuras Pendientes de Aprobación (${data.pendingProducts.length})
-          </h3>
-        </div>
-        <div class="db-table-wrapper">
-          <table class="db-table">
-            <thead>
-              <tr>
-                <th>Figura</th>
-                <th>Marca / Categoría</th>
-                <th>Condición</th>
-                <th>Precio</th>
-                <th>Vendedor</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.pendingProducts.length === 0 ? `
+      <!-- Pending Sellers Section -->
+      <div style="margin-bottom: 2rem;">
+        <h3>Solicitudes de Nuevos Vendedores (${data.pendingSellers.length})</h3>
+        <div class="db-table-card" style="margin-top:1rem;">
+          <div class="db-table-wrapper">
+            <table class="db-table">
+              <thead>
                 <tr>
-                  <td colspan="6" style="text-align:center; padding:2rem;">No hay productos pendientes de revisión.</td>
+                  <th>Nombre Vendedor</th>
+                  <th>Correo</th>
+                  <th>Tienda Propuesta</th>
+                  <th>Descripción</th>
+                  <th>Fecha Registro</th>
+                  <th>Gestión</th>
                 </tr>
-              ` : data.pendingProducts.map(p => {
-                const sName = data.profiles.find(sp => sp.user_id === p.seller_id)?.store_name || 'Vendedor Externo';
-                return `
+              </thead>
+              <tbody>
+                ${data.pendingSellers.length === 0 ? `
                   <tr>
-                    <td><strong>${p.title}</strong></td>
-                    <td>${p.brand} / ${p.category}</td>
-                    <td>${p.condition}</td>
-                    <td style="font-weight:600; color:var(--text-primary);">$${p.price.toFixed(2)}</td>
-                    <td>${sName}</td>
-                    <td style="display:flex; gap:0.5rem;">
-                      <button class="action-btn-small approve" onclick="approveProduct('${p.id}', true)">Aprobar</button>
-                      <button class="action-btn-small reject" onclick="approveProduct('${p.id}', false)">Rechazar</button>
-                    </td>
+                    <td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">No hay registros de vendedores pendientes.</td>
                   </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
+                ` : data.pendingSellers.map(sel => {
+                  const u = data.users.find(usr => usr.id === sel.user_id);
+                  return `
+                    <tr>
+                      <td><strong>${u ? u.name : 'Vendedor'}</strong></td>
+                      <td>${u ? u.email : ''}</td>
+                      <td>${sel.store_name}</td>
+                      <td style="max-width:250px; font-size:0.85rem; color:var(--text-secondary);">${sel.description}</td>
+                      <td>${new Date(u.created_at).toLocaleDateString()}</td>
+                      <td style="display:flex; gap:0.5rem;">
+                        <button class="action-btn-small approve" onclick="approveSellerProfile('${sel.user_id}', true)">Aprobar</button>
+                        <button class="action-btn-small reject" onclick="approveSellerProfile('${sel.user_id}', false)">Rechazar</button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <!-- Seller Approvals -->
-      <div class="db-table-card">
-        <div class="db-table-header">
-          <h3 style="display:flex;align-items:center;gap:0.5rem;">
-            <i data-lucide="store" style="color:var(--primary-light);"></i> Solicitudes de Registro de Vendedores (${data.pendingSellers.length})
-          </h3>
+      <!-- Pending Products Catalog Approval -->
+      <div>
+        <h3>Figuras Pendientes de Aprobación en Catálogo (${data.pendingProducts.length})</h3>
+        <div class="db-table-card" style="margin-top:1rem;">
+          <div class="db-table-wrapper">
+            <table class="db-table">
+              <thead>
+                <tr>
+                  <th>Nombre Artículo</th>
+                  <th>Marca / Categoría</th>
+                  <th>Condición</th>
+                  <th>Precio</th>
+                  <th>Vendedor</th>
+                  <th>Gestión</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.pendingProducts.length === 0 ? `
+                  <tr>
+                    <td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">No hay figuras pendientes de aprobación.</td>
+                  </tr>
+                ` : data.pendingProducts.map(p => {
+                  const sName = data.profiles.find(sp => sp.user_id === p.seller_id)?.store_name || 'Vendedor Externo';
+                  return `
+                    <tr>
+                      <td><strong>${p.title}</strong></td>
+                      <td>${p.brand} / ${p.category}</td>
+                      <td>${p.condition}</td>
+                      <td style="font-weight:600; color:var(--text-primary);">$${p.price.toFixed(2)}</td>
+                      <td>${sName}</td>
+                      <td style="display:flex; gap:0.5rem;">
+                        <button class="action-btn-small approve" onclick="approveProduct('${p.id}', true)">Aprobar</button>
+                        <button class="action-btn-small reject" onclick="approveProduct('${p.id}', false)">Rechazar</button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
         </div>
+      </div>
+    `;
+  } 
+
+  else if (tab === 'shipping') {
+    // Global Shippo shipping monitors
+    const evidenceLogs = db.get('package_evidence');
+
+    container.innerHTML = `
+      <div style="margin-bottom:1.5rem;">
+        <h3>Administrador de Envíos Shippo</h3>
+        <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">
+          Supervisa el estado de todas las guías del marketplace, valida la evidencia de empaque y gestiona disputas de payouts Connect.
+        </p>
+      </div>
+
+      <div class="db-table-card">
         <div class="db-table-wrapper">
           <table class="db-table">
             <thead>
               <tr>
-                <th>Vendedor</th>
-                <th>Tienda</th>
-                <th>Plan Suscripción</th>
-                <th>Correo</th>
-                <th>Acciones</th>
+                <th>Código Guía / Orden</th>
+                <th>Vendedor ➡️ Comprador</th>
+                <th>Carrier / Servicio</th>
+                <th>Costo Envío</th>
+                <th>Seguro Adicional</th>
+                <th>Evidencia Empaque</th>
+                <th>Estado Shippo</th>
+                <th>Acciones Control</th>
               </tr>
             </thead>
             <tbody>
-              ${data.pendingSellers.length === 0 ? `
+              ${data.shipments.length === 0 ? `
                 <tr>
-                  <td colspan="5" style="text-align:center; padding:2rem;">No hay solicitudes de vendedores pendientes.</td>
+                  <td colspan="8" style="text-align:center; padding:3rem; color:var(--text-muted); font-style:italic;">No hay envíos registrados en el sistema.</td>
                 </tr>
-              ` : data.pendingSellers.map(s => {
-                const sUser = data.users.find(u => u.id === s.user_id) || {};
+              ` : data.shipments.map(s => {
+                const evidence = evidenceLogs.find(ev => ev.shipment_id === s.id);
+                const sellerName = data.profiles.find(p => p.user_id === s.seller_id)?.store_name || 'Vendedor';
+                const buyerName = data.users.find(u => u.id === s.buyer_id)?.name || 'Comprador';
+
                 return `
                   <tr>
-                    <td><strong>${sUser.name || 'Vendedor'}</strong></td>
-                    <td>${s.store_name}</td>
-                    <td><span class="status-tag approved">${s.subscription_plan}</span></td>
-                    <td>${sUser.email || ''}</td>
-                    <td style="display:flex; gap:0.5rem;">
-                      <button class="action-btn-small approve" onclick="approveSeller('${s.id}', true)">Aprobar</button>
-                      <button class="action-btn-small reject" onclick="approveSeller('${s.id}', false)">Rechazar</button>
+                    <td>
+                      <strong>${s.id}</strong>
+                      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.15rem;">Orden: <code>${s.order_id}</code></div>
+                    </td>
+                    <td>
+                      <span style="font-weight:600;">${sellerName}</span><br>
+                      <i data-lucide="arrow-right" style="width:0.8rem;height:0.8rem;display:inline-block;vertical-align:middle;color:var(--text-muted);"></i>
+                      <span style="font-size:0.85rem; color:var(--text-secondary);">${buyerName}</span>
+                    </td>
+                    <td>
+                      <strong>${s.carrier}</strong>
+                      <div style="font-size:0.75rem; color:var(--text-secondary);">${s.service_level}</div>
+                      <a href="${s.tracking_url}" target="_blank" style="font-size:0.8rem; color:var(--primary-light); text-decoration:underline;">
+                        <code>${s.tracking_number}</code>
+                      </a>
+                    </td>
+                    <td style="font-weight:600; color:var(--text-primary);">$${s.shipping_cost.toFixed(2)}</td>
+                    <td>
+                      ${s.insurance_amount > 0 ? `🛡️ Activo ($${s.insurance_amount.toFixed(2)})` : '❌ Sin seguro'}
+                    </td>
+                    <td>
+                      ${evidence ? `
+                        <div style="display:flex; flex-direction:column; align-items:center; gap:0.25rem;">
+                          <img src="${evidence.image_url}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid var(--border-metallic-yellow);" onclick="viewEvidencePhoto('${evidence.image_url}')">
+                          <span style="font-size:0.6rem; color:#10b981; font-weight:700;">OK</span>
+                        </div>
+                      ` : '<span style="color:#ef4444; font-size:0.75rem; font-weight:700;">⚠️ SIN FOTO</span>'}
+                    </td>
+                    <td>
+                      <span class="status-tag ${s.status === 'delivered' ? 'approved' : s.status === 'label_generado' ? 'pending' : 'disputed'}" style="font-size:0.7rem; text-transform:uppercase;">
+                        ${s.status.replace(/_/g, ' ')}
+                      </span>
+                    </td>
+                    <td style="display:flex; flex-direction:column; gap:0.4rem;">
+                      ${s.status !== 'delivered' && s.status !== 'problema' ? `
+                        <button class="action-btn-small reject" style="font-size:0.7rem; padding:0.25rem 0.5rem;" onclick="adminTriggerDisputedShipping('${s.id}')">
+                          🚨 Marcar Disputa
+                        </button>
+                      ` : ''}
+
+                      ${s.status === 'problema' ? `
+                        <button class="action-btn-small approve" style="font-size:0.7rem; padding:0.25rem 0.5rem; background:#10b981; border-color:#10b981;" onclick="adminResolveDisputedShipping('${s.id}')">
+                          🔓 Liberar Custodia
+                        </button>
+                      ` : ''}
+
+                      ${s.status !== 'devuelto' && s.status !== 'delivered' ? `
+                        <button class="action-btn-small suspend" style="font-size:0.7rem; padding:0.25rem 0.5rem;" onclick="adminTriggerReturnedShipping('${s.id}')">
+                          🔄 Registrar Devolución
+                        </button>
+                      ` : ''}
+
+                      <div style="font-size:0.6rem; color:var(--text-muted); text-align:center;">
+                        ${s.status === 'delivered' ? 'Fondos Liquidados' : 'Payout Retenido en Stripe'}
+                      </div>
                     </td>
                   </tr>
                 `;
@@ -231,14 +343,14 @@ function renderAdminSubTab(tab, data) {
         </div>
       </div>
     `;
-  } 
+  }
   
   else if (tab === 'products') {
     container.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3>Administración de Catálogo Completo</h3>
-        <button class="btn-large primary-btn" style="width:auto; padding:0.5rem 1rem;" onclick="openAdminAddProductModal()">
-          <i data-lucide="plus"></i> Crear Producto Oficial (Tienda)
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+        <h3>Catálogo de Productos del Marketplace (${data.products.length})</h3>
+        <button class="btn-large primary-btn" style="width:auto; padding: 0.5rem 1rem;" onclick="openAdminAddProductModal()">
+          + Publicar Oficial
         </button>
       </div>
 
@@ -247,11 +359,11 @@ function renderAdminSubTab(tab, data) {
           <table class="db-table">
             <thead>
               <tr>
-                <th>Producto</th>
-                <th>Vendedor</th>
+                <th>Artículo</th>
+                <th>Tienda / Seller</th>
                 <th>Precio</th>
                 <th>Stock</th>
-                <th>Canal</th>
+                <th>Tipo Inventario</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -339,227 +451,258 @@ function renderAdminSubTab(tab, data) {
   
   else if (tab === 'reviews') {
     container.innerHTML = `
-      <h3>Moderar Reseñas del Portal</h3>
-      <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1rem;">Oculta reviews que contengan lenguaje ofensivo, spam o fotos no relacionadas con el producto.</p>
+      <h3>Moderar Reseñas de Compradores</h3>
       
-      <div class="reviews-list">
+      <div class="reviews-list" style="margin-top:1.5rem;">
         ${data.reviews.map(r => {
-          const prodTitle = data.products.find(p => p.id === r.product_id)?.title || 'Figura';
-          const isApproved = r.status === 'approved';
+          const item = data.products.find(p => p.id === r.product_id);
+          const buyer = data.users.find(u => u.id === r.buyer_id);
           
           return `
-            <div class="review-item" style="background:var(--bg-card); padding:1.25rem; border-radius:10px; border:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
-              <div>
-                <div style="margin-bottom:0.4rem;">
-                  <strong>Review para:</strong> <span style="color:var(--gold-light);">${prodTitle}</span>
-                </div>
-                <div style="color:var(--gold-light); margin-bottom:0.5rem;">
-                  ${drawStarRatingHtml(r.rating)}
-                </div>
-                <p style="font-size:0.95rem; color:var(--text-primary);">"${r.comment}"</p>
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem;">
-                  Estado actual: <span class="status-tag ${r.status}">${r.status}</span>
-                </div>
+            <div class="review-item" style="background:var(--bg-card); padding:1rem; border-radius:8px; border:1px solid var(--border-color); margin-bottom:1rem;">
+              <div class="review-header">
+                <span style="font-weight:600; color:var(--text-primary);">Reseña de: ${buyer ? buyer.name : 'Usuario'}</span>
+                <span class="status-tag ${r.status === 'approved' ? 'approved' : 'rejected'}">${r.status === 'approved' ? 'Activa' : 'Oculta'}</span>
               </div>
-              <div>
-                ${isApproved ? `
-                  <button class="action-btn-small reject" onclick="toggleReviewStatus('${r.id}', false)">Ocultar Review</button>
-                ` : `
-                  <button class="action-btn-small approve" onclick="toggleReviewStatus('${r.id}', true)">Mostrar Review</button>
-                `}
+              <div style="font-size:0.85rem; color:var(--text-muted); margin: 0.2rem 0;">
+                Artículo: <strong>${item ? item.title : 'Figura'}</strong>
+              </div>
+              <div style="color:var(--gold-light); margin-bottom:0.5rem;">
+                ${drawStarRatingHtml(r.rating)}
+              </div>
+              <p style="color:var(--text-primary); font-size:0.9rem;">"${r.comment}"</p>
+              
+              <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem; border-top:1px solid var(--border-color); padding-top:0.75rem;">
+                <button class="action-btn-small approve" onclick="moderateReviewAdmin('${r.id}', 'approved')">Habilitar</button>
+                <button class="action-btn-small reject" onclick="moderateReviewAdmin('${r.id}', 'rejected')">Ocultar / Censurar</button>
               </div>
             </div>
           `;
         }).join('')}
       </div>
     `;
-  } 
-  
+  }
+
   else if (tab === 'marketing') {
     container.innerHTML = `
-      <!-- Coupons Section -->
-      <div class="db-table-card" style="margin-bottom:2rem;">
-        <div class="db-table-header" style="display:flex; justify-content:space-between; align-items:center;">
+      <!-- Coupons Design -->
+      <div style="margin-bottom: 2rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
           <h3>Cupones de Descuento Activos</h3>
-          <button class="btn-large primary-btn" style="width:auto; padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="openAddCouponModal()">+ Crear Cupón</button>
+          <button class="btn-large primary-btn" style="width:auto; padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="openAddCouponModal()">
+            Crear Cupón
+          </button>
         </div>
-        <div class="db-table-wrapper">
-          <table class="db-table">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Tipo Descuento</th>
-                <th>Valor</th>
-                <th>Compra Mínima</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.coupons.map(c => `
+
+        <div class="db-table-card">
+          <div class="db-table-wrapper">
+            <table class="db-table">
+              <thead>
                 <tr>
-                  <td><strong style="color:var(--gold-light); letter-spacing:0.05em;">${c.code}</strong></td>
-                  <td>${c.discount_type === 'percentage' ? 'Porcentaje (%)' : 'Fijo ($USD)'}</td>
-                  <td>${c.discount_type === 'percentage' ? `${c.value}%` : `$${c.value.toFixed(2)}`}</td>
-                  <td>$${c.min_purchase.toFixed(2)}</td>
-                  <td><span class="status-tag ${c.active ? 'approved' : 'rejected'}">${c.active ? 'Activo' : 'Inactivo'}</span></td>
-                  <td>
-                    <button class="action-btn-small reject" onclick="toggleCouponStatus('${c.code}')">
-                      ${c.active ? 'Desactivar' : 'Activar'}
-                    </button>
-                  </td>
+                  <th>Código</th>
+                  <th>Tipo Descuento</th>
+                  <th>Valor</th>
+                  <th>Compra Mínima</th>
+                  <th>Estado</th>
+                  <th>Acción</th>
                 </tr>
-              `).join('')}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                ${data.coupons.map(c => `
+                  <tr>
+                    <td><code>${c.code}</code></td>
+                    <td>${c.discount_type === 'percentage' ? 'Porcentual' : 'Fijo (Monto)'}</td>
+                    <td>${c.discount_type === 'percentage' ? `${c.value}%` : `$${c.value}`}</td>
+                    <td>$${c.min_purchase.toFixed(2)}</td>
+                    <td>
+                      <span class="status-tag ${c.active ? 'approved' : 'rejected'}">
+                        ${c.active ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+                    <td>
+                      <button class="action-btn-small reject" onclick="toggleCouponStatus('${c.code}', ${c.active})">
+                        ${c.active ? 'Desactivar' : 'Activar'}
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <!-- Banners Section -->
-      <div class="db-table-card">
-        <div class="db-table-header" style="display:flex; justify-content:space-between; align-items:center;">
-          <h3>Banners Promocionales Home</h3>
-          <button class="btn-large primary-btn" style="width:auto; padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="openAddBannerModal()">+ Crear Banner</button>
-        </div>
-        <div class="db-table-wrapper">
-          <table class="db-table">
-            <thead>
-              <tr>
-                <th>Título Promoción</th>
-                <th>Subtítulo</th>
-                <th>Link Destino</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.banners.map(b => `
-                <tr>
-                  <td><strong>${b.title}</strong></td>
-                  <td>${b.subtitle}</td>
-                  <td><code>${b.link}</code></td>
-                  <td><span class="status-tag ${b.active ? 'approved' : 'rejected'}">${b.active ? 'Activo' : 'Oculto'}</span></td>
-                  <td>
-                    <button class="action-btn-small reject" onclick="toggleBannerStatus('${b.id}')">
-                      ${b.active ? 'Ocultar' : 'Mostrar'}
-                    </button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+      <!-- Banners design -->
+      <div>
+        <h3>Diseño de Banners del Home</h3>
+        <div class="banners-management-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-top:1rem;">
+          ${data.banners.map(b => `
+            <div style="border:1px solid var(--border-color); border-radius:8px; overflow:hidden; background:var(--bg-card);">
+              <img src="${b.image}" style="width:100%; height:120px; object-fit:cover;">
+              <div style="padding:1rem;">
+                <h4 style="margin-bottom:0.25rem;">${b.title}</h4>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.75rem;">${b.subtitle}</p>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span class="status-tag ${b.active ? 'approved' : 'rejected'}">${b.active ? 'Activo' : 'Pausado'}</span>
+                  <button class="action-btn-small suspend" onclick="toggleBannerActive('${b.id}', ${b.active})">
+                    ${b.active ? 'Pausar' : 'Activar'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
         </div>
       </div>
     `;
   }
 }
 
-// --- Admin Actions Controllers ---
-function approveProduct(prodId, isApprove) {
-  const products = db.get('products');
-  const index = products.findIndex(p => p.id === prodId);
+// Admin Shipping Operations
+function adminTriggerDisputedShipping(shipmentId) {
+  shippoAPI.updateShipmentStatus(shipmentId, "problema");
+  alert("🚨 Se ha registrado una Disputa sobre este envío. El Payout correspondiente quedará bloqueado en Stripe Connect.");
+  renderAdminDashboard();
+}
+
+function adminResolveDisputedShipping(shipmentId) {
+  shippoAPI.updateShipmentStatus(shipmentId, "delivered");
+  alert("🔓 Disputa resuelta. Se ha liberado la retención de los fondos. El vendedor recibirá su payout.");
+  renderAdminDashboard();
+}
+
+function adminTriggerReturnedShipping(shipmentId) {
+  shippoAPI.updateShipmentStatus(shipmentId, "devuelto");
+  alert("🔄 Se ha registrado la devolución del paquete al vendedor. La orden se considerará reembolsada.");
+  renderAdminDashboard();
+}
+
+function viewEvidencePhoto(imgUrl) {
+  const bodyHtml = `
+    <div style="text-align:center;">
+      <img src="${imgUrl}" style="max-width:100%; max-height:400px; border-radius:8px; border:2px solid var(--border-metallic-yellow); object-fit:contain;">
+      <button class="btn-large secondary-btn" style="margin-top:1.5rem; width:auto; padding: 0.5rem 1rem;" onclick="toggleGlobalModal(false)">Cerrar</button>
+    </div>
+  `;
+  toggleGlobalModal(true, "Evidencia de Empaque del Paquete", bodyHtml);
+}
+
+// Moderations callbacks
+function approveSellerProfile(userId, isApproved) {
+  const profiles = db.get('seller_profiles');
+  const index = profiles.findIndex(p => p.user_id === userId);
+  
   if (index > -1) {
-    products[index].status = isApprove ? 'approved' : 'rejected';
-    db.set('products', products);
-    alert(`Producto ${isApprove ? 'Aprobado' : 'Rechazado'} con éxito.`);
+    if (isApproved) {
+      profiles[index].approved = true;
+      profiles[index].stripe_connect_id = `acct_1N_${userId}`;
+      alert("¡Cuenta de Vendedor aprobada exitosamente y cuenta de Stripe Connect vinculada!");
+    } else {
+      profiles.splice(index, 1);
+      alert("Solicitud de vendedor rechazada y perfil eliminado.");
+    }
+    db.set('seller_profiles', profiles);
     renderAdminDashboard();
   }
 }
 
-function approveSeller(sellerId, isApprove) {
-  const profiles = db.get('seller_profiles');
-  const index = profiles.findIndex(p => p.id === sellerId);
+function approveProduct(prodId, isApproved) {
+  const products = db.get('products');
+  const index = products.findIndex(p => p.id === prodId);
+  
   if (index > -1) {
-    profiles[index].approved = isApprove;
-    if (isApprove) {
-      profiles[index].stripe_connect_id = "acct_Connect_" + Math.random().toString(36).substr(2, 9);
+    if (isApproved) {
+      products[index].status = "approved";
+      alert("¡Producto aprobado y publicado en la tienda!");
+    } else {
+      products[index].status = "rejected";
+      alert("Producto rechazado.");
     }
-    db.set('seller_profiles', profiles);
-    alert(`Vendedor ${isApprove ? 'Aprobado y Cuenta Stripe Connect Asignada' : 'Rechazado'} con éxito.`);
+    db.set('products', products);
     renderAdminDashboard();
   }
 }
 
 function removeProductAdmin(prodId) {
-  if (confirm("¿Estás seguro de eliminar este producto del marketplace?")) {
-    let products = db.get('products');
-    products = products.filter(p => p.id !== prodId);
+  if (confirm("¿Estás seguro de eliminar este producto del marketplace permanentemente?")) {
+    const products = db.get('products').filter(p => p.id !== prodId);
     db.set('products', products);
-    alert("Producto eliminado.");
+    alert("Producto eliminado exitosamente.");
     renderAdminDashboard();
   }
 }
 
-function toggleReviewStatus(reviewId, show) {
+function moderateReviewAdmin(reviewId, status) {
   const reviews = db.get('reviews');
   const index = reviews.findIndex(r => r.id === reviewId);
   if (index > -1) {
-    reviews[index].status = show ? 'approved' : 'hidden';
+    reviews[index].status = status;
     db.set('reviews', reviews);
-    alert(`Review ${show ? 'mostrada' : 'ocultada'} con éxito.`);
+    alert(`Estado de la reseña cambiado a: ${status === 'approved' ? 'Habilitada' : 'Oculta'}`);
     renderAdminDashboard();
   }
 }
 
-function toggleCouponStatus(code) {
+// Marketing callbacks
+function toggleCouponStatus(code, currentStatus) {
   const coupons = db.get('coupons');
   const index = coupons.findIndex(c => c.code === code);
   if (index > -1) {
-    coupons[index].active = !coupons[index].active;
+    coupons[index].active = !currentStatus;
     db.set('coupons', coupons);
+    alert(`Cupón ${code} ha sido ${!currentStatus ? 'activado' : 'desactivado'}.`);
     renderAdminDashboard();
   }
 }
 
-function toggleBannerStatus(id) {
+function toggleBannerActive(id, currentStatus) {
   const banners = db.get('banners');
   const index = banners.findIndex(b => b.id === id);
   if (index > -1) {
-    banners[index].active = !banners[index].active;
+    banners[index].active = !currentStatus;
     db.set('banners', banners);
+    alert(`El banner ha sido ${!currentStatus ? 'activado' : 'pausado'}.`);
     renderAdminDashboard();
   }
 }
 
-// --- Create Coupons and Banners Forms ---
 function openAddCouponModal() {
-  const html = `
+  const bodyHtml = `
     <div style="display:flex; flex-direction:column; gap:1rem;">
       <div class="checkout-input-wrapper">
-        <label>Código del Cupón</label>
-        <input type="text" id="add-coupon-code" placeholder="Ej: VERANO20" style="text-transform:uppercase;">
+        <label>Código de Cupón</label>
+        <input type="text" id="frm-coupon-code" placeholder="EJ: ANIME20" style="text-transform:uppercase;">
       </div>
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
           <label>Tipo Descuento</label>
-          <select id="add-coupon-type">
+          <select id="frm-coupon-type">
             <option value="percentage">Porcentaje (%)</option>
-            <option value="fixed">Fijo ($USD)</option>
+            <option value="fixed">Monto Fijo ($USD)</option>
           </select>
         </div>
         <div class="checkout-input-wrapper">
           <label>Valor</label>
-          <input type="number" id="add-coupon-val" placeholder="20">
+          <input type="number" id="frm-coupon-val" placeholder="10">
         </div>
       </div>
       <div class="checkout-input-wrapper">
-        <label>Compra Mínima Requerida ($USD)</label>
-        <input type="number" id="add-coupon-min" value="30.00">
+        <label>Compra Mínima ($USD)</label>
+        <input type="number" id="frm-coupon-min" value="30">
       </div>
-      <button class="btn-large primary-btn" onclick="submitAddCoupon()">Crear Cupón</button>
+      <button class="btn-large primary-btn" onclick="submitCreateCoupon()">Crear Cupón</button>
     </div>
   `;
-  toggleGlobalModal(true, "Crear Cupón de Descuento", html);
+  toggleGlobalModal(true, "Crear Nuevo Cupón de Descuento", bodyHtml);
 }
 
-function submitAddCoupon() {
-  const code = document.getElementById('add-coupon-code').value.trim().toUpperCase();
-  const type = document.getElementById('add-coupon-type').value;
-  const val = parseFloat(document.getElementById('add-coupon-val').value) || 0;
-  const min = parseFloat(document.getElementById('add-coupon-min').value) || 0;
+function submitCreateCoupon() {
+  const code = document.getElementById('frm-coupon-code').value.trim().toUpperCase();
+  const type = document.getElementById('frm-coupon-type').value;
+  const val = parseFloat(document.getElementById('frm-coupon-val').value) || 0;
+  const min = parseFloat(document.getElementById('frm-coupon-min').value) || 0;
 
-  if (!code || !val) {
-    alert("Ingresa un código de cupón y su valor de descuento.");
+  if (!code || val <= 0) {
+    alert("Por favor completa los datos del cupón.");
     return;
   }
 
@@ -574,65 +717,10 @@ function submitAddCoupon() {
   db.set('coupons', coupons);
 
   toggleGlobalModal(false);
-  alert(`¡Cupón ${code} creado correctamente!`);
+  alert(`¡Cupón ${code} creado exitosamente!`);
   renderAdminDashboard();
 }
 
-function openAddBannerModal() {
-  const html = `
-    <div style="display:flex; flex-direction:column; gap:1rem;">
-      <div class="checkout-input-wrapper">
-        <label>Título del Banner</label>
-        <input type="text" id="add-banner-title" placeholder="Descuentos Retro">
-      </div>
-      <div class="checkout-input-wrapper">
-        <label>Subtítulo / Mensaje</label>
-        <input type="text" id="add-banner-subtitle" placeholder="Obtén 10% en figuras vintage esta semana">
-      </div>
-      <div class="checkout-form-group">
-        <div class="checkout-input-wrapper">
-          <label>Link Destino (Ej: #category/Anime)</label>
-          <input type="text" id="add-banner-link" placeholder="#category/Anime">
-        </div>
-        <div class="checkout-input-wrapper">
-          <label>Imagen del Banner (URL)</label>
-          <input type="text" id="add-banner-img" placeholder="https://images.unsplash.com/...">
-        </div>
-      </div>
-      <button class="btn-large primary-btn" onclick="submitAddBanner()">Crear Banner</button>
-    </div>
-  `;
-  toggleGlobalModal(true, "Crear Banner Publicitario", html);
-}
-
-function submitAddBanner() {
-  const title = document.getElementById('add-banner-title').value.trim();
-  const sub = document.getElementById('add-banner-subtitle').value.trim();
-  const link = document.getElementById('add-banner-link').value.trim() || '#';
-  const img = document.getElementById('add-banner-img').value.trim() || 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=1200&auto=format&fit=crop&q=80';
-
-  if (!title || !sub) {
-    alert("Por favor rellena el título y el subtítulo.");
-    return;
-  }
-
-  const banners = db.get('banners');
-  banners.push({
-    id: "ban_" + Date.now(),
-    title: title,
-    subtitle: sub,
-    image: img,
-    link: link,
-    active: true
-  });
-  db.set('banners', banners);
-
-  toggleGlobalModal(false);
-  alert("¡Banner publicitario creado con éxito!");
-  renderAdminDashboard();
-}
-
-// --- Admin Store Inventory Creators ---
 function openAdminAddProductModal() {
   const categoriesOptions = CATEGORIES.slice(1).map(cat => `<option value="${cat}">${cat}</option>`).join('');
   
@@ -640,22 +728,22 @@ function openAdminAddProductModal() {
     <div style="display:flex; flex-direction:column; gap:1rem;">
       <div class="checkout-input-wrapper">
         <label>Título de la figura (Tienda Oficial)</label>
-        <input type="text" id="admin-prod-title" placeholder="Ej: WWE Undertaker Retro Series">
+        <input type="text" id="adm-prod-title" placeholder="Ej: Iron Man Retro carded">
       </div>
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
           <label>Marca</label>
-          <input type="text" id="admin-prod-brand" placeholder="Hasbro, Mattel, etc.">
+          <input type="text" id="adm-prod-brand" value="Hasbro">
         </div>
         <div class="checkout-input-wrapper">
           <label>Categoría</label>
-          <select id="admin-prod-category">${categoriesOptions}</select>
+          <select id="adm-prod-category">${categoriesOptions}</select>
         </div>
       </div>
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
           <label>Condición</label>
-          <select id="admin-prod-condition">
+          <select id="adm-prod-condition">
             <option value="Sellado">Sellado</option>
             <option value="Nuevo">Nuevo</option>
             <option value="Usado">Usado</option>
@@ -663,69 +751,42 @@ function openAdminAddProductModal() {
         </div>
         <div class="checkout-input-wrapper">
           <label>Cantidad (Stock)</label>
-          <input type="number" id="admin-prod-stock" value="5">
+          <input type="number" id="adm-prod-stock" value="5">
         </div>
       </div>
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
           <label>Precio ($USD)</label>
-          <input type="number" id="admin-prod-price" placeholder="59.99">
+          <input type="number" id="adm-prod-price" placeholder="29.99">
         </div>
         <div class="checkout-input-wrapper">
           <label>Imagen (URL)</label>
-          <input type="text" id="admin-prod-img" placeholder="https://images.unsplash.com/...">
+          <input type="text" id="adm-prod-img" placeholder="https://images.unsplash.com/photo-...">
         </div>
       </div>
-      
-      <!-- eBay Referral settings -->
-      <div class="checkout-form-group">
-        <div class="checkout-input-wrapper">
-          <label>¿Es venta externa en eBay?</label>
-          <select id="admin-prod-isebay" onchange="toggleAdminEbayInput(this.value)">
-            <option value="false">No (Venta interna local)</option>
-            <option value="true">Sí (Redirigir a eBay)</option>
-          </select>
-        </div>
-        <div class="checkout-input-wrapper" id="admin-ebay-url-wrapper" style="display:none;">
-          <label>eBay URL de Compra</label>
-          <input type="text" id="admin-prod-ebayurl" placeholder="https://www.ebay.com/itm/...">
-        </div>
-      </div>
-      
       <div class="checkout-input-wrapper">
         <label>Descripción detallada</label>
-        <textarea class="form-textarea" id="admin-prod-desc" placeholder="Descripción física..."></textarea>
+        <textarea class="form-textarea" id="adm-prod-desc" placeholder="Descripción..."></textarea>
       </div>
-      <button class="btn-large primary-btn" onclick="submitAdminAddProduct()">Publicar al Instante</button>
+      <button class="btn-large primary-btn" onclick="submitAdminAddProduct()">Publicar en Catálogo Oficial</button>
     </div>
   `;
   
-  toggleGlobalModal(true, "Agregar Producto Oficial al Catálogo", formHtml);
-}
-
-function toggleAdminEbayInput(val) {
-  const el = document.getElementById('admin-ebay-url-wrapper');
-  el.style.display = val === 'true' ? 'block' : 'none';
+  toggleGlobalModal(true, "Publicar Producto Oficial (Admin Shop)", formHtml);
 }
 
 function submitAdminAddProduct() {
-  const title = document.getElementById('admin-prod-title').value.trim();
-  const brand = document.getElementById('admin-prod-brand').value.trim();
-  const category = document.getElementById('admin-prod-category').value;
-  const condition = document.getElementById('admin-prod-condition').value;
-  const stock = parseInt(document.getElementById('admin-prod-stock').value) || 0;
-  const price = parseFloat(document.getElementById('admin-prod-price').value) || 0.00;
-  const imgUrl = document.getElementById('admin-prod-img').value.trim() || 'https://images.unsplash.com/photo-1608889174649-414430997ee6?w=600&auto=format&fit=crop&q=80';
-  const isEbay = document.getElementById('admin-prod-isebay').value === 'true';
-  const ebayUrl = document.getElementById('admin-prod-ebayurl').value.trim();
-  const desc = document.getElementById('admin-prod-desc').value.trim();
+  const title = document.getElementById('adm-prod-title').value.trim();
+  const brand = document.getElementById('adm-prod-brand').value.trim();
+  const category = document.getElementById('adm-prod-category').value;
+  const condition = document.getElementById('adm-prod-condition').value;
+  const stock = parseInt(document.getElementById('adm-prod-stock').value) || 0;
+  const price = parseFloat(document.getElementById('adm-prod-price').value) || 0.00;
+  const imgUrl = document.getElementById('adm-prod-img').value.trim() || 'https://images.unsplash.com/photo-1608889174649-414430997ee6?w=600&auto=format&fit=crop&q=80';
+  const desc = document.getElementById('adm-prod-desc').value.trim();
 
   if (!title || !brand || !price || !desc) {
-    alert("Por favor rellena los campos principales.");
-    return;
-  }
-  if (isEbay && !ebayUrl) {
-    alert("Debes proporcionar el enlace de eBay si activas la venta externa.");
+    alert("Por favor completa los campos principales.");
     return;
   }
 
@@ -735,7 +796,7 @@ function submitAdminAddProduct() {
   const newProdId = "prod_" + Date.now();
   const newProd = {
     id: newProdId,
-    seller_id: "usr_admin_1", // Published under admin store directly
+    seller_id: "usr_admin_1", // Admin shop
     title: title,
     description: desc,
     brand: brand,
@@ -743,9 +804,9 @@ function submitAdminAddProduct() {
     condition: condition,
     price: price,
     stock: stock,
-    status: "approved", // Admin items are automatically approved!
-    ebay_url: isEbay ? ebayUrl : "",
-    is_external_ebay: isEbay,
+    status: "approved", // Pre-approved since it is created by admin
+    ebay_url: "",
+    is_external_ebay: false,
     created_at: new Date().toISOString()
   };
 

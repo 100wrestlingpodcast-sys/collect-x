@@ -3,7 +3,10 @@
 // --- Persistent Database Simulator using LocalStorage ---
 const db = {
   init() {
-    if (!localStorage.getItem('cm_initialized')) {
+    if (!localStorage.getItem('cm_initialized_v2')) {
+      // Clean old keys if exist
+      localStorage.clear();
+      
       localStorage.setItem('cm_users', JSON.stringify(window.INITIAL_USERS));
       localStorage.setItem('cm_seller_profiles', JSON.stringify(window.INITIAL_SELLER_PROFILES));
       localStorage.setItem('cm_products', JSON.stringify(window.INITIAL_PRODUCTS));
@@ -17,12 +20,17 @@ const db = {
       localStorage.setItem('cm_banners', JSON.stringify(window.INITIAL_BANNERS));
       localStorage.setItem('cm_coupons', JSON.stringify(window.INITIAL_COUPONS));
       
+      // New Shippo tables
+      localStorage.setItem('cm_shipping_addresses', JSON.stringify(window.INITIAL_SHIPPING_ADDRESSES));
+      localStorage.setItem('cm_shipments', JSON.stringify(window.INITIAL_SHIPMENTS));
+      localStorage.setItem('cm_package_evidence', JSON.stringify(window.INITIAL_PACKAGE_EVIDENCE));
+      
       // Default session
       localStorage.setItem('cm_current_user_id', 'usr_buyer_1'); // Carlos default
       localStorage.setItem('cm_cart', JSON.stringify([]));
       localStorage.setItem('cm_favorites', JSON.stringify([]));
       
-      localStorage.setItem('cm_initialized', 'true');
+      localStorage.setItem('cm_initialized_v2', 'true');
     }
   },
   
@@ -40,6 +48,198 @@ const db = {
   
   setCurrentUserId(id) {
     localStorage.setItem('cm_current_user_id', id);
+  }
+};
+
+// --- Secure Shippo API Simulator (Backend Endpoint Simulation) ---
+const shippoAPI = {
+  verifyAddress(address) {
+    // Basic verification simulation
+    if (!address.zip || address.zip.length < 5) {
+      return { isValid: false, error: "Código postal inválido." };
+    }
+    if (!address.street || address.street.length < 5) {
+      return { isValid: false, error: "Dirección de calle incompleta." };
+    }
+    return { isValid: true, error: null };
+  },
+
+  calculateRates(parcel, fromAddress, toAddress) {
+    // Simulating call to Shippo API to fetch carrier rates
+    // Apply rules for collectibles
+    const declaredValue = parcel.declared_value || 0;
+    const isFragile = parcel.fragile || false;
+    const isCollectibleSpecial = parcel.category === "Autografiados" || parcel.category === "Ediciones limitadas";
+
+    // Auto-calculate insurance fee if required or worth > $100
+    let insuranceFee = 0.00;
+    let insuranceSuggested = false;
+
+    if (declaredValue >= 100.00 || isCollectibleSpecial) {
+      insuranceSuggested = true;
+      // Mock Shippo Insurance calculation: 1% of declared value, minimum $2.50
+      insuranceFee = Math.max(2.50, declaredValue * 0.01);
+    }
+
+    // Dynamic base shipping multipliers based on weight (oz) and distance (mocked by ZIP differences)
+    const weightInOunces = parcel.weight || 8;
+    const weightFactor = Math.ceil(weightInOunces / 16) * 1.5; // Scale rate per pound
+    
+    const baseRates = [
+      {
+        id: "rate_usps_ground",
+        carrier: "USPS",
+        service: "Ground Advantage",
+        cost: 4.50 + weightFactor,
+        days: 4,
+        tier: "Económico"
+      },
+      {
+        id: "rate_usps_priority",
+        carrier: "USPS",
+        service: "Priority Mail",
+        cost: 7.99 + weightFactor,
+        days: 2,
+        tier: "Estándar"
+      },
+      {
+        id: "rate_fedex_home",
+        carrier: "FedEx",
+        service: "Home Delivery",
+        cost: 10.50 + weightFactor,
+        days: 3,
+        tier: "Estándar"
+      },
+      {
+        id: "rate_dhl_express",
+        carrier: "DHL",
+        service: "Express Worldwide",
+        cost: 32.00 + weightFactor,
+        days: 1,
+        tier: "Rápido"
+      }
+    ];
+
+    // Filter or adjust recommendations based on fragility
+    const rates = baseRates.map(r => {
+      let finalCost = r.cost;
+      let notes = "";
+
+      // Fragile items get protective packaging surcharge
+      if (isFragile) {
+        finalCost += 2.00;
+        notes = "Incluye empaque especial de protección";
+      }
+
+      return {
+        id: r.id,
+        carrier: r.carrier,
+        service: r.service,
+        shipping_cost: parseFloat(finalCost.toFixed(2)),
+        days: r.days,
+        tier: r.tier,
+        insurance_cost: parseFloat(insuranceFee.toFixed(2)),
+        notes: notes
+      };
+    });
+
+    // Recommend fast, secure carrier if fragile or high value
+    let recommendedRateId = "rate_usps_priority";
+    if (declaredValue > 500) recommendedRateId = "rate_dhl_express";
+
+    return {
+      rates: rates,
+      insurance_suggested: insuranceSuggested,
+      insurance_fee: parseFloat(insuranceFee.toFixed(2)),
+      recommended_rate_id: recommendedRateId,
+      fragile_warning: isFragile ? "Advertencia: El artículo es frágil. Se recomienda seleccionar envíos rápidos con seguro activo." : null
+    };
+  },
+
+  createShipmentTransaction(orderId, rateSelected, parcel, fromAddr, toAddr) {
+    // Simulating label creation
+    const carrier = rateSelected.carrier;
+    const trackingPrefix = carrier === "USPS" ? "USPS" : carrier === "FedEx" ? "FDX" : "DHL";
+    const trackingNumber = trackingPrefix + Math.floor(1000000000 + Math.random() * 9000000000);
+    
+    const labelFilename = `label_${carrier.toLowerCase()}_${trackingNumber}.pdf`;
+    const labelUrl = `https://shippo-delivery-labels.s3.amazonaws.com/${labelFilename}`;
+    const trackingUrl = `https://goshippo.com/tracking?carrier=${carrier.toLowerCase()}&tracking_number=${trackingNumber}`;
+
+    const shipments = db.get('shipments');
+    const newShipment = {
+      id: "shp_" + Date.now(),
+      order_id: orderId,
+      seller_id: parcel.seller_id,
+      buyer_id: toAddr.user_id,
+      shippo_shipment_id: "sh_api_" + Math.random().toString(36).substr(2, 9),
+      shippo_transaction_id: "tx_api_" + Math.random().toString(36).substr(2, 9),
+      carrier: carrier,
+      service_level: rateSelected.service,
+      tracking_number: trackingNumber,
+      tracking_url: trackingUrl,
+      label_url: labelUrl,
+      shipping_cost: rateSelected.shipping_cost,
+      insurance_amount: rateSelected.insurance_cost || 0.00,
+      status: "label_generado", // Initial state once paid
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    shipments.push(newShipment);
+    db.set('shipments', shipments);
+
+    // Update order shipping details
+    const orders = db.get('orders');
+    const oIdx = orders.findIndex(o => o.id === orderId);
+    if (oIdx > -1) {
+      orders[oIdx].order_status = "preparing"; // Preparing shipment
+      orders[oIdx].tracking_number = trackingNumber;
+      orders[oIdx].shipping_carrier = carrier;
+      db.set('orders', orders);
+    }
+
+    return newShipment;
+  },
+
+  updateShipmentStatus(shipmentId, newStatus) {
+    const shipments = db.get('shipments');
+    const orders = db.get('orders');
+    const transactions = db.get('transactions');
+    const profiles = db.get('seller_profiles');
+
+    const sIdx = shipments.findIndex(s => s.id === shipmentId);
+    if (sIdx === -1) return;
+
+    const shipment = shipments[sIdx];
+    shipment.status = newStatus;
+    shipment.updated_at = new Date().toISOString();
+    shipments[sIdx] = shipment;
+    db.set('shipments', shipments);
+
+    // Sync order status
+    const oIdx = orders.findIndex(o => o.id === shipment.order_id);
+    if (oIdx > -1) {
+      let mappedOrderStatus = "processing";
+      if (newStatus === "empacado") mappedOrderStatus = "preparing";
+      if (newStatus === "entregado_al_carrier") mappedOrderStatus = "preparing";
+      if (newStatus === "en_transito") mappedOrderStatus = "shipped";
+      if (newStatus === "entregado") mappedOrderStatus = "delivered";
+      if (newStatus === "problema") mappedOrderStatus = "disputed";
+      if (newStatus === "devuelto") mappedOrderStatus = "refunded";
+
+      orders[oIdx].order_status = mappedOrderStatus;
+      db.set('orders', orders);
+
+      // Payout Release Lock: If status is 'delivered' (entregado), release the transaction seller payout!
+      if (mappedOrderStatus === "delivered") {
+        const tIdx = transactions.findIndex(t => t.order_id === shipment.order_id);
+        if (tIdx > -1 && transactions[tIdx].status === "succeeded") {
+          // Release payout from escrow (payout is marked as released/succeeded)
+          console.log(`Shipment delivered. Releasing $${transactions[tIdx].seller_net.toFixed(2)} to seller connected account: ${shipment.seller_id}`);
+        }
+      }
+    }
   }
 };
 
@@ -168,8 +368,7 @@ function renderCategoryTabs() {
   const container = document.getElementById('categories-tabs-container');
   if (!container) return;
   
-  const currentHash = window.location.hash.slice(1);
-  const selectedCategory = currentHash.startsWith('category/') ? decodeURIComponent(currentHash.split('/')[1]) : 'Todos';
+  const selectedCategory = window.location.hash.slice(1).startsWith('category/') ? decodeURIComponent(window.location.hash.slice(1).split('/')[1]) : 'Todos';
   
   container.innerHTML = CATEGORIES.map(cat => {
     const isActive = (cat === 'Todos' && selectedCategory === 'Todos') || (cat === selectedCategory);
@@ -181,7 +380,6 @@ function renderCategoryTabs() {
 // Special route check for category filters
 window.addEventListener('hashchange', () => {
   if (window.location.hash.startsWith('#category/')) {
-    // Re-render marketplace with active category selected
     renderMarketplace();
   }
   renderCategoryTabs();
@@ -256,11 +454,7 @@ function quickSwitchUser(userId) {
   
   // Refresh current route
   router.resolve();
-  
-  // Rerender headers
   renderCategoryTabs();
-  
-  console.log(`Switched to user: ${state.currentUser.name} (${state.currentUser.role})`);
 }
 
 // --- Cart Drawer Animation Controllers ---
@@ -302,14 +496,13 @@ function closeGlobalModal(event) {
 
 // Profile Dropdown
 function toggleProfileDropdown() {
-  // Simple simulator shows profile edit/details overlay
   const user = state.currentUser;
   const createdDate = new Date(user.created_at).toLocaleDateString();
   
   let detailsHtml = `
     <div style="text-align:center; padding: 1rem 0;">
-      <img src="${user.avatar}" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--gold); margin-bottom:1rem;">
-      <h3 style="color:white; margin-bottom:0.25rem;">${user.name}</h3>
+      <img src="${user.avatar}" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--border-metallic-yellow); margin-bottom:1rem;">
+      <h3 style="color:var(--text-primary); margin-bottom:0.25rem;">${user.name}</h3>
       <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1rem;">${user.email}</p>
       <div style="display:flex; justify-content:center; gap:0.5rem; margin-bottom:1.5rem;">
         <span class="user-role-badge ${user.role}">${user.role}</span>
@@ -360,7 +553,5 @@ window.addEventListener('DOMContentLoaded', () => {
   
   // Start SPA router
   router.init();
-  
-  // Parse lucide icons initial load
   lucide.createIcons();
 });

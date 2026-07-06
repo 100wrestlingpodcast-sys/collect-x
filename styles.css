@@ -1916,3 +1916,52 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* Shipping Rates & Parcel Cards Styles (Shippo Integrations) */
+.shipping-rate-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.shipping-rate-card:hover {
+  border-color: var(--border-metallic-yellow);
+}
+
+.shipping-rate-card.selected {
+  border-color: var(--border-metallic-yellow);
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.25);
+  background: #fffdf5;
+}
+
+/* Print Styles for Shippo Labels */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #global-modal, #global-modal * {
+    visibility: visible;
+  }
+  #global-modal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+  }
+  /* Hide print buttons and header inside modal when printing */
+  .cart-close-btn, #modal-title, .modal-header, .action-btn-small {
+    display: none !important;
+  }
+}
