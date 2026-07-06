@@ -153,11 +153,12 @@ function renderCheckoutView() {
   let isFragile = false;
   let declaredValue = 0;
   let mainCategory = "Funko Pop";
-  let sellerIdForShipping = "usr_seller_1";
+  let sellerIdForShipping = "";
 
   state.cart.forEach(item => {
     const p = products.find(prod => prod.id === item.product_id);
     if (p) {
+      sellerIdForShipping = p.seller_id;
       totalWeight += (p.weight || 8) * item.quantity;
       maxLength = Math.max(maxLength, p.length || 6);
       maxWidth = Math.max(maxWidth, p.width || 5);

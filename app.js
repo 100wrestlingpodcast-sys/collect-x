@@ -3,7 +3,7 @@
 // --- Persistent Database Simulator using LocalStorage ---
 const db = {
   init() {
-    if (!localStorage.getItem('cm_initialized_v3')) {
+    if (!localStorage.getItem('cm_initialized_v4')) {
       // Clean old keys if exist
       localStorage.clear();
       
@@ -26,11 +26,11 @@ const db = {
       localStorage.setItem('cm_package_evidence', JSON.stringify(window.INITIAL_PACKAGE_EVIDENCE));
       
       // Default session
-      localStorage.setItem('cm_current_user_id', 'usr_buyer_1'); // Carlos default
+      localStorage.setItem('cm_current_user_id', ''); // Empty (Guest) default
       localStorage.setItem('cm_cart', JSON.stringify([]));
       localStorage.setItem('cm_favorites', JSON.stringify([]));
       
-      localStorage.setItem('cm_initialized_v3', 'true');
+      localStorage.setItem('cm_initialized_v4', 'true');
     }
   },
   
@@ -604,6 +604,10 @@ function renderLoginFormModal() {
           Iniciar Sesión
         </button>
       </div>
+
+      <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:1.5rem; text-align:center;">
+        ¿No tienes cuenta? <a onclick="renderRegisterFormModal()" style="color:var(--gold-light); font-weight:700; cursor:pointer; text-decoration:underline;">Regístrate aquí</a>
+      </p>
     </div>
   `;
   toggleGlobalModal(true, "Iniciar Sesión en COLLECT X", formHtml);
@@ -647,8 +651,157 @@ function handleUserLoginSubmit() {
 }
 
 function handleUserLogout() {
+  db.setCurrentUserId(''); // Clear session
+  state.refresh();
+  updateNavBar();
+  updateBadges();
+  
   window.showLoginFormOnly = true;
   toggleProfileDropdown();
+}
+
+function renderRegisterFormModal() {
+  const formHtml = `
+    <div style="padding: 0.5rem 0;">
+      <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.5rem; text-align:center;">
+        Crea tu cuenta de Comprador o Vendedor en COLLECT X.
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:1rem;">
+        <div class="checkout-input-wrapper">
+          <label for="reg-name">Nombre Completo</label>
+          <input type="text" id="reg-name" placeholder="Ej: John Doe" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
+        </div>
+        <div class="checkout-input-wrapper">
+          <label for="reg-email">Correo Electrónico</label>
+          <input type="email" id="reg-email" placeholder="ejemplo@mail.com" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
+        </div>
+        <div class="checkout-input-wrapper">
+          <label for="reg-password">Contraseña</label>
+          <input type="password" id="reg-password" placeholder="••••••••" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
+        </div>
+        <div class="checkout-input-wrapper">
+          <label for="reg-role">¿Qué deseas hacer?</label>
+          <select id="reg-role" onchange="toggleRegisterSellerFields(this.value)" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
+            <option value="buyer">Comprar Figuras (Comprador)</option>
+            <option value="seller">Vender Figuras (Vendedor)</option>
+          </select>
+        </div>
+
+        <!-- Extra fields for Seller -->
+        <div id="reg-seller-fields" style="display:none; flex-direction:column; gap:1rem; border-top:1px dashed var(--border-color); padding-top:1rem; margin-top:0.5rem;">
+          <div class="checkout-input-wrapper">
+            <label for="reg-store-name">Nombre de tu Tienda</label>
+            <input type="text" id="reg-store-name" placeholder="Ej: Geek Empire" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
+          </div>
+          <div class="checkout-input-wrapper">
+            <label for="reg-store-desc">Descripción corta</label>
+            <textarea id="reg-store-desc" placeholder="¿Qué tipo de coleccionables vendes?" style="height:60px; padding:0.5rem; border-radius:6px; border:1px solid var(--border-color); width:100%; outline:none; background:white; color:var(--text-primary);"></textarea>
+          </div>
+        </div>
+
+        <button class="btn-large primary-btn" style="margin-top:1rem; padding:0.9rem;" onclick="handleUserRegisterSubmit()">
+          Crear Cuenta
+        </button>
+      </div>
+
+      <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:1.5rem; text-align:center;">
+        ¿Ya tienes cuenta? <a onclick="renderLoginFormModal()" style="color:var(--gold-light); font-weight:700; cursor:pointer; text-decoration:underline;">Inicia sesión aquí</a>
+      </p>
+    </div>
+  `;
+  toggleGlobalModal(true, "Registrarse en COLLECT X", formHtml);
+  lucide.createIcons();
+}
+
+function toggleRegisterSellerFields(role) {
+  const fields = document.getElementById('reg-seller-fields');
+  if (fields) {
+    fields.style.display = role === 'seller' ? 'flex' : 'none';
+  }
+}
+
+function handleUserRegisterSubmit() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value.trim();
+  const role = document.getElementById('reg-role').value;
+
+  if (!name || !email || !password) {
+    alert("Por favor completa todos los campos principales (Nombre, Email y Contraseña).");
+    return;
+  }
+
+  const users = db.get('users');
+  const exists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
+
+  if (exists) {
+    alert("Este correo electrónico ya está registrado.");
+    return;
+  }
+
+  const newUserId = "usr_" + Date.now();
+  const newUser = {
+    id: newUserId,
+    name: name,
+    email: email,
+    password_hash: password,
+    role: role,
+    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+    created_at: new Date().toISOString(),
+    status: "active"
+  };
+  users.push(newUser);
+  db.set('users', users);
+
+  if (role === 'seller') {
+    const storeName = document.getElementById('reg-store-name').value.trim() || `${name} Shop`;
+    const storeDesc = document.getElementById('reg-store-desc').value.trim() || 'Vendedor de figuras coleccionables.';
+    
+    const profiles = db.get('seller_profiles');
+    profiles.push({
+      id: "sel_prof_" + Date.now(),
+      user_id: newUserId,
+      store_name: storeName,
+      description: storeDesc,
+      stripe_connect_id: "",
+      subscription_plan: "Free",
+      commission_rate: 0.12,
+      approved: false, // Starts as pending admin approval!
+      rating_average: 5.0,
+      total_sales: 0.00
+    });
+    db.set('seller_profiles', profiles);
+    
+    alert(`¡Registro de vendedor exitoso! Tu perfil está pendiente de aprobación por el Administrador.`);
+  } else {
+    // Create default empty shipping address for buyer
+    const addresses = db.get('shipping_addresses');
+    addresses.push({
+      id: "addr_" + Date.now(),
+      user_id: newUserId,
+      name: name,
+      street: "",
+      city: "",
+      state: "",
+      zip: "",
+      country: "US",
+      phone: "",
+      is_default: true
+    });
+    db.set('shipping_addresses', addresses);
+    alert(`¡Cuenta creada con éxito! Bienvenido a COLLECT X, ${name}.`);
+  }
+
+  // Auto login
+  db.setCurrentUserId(newUserId);
+  state.refresh();
+  updateNavBar();
+  updateBadges();
+
+  window.showLoginFormOnly = false;
+  toggleGlobalModal(false);
+  router.navigate('');
 }
 
 
