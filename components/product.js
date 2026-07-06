@@ -88,14 +88,31 @@ function renderProductDetail(productId) {
       <div class="product-details-container">
         <!-- Gallery -->
         <div class="product-gallery">
-          <div class="gallery-main-wrapper">
-            <img src="${mainImage}" alt="${product.title}" class="gallery-main" id="product-detail-main-img">
+          <div class="gallery-main-wrapper" id="product-detail-main-wrapper" style="min-height:300px; display:flex; align-items:center; justify-content:center; background:#1e1e1e; border-radius:8px; overflow:hidden;">
+            ${pMedia.length > 0 && pMedia[0].media_type === 'video' ? `
+              <video src="${pMedia[0].media_url}" controls class="gallery-main" style="width:100%; height:100%; max-height:450px; object-fit:contain; background:#000;"></video>
+            ` : `
+              <img src="${mainImage}" alt="${product.title}" class="gallery-main" style="width:100%; height:100%; max-height:450px; object-fit:contain;" onclick="viewFullImage('${mainImage}')">
+            `}
           </div>
           ${pMedia.length > 1 ? `
-            <div class="gallery-thumbs">
-              ${pMedia.map((m, index) => `
-                <img src="${m.media_url}" class="gallery-thumb ${index === 0 ? 'active' : ''}" onclick="setMainImage('${m.media_url}', this)">
-              `).join('')}
+            <div class="gallery-thumbs" style="display:flex; gap:0.5rem; margin-top:0.75rem; overflow-x:auto; padding-bottom:0.25rem;">
+              ${pMedia.map((m, index) => {
+                if (m.media_type === 'video') {
+                  return `
+                    <div class="gallery-thumb-wrapper" style="position:relative; width:65px; height:65px; flex-shrink:0;">
+                      <video src="${m.media_url}" class="gallery-thumb ${index === 0 ? 'active' : ''}" style="width:100%; height:100%; object-fit:cover; border-radius:4px; border:2px solid transparent; cursor:pointer;" onclick="setMainMedia('${m.media_url}', 'video', this)"></video>
+                      <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.6); border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; pointer-events:none;">
+                        <i data-lucide="play" style="width:0.6rem; height:0.6rem; color:#fff; fill:#fff;"></i>
+                      </div>
+                    </div>
+                  `;
+                } else {
+                  return `
+                    <img src="${m.media_url}" class="gallery-thumb ${index === 0 ? 'active' : ''}" style="width:65px; height:65px; object-fit:cover; border-radius:4px; border:2px solid transparent; cursor:pointer; flex-shrink:0;" onclick="setMainMedia('${m.media_url}', 'image', this)">
+                  `;
+                }
+              }).join('')}
             </div>
           ` : ''}
         </div>
@@ -491,4 +508,19 @@ function toggleProductFavorite(productId) {
 function viewFullImage(url) {
   const html = `<img src="${url}" style="width:100%; height:auto; max-height:80vh; object-fit:contain; border-radius:8px;">`;
   toggleGlobalModal(true, "Visualizador de Media", html);
+}
+
+function setMainMedia(mediaUrl, mediaType, element) {
+  const container = document.getElementById('product-detail-main-wrapper');
+  if (!container) return;
+
+  // Remove active class from all thumbs
+  document.querySelectorAll('.gallery-thumb').forEach(el => el.classList.remove('active'));
+  element.classList.add('active');
+
+  if (mediaType === 'video') {
+    container.innerHTML = `<video src="${mediaUrl}" controls autoplay class="gallery-main" style="width:100%; height:100%; max-height:450px; object-fit:contain; background:#000; border-radius:8px;"></video>`;
+  } else {
+    container.innerHTML = `<img src="${mediaUrl}" class="gallery-main" style="width:100%; height:100%; max-height:450px; object-fit:contain;" onclick="viewFullImage('${mediaUrl}')">`;
+  }
 }
