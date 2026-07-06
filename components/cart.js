@@ -11,8 +11,8 @@ function renderCartDrawer() {
     container.innerHTML = `
       <div style="text-align:center; padding:3rem 1rem; color:var(--text-secondary);">
         <i data-lucide="shopping-cart" style="width:3rem; height:3rem; color:var(--border-metallic-yellow); margin-bottom:1rem; opacity:0.6;"></i>
-        <p>Tu carrito está vacío</p>
-        <button class="btn-large primary-btn" style="margin-top:1.5rem; font-size:0.85rem;" onclick="toggleCartDrawer(false)">Continuar Comprando</button>
+        <p>${tr('Tu carrito está vacío', 'Your cart is empty')}</p>
+        <button class="btn-large primary-btn" style="margin-top:1.5rem; font-size:0.85rem;" onclick="toggleCartDrawer(false)">${tr('Continuar Comprando', 'Continue Shopping')}</button>
       </div>
     `;
     lucide.createIcons();
@@ -42,7 +42,7 @@ function renderCartDrawer() {
             </div>
             <div style="font-weight:700; color:var(--gold-light); font-size:0.95rem;">$${p.price.toFixed(2)}</div>
           </div>
-          <button class="cart-item-remove" onclick="removeFromCart('${p.id}')" title="Eliminar de carrito">
+          <button class="cart-item-remove" onclick="removeFromCart('${p.id}')" title="${tr('Eliminar de carrito', 'Remove from cart')}">
             <i data-lucide="trash-2" style="width:0.95rem; height:0.95rem;"></i>
           </button>
         </div>
@@ -55,16 +55,16 @@ function renderCartDrawer() {
     
     <div style="margin-top:auto; padding-top:1.5rem; border-top:1px solid var(--border-color);">
       <div style="display:flex; justify-content:space-between; font-weight:700; font-size:1.1rem; margin-bottom:1.5rem; color:var(--text-primary);">
-        <span>Subtotal</span>
+        <span>${tr('Subtotal', 'Subtotal')}</span>
         <span>$${subtotal.toFixed(2)}</span>
       </div>
       
       <div style="display:flex; flex-direction:column; gap:0.75rem;">
         <button class="btn-large primary-btn" onclick="router.navigate('checkout')">
-          Proceder al Checkout
+          ${tr('Proceder al Checkout', 'Proceed to Checkout')}
         </button>
         <button class="btn-large secondary-btn" onclick="toggleCartDrawer(false)">
-          Seguir Comprando
+          ${tr('Seguir Comprando', 'Continue Shopping')}
         </button>
       </div>
     </div>

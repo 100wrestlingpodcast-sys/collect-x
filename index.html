@@ -25,11 +25,17 @@
       <input type="text" id="search-input" placeholder="Buscar figuras de acción, Funko, cómics..." onkeypress="handleSearchKeyPress(event)">
       <button onclick="triggerSearch()"><i data-lucide="search" style="width:1.1rem;height:1.1rem;"></i></button>
     </div>
+
+    <!-- Language Switcher (Visible on both desktop & mobile) -->
+    <div class="lang-switcher" style="display:flex; align-items:center; background:rgba(255,255,255,0.08); border:1.5px solid var(--border-metallic-yellow); border-radius:20px; padding:2px; height:32px; flex-shrink:0; margin-left:0.5rem; margin-right:0.5rem;">
+      <button onclick="changeLanguage('es')" id="lang-btn-es" style="background:var(--gold-light); color:#000000; font-weight:700; border:none; border-radius:18px; padding: 0 0.6rem; font-size:0.7rem; cursor:pointer; height:26px; transition:all 0.2s;">ES</button>
+      <button onclick="changeLanguage('en')" id="lang-btn-en" style="background:transparent; color:var(--text-secondary); font-weight:500; border:none; border-radius:18px; padding: 0 0.6rem; font-size:0.7rem; cursor:pointer; height:26px; transition:all 0.2s;">EN</button>
+    </div>
     
     <div class="nav-links">
       <a class="nav-link" id="nav-btn-marketplace" onclick="router.navigate('')">
         <i data-lucide="shopping-bag" style="width:1.1rem;height:1.1rem;"></i>
-        <span>Marketplace</span>
+        <span class="nav-text-desktop">Marketplace</span>
       </a>
       
       <a class="nav-link" id="nav-btn-favorites" onclick="router.navigate('favorites')">
@@ -37,7 +43,7 @@
           <i data-lucide="heart" style="width:1.1rem;height:1.1rem;"></i>
           <span class="badge-count" id="favorites-badge" style="display:none;">0</span>
         </div>
-        <span>Favoritos</span>
+        <span class="nav-text-desktop">Favoritos</span>
       </a>
       
       <a class="nav-link" id="nav-btn-cart" onclick="toggleCartDrawer(true)">
@@ -45,18 +51,18 @@
           <i data-lucide="shopping-cart" style="width:1.1rem;height:1.1rem;"></i>
           <span class="badge-count" id="cart-badge" style="display:none;">0</span>
         </div>
-        <span>Carrito</span>
+        <span class="nav-text-desktop">Carrito</span>
       </a>
 
       <!-- Dynamic navigation links for dashboards, shown based on current logged in user -->
       <a class="nav-link" id="nav-btn-seller" onclick="router.navigate('seller')" style="display:none;">
         <i data-lucide="layout-dashboard" style="width:1.1rem;height:1.1rem;"></i>
-        <span>Panel Vendedor</span>
+        <span class="nav-text-desktop">Panel Vendedor</span>
       </a>
       
       <a class="nav-link" id="nav-btn-admin" onclick="router.navigate('admin')" style="display:none;">
         <i data-lucide="shield-check" style="width:1.1rem;height:1.1rem;"></i>
-        <span>Admin Dashboard</span>
+        <span class="nav-text-desktop">Admin Dashboard</span>
       </a>
 
       <!-- Profile Menu -->
@@ -88,29 +94,29 @@
   <div class="mobile-bottom-nav">
     <a class="mobile-nav-item" onclick="router.navigate('')">
       <i data-lucide="shopping-bag" style="width:1.2rem;height:1.2rem;"></i>
-      <span>Tienda</span>
+      <span class="nav-text-mobile">Tienda</span>
     </a>
     <a class="mobile-nav-item" onclick="router.navigate('favorites')">
       <div style="position:relative; display:inline-block;">
         <i data-lucide="heart" style="width:1.2rem;height:1.2rem;"></i>
         <span class="badge-count" id="mobile-favorites-badge" style="display:none; position:absolute; top:-6px; right:-8px; font-size:0.6rem; padding:0.1rem 0.25rem;">0</span>
       </div>
-      <span>Favoritos</span>
+      <span class="nav-text-mobile">Favoritos</span>
     </a>
     <a class="mobile-nav-item" onclick="toggleCartDrawer(true)">
       <div style="position:relative; display:inline-block;">
         <i data-lucide="shopping-cart" style="width:1.2rem;height:1.2rem;"></i>
         <span class="badge-count" id="mobile-cart-badge" style="display:none; position:absolute; top:-6px; right:-8px; font-size:0.6rem; padding:0.1rem 0.25rem;">0</span>
       </div>
-      <span>Carrito</span>
+      <span class="nav-text-mobile">Carrito</span>
     </a>
     <a class="mobile-nav-item" id="mobile-nav-btn-dashboard" onclick="routeMobileDashboard()" style="display:none;">
       <i data-lucide="layout-dashboard" style="width:1.2rem;height:1.2rem;"></i>
-      <span>Panel</span>
+      <span class="nav-text-mobile">Panel</span>
     </a>
     <a class="mobile-nav-item" onclick="toggleProfileDropdown()">
       <img src="" alt="Avatar" id="mobile-nav-avatar" style="width:22px; height:22px; border-radius:50%; border:1.5px solid var(--border-metallic-yellow); object-fit:cover;">
-      <span>Perfil</span>
+      <span class="nav-text-mobile">Perfil</span>
     </a>
   </div>
 

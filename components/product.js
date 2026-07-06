@@ -125,25 +125,25 @@ function renderProductDetail(productId) {
               <i data-lucide="star" style="width:0.9rem; height:0.9rem; fill:var(--gold-light);"></i> ${avgRating} (${reviews.length} reviews)
             </span>
             <h1 class="product-title-detail" style="margin-top:0.5rem;">${product.title}</h1>
-            <p class="product-brand-category">Marca: <strong>${product.brand}</strong> | Categoría: <strong>${product.category}</strong></p>
+            <p class="product-brand-category">${tr('Marca:', 'Brand:')} <strong>${product.brand}</strong> | ${tr('Categoría:', 'Category:')} <strong>${product.category}</strong></p>
           </div>
 
           <div class="product-price-section">
             <span class="product-price-detail">$${product.price.toFixed(2)}</span>
             ${product.is_external_ebay ? `
-              <span class="stock-indicator in-stock">Disponible en eBay</span>
+              <span class="stock-indicator in-stock">${tr('Disponible en eBay', 'Available on eBay')}</span>
             ` : product.stock > 3 ? `
-              <span class="stock-indicator in-stock">En Stock (${product.stock} disp.)</span>
+              <span class="stock-indicator in-stock">${tr(`En Stock (${product.stock} disp.)`, `In Stock (${product.stock} avail.)`)}</span>
             ` : product.stock > 0 ? `
-              <span class="stock-indicator low-stock">¡Pocas unidades! (Solo ${product.stock})</span>
+              <span class="stock-indicator low-stock">${tr(`¡Pocas unidades! (Solo ${product.stock})`, `Few units left! (Only ${product.stock})`)}</span>
             ` : `
-              <span class="stock-indicator out-of-stock">Agotado</span>
+              <span class="stock-indicator out-of-stock">${tr('Agotado', 'Sold Out')}</span>
             `}
           </div>
 
           <!-- Description -->
           <div style="margin: 1rem 0; line-height: 1.6; color: var(--text-secondary);">
-            <h4 style="color:var(--text-primary); margin-bottom:0.5rem;">Descripción del artículo</h4>
+            <h4 style="color:var(--text-primary); margin-bottom:0.5rem;">${tr('Descripción del artículo', 'Item description')}</h4>
             <p>${product.description}</p>
           </div>
 
@@ -169,7 +169,7 @@ function renderProductDetail(productId) {
                       style="width:auto; padding:0.4rem 0.8rem; font-size:0.75rem; display:flex; align-items:center; gap:0.25rem;" 
                       onclick="toggleFollowSeller('${sellerUserId}', '${sellerName.replace(/'/g, "\\'")}')">
                 <i data-lucide="heart" style="width:0.85rem; height:0.85rem; fill:${state.currentUser && isFollowingSeller(sellerUserId) ? 'var(--text-primary)' : 'none'};"></i>
-                <span>${state.currentUser && isFollowingSeller(sellerUserId) ? 'Siguiendo' : 'Seguir Tienda'}</span>
+                <span>${state.currentUser && isFollowingSeller(sellerUserId) ? tr('Siguiendo', 'Following') : tr('Seguir Tienda', 'Follow Store')}</span>
               </button>
             ` : ''}
           </div>
@@ -178,24 +178,24 @@ function renderProductDetail(productId) {
           <div class="action-buttons-group">
             ${product.is_external_ebay ? `
               <button class="btn-large ebay-action-btn" onclick="openEbayLink('${product.id}', '${product.ebay_url}')">
-                <i data-lucide="external-link"></i> Comprar en eBay (Link Externo)
+                <i data-lucide="external-link"></i> ${tr('Comprar en eBay (Link Externo)', 'Buy on eBay (External Link)')}
               </button>
             ` : product.stock === 0 ? `
               <button class="btn-large secondary-btn" style="grid-column: span 2; opacity:0.5; cursor:not-allowed;" disabled>
-                Agotado Temporalmente
+                ${tr('Agotado Temporalmente', 'Temporarily Out of Stock')}
               </button>
             ` : `
               <button class="btn-large secondary-btn" onclick="addToCart('${product.id}')">
-                <i data-lucide="shopping-cart"></i> Añadir al Carrito
+                <i data-lucide="shopping-cart"></i> ${tr('Añadir al Carrito', 'Add to Cart')}
               </button>
               <button class="btn-large primary-btn" onclick="buyNow('${product.id}')">
-                Comprar Ahora
+                ${tr('Comprar Ahora', 'Buy Now')}
               </button>
             `}
             
             <button class="btn-large favorite-action-btn ${isFav ? 'active' : ''}" onclick="toggleProductFavorite('${product.id}')">
               <i data-lucide="heart" style="fill:${isFav ? 'white' : 'none'};"></i> 
-              <span>${isFav ? 'Guardado en Favoritos' : 'Guardar en Favoritos'}</span>
+              <span>${isFav ? tr('Guardado en Favoritos', 'Saved in Favorites') : tr('Guardar en Favoritos', 'Save to Favorites')}</span>
             </button>
           </div>
         </div>

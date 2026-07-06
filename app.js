@@ -1,5 +1,10 @@
 // collectors-market/app.js
 
+window.tr = function(es, en) {
+  const lang = localStorage.getItem('cm_language') || 'es';
+  return lang === 'en' ? en : es;
+};
+
 // --- Persistent Database Simulator using LocalStorage ---
 const db = {
   init() {
@@ -254,9 +259,13 @@ const state = {
   sellerProfile: null,
   cart: [],
   favorites: [],
+  language: 'es',
   
   refresh() {
     db.init();
+    
+    // Load Language
+    this.language = localStorage.getItem('cm_language') || 'es';
     
     // Load User
     const users = db.get('users');
@@ -513,6 +522,63 @@ function updateNavBar() {
     if (user.id === 'usr_buyer_1') document.getElementById('role-btn-buyer')?.classList.add('active');
     if (user.id === 'usr_seller_1') document.getElementById('role-btn-seller')?.classList.add('active');
     if (user.id === 'usr_admin_1') document.getElementById('role-btn-admin')?.classList.add('active');
+  }
+
+  // Translate search placeholder
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.placeholder = tr("Buscar figuras de acción, Funko, cómics...", "Search action figures, Funkos, comics...");
+  }
+
+  // Update lang switcher style in navbar
+  const btnEs = document.getElementById('lang-btn-es');
+  const btnEn = document.getElementById('lang-btn-en');
+  if (btnEs && btnEn) {
+    if (state.language === 'en') {
+      btnEs.style.background = 'transparent';
+      btnEs.style.color = 'var(--text-secondary)';
+      btnEs.style.fontWeight = '500';
+      
+      btnEn.style.background = 'var(--gold-light)';
+      btnEn.style.color = '#000000';
+      btnEn.style.fontWeight = '700';
+    } else {
+      btnEn.style.background = 'transparent';
+      btnEn.style.color = 'var(--text-secondary)';
+      btnEn.style.fontWeight = '500';
+      
+      btnEs.style.background = 'var(--gold-light)';
+      btnEs.style.color = '#000000';
+      btnEs.style.fontWeight = '700';
+    }
+  }
+
+  // Translate desktop links text content
+  const desktopNavLabels = document.querySelectorAll('.nav-text-desktop');
+  if (desktopNavLabels.length >= 5) {
+    desktopNavLabels[0].textContent = tr("Marketplace", "Marketplace");
+    desktopNavLabels[1].textContent = tr("Favoritos", "Favorites");
+    desktopNavLabels[2].textContent = tr("Carrito", "Cart");
+    desktopNavLabels[3].textContent = tr("Panel Vendedor", "Seller Panel");
+    desktopNavLabels[4].textContent = tr("Admin Dashboard", "Admin Panel");
+  }
+
+  // Translate mobile links text content
+  const mobileNavLabels = document.querySelectorAll('.nav-text-mobile');
+  if (mobileNavLabels.length >= 5) {
+    mobileNavLabels[0].textContent = tr("Tienda", "Store");
+    mobileNavLabels[1].textContent = tr("Favoritos", "Favs");
+    mobileNavLabels[2].textContent = tr("Carrito", "Cart");
+    mobileNavLabels[3].textContent = tr("Panel", "Panel");
+    mobileNavLabels[4].textContent = tr("Perfil", "Profile");
+  }
+
+  // Translate cart drawer static headers
+  const drawerHeaderTitle = document.querySelector('.cart-drawer-header h3');
+  if (drawerHeaderTitle) {
+    const countSpan = document.getElementById('cart-drawer-count');
+    const countVal = countSpan ? countSpan.textContent : '0';
+    drawerHeaderTitle.innerHTML = `<i data-lucide="shopping-cart" style="color:var(--gold-light);"></i> ${tr('Tu Carrito', 'Your Cart')} (<span id="cart-drawer-count">${countVal}</span>)`;
   }
 }
 
@@ -1116,4 +1182,20 @@ function handleAvatarUpload(input) {
     }
   };
   reader.readAsDataURL(file);
+}
+
+function changeLanguage(lang) {
+  state.language = lang;
+  localStorage.setItem('cm_language', lang);
+  
+  // Refresh and re-render everything
+  state.refresh();
+  updateNavBar();
+  updateBadges();
+  
+  // Re-run router resolve to translate the current view
+  router.resolve();
+  
+  // Re-render categories tabs
+  renderCategoryTabs();
 }
