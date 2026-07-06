@@ -557,7 +557,13 @@ function toggleProfileDropdown() {
   
   let detailsHtml = `
     <div style="text-align:center; padding: 1rem 0;">
-      <img src="${user.avatar}" style="width:90px; height:90px; border-radius:50%; object-fit:cover; border:3.5px solid var(--border-metallic-yellow); margin-bottom:1rem;">
+      <div style="position:relative; display:inline-block; margin-bottom:0.75rem;">
+        <img src="${user.avatar}" id="profile-avatar-preview" style="width:90px; height:90px; border-radius:50%; object-fit:cover; border:3.5px solid var(--border-metallic-yellow);">
+        <label for="avatar-file-input" style="position:absolute; bottom:-5px; right:-5px; background:var(--gold-light); border:1.5px solid #000000; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 3px 8px rgba(0,0,0,0.2);">
+          <i data-lucide="camera" style="width:0.85rem; height:0.85rem; color:#000000;"></i>
+        </label>
+        <input type="file" id="avatar-file-input" style="display:none;" accept="image/*" onchange="handleAvatarUpload(this)">
+      </div>
       <h3 style="color:var(--text-primary); margin-bottom:0.25rem;">${user.name}</h3>
       <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.2rem;">${user.email}</p>
       <div style="display:flex; justify-content:center; gap:0.5rem; margin-bottom:1.5rem;">
@@ -685,6 +691,7 @@ function handleUserLogout() {
   
   window.showLoginFormOnly = true;
   toggleProfileDropdown();
+  router.navigate(''); // Redirect to home page on logout
 }
 
 function renderRegisterFormModal() {
@@ -1045,4 +1052,39 @@ function showNotificationToast(storeName, productTitle, count) {
       toast.remove();
     }, 400);
   }, 5000);
+}
+
+function handleAvatarUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64String = e.target.result;
+    
+    // Update active user profile picture
+    const user = state.currentUser;
+    if (user) {
+      const users = db.get('users');
+      const idx = users.findIndex(u => u.id === user.id);
+      if (idx !== -1) {
+        users[idx].avatar = base64String;
+        db.set('users', users);
+        state.currentUser = users[idx];
+        
+        // Update previews instantly
+        const preview = document.getElementById('profile-avatar-preview');
+        if (preview) preview.src = base64String;
+        
+        const navAvatar = document.getElementById('nav-user-avatar');
+        if (navAvatar) navAvatar.src = base64String;
+        
+        const mobileAvatar = document.getElementById('mobile-nav-avatar');
+        if (mobileAvatar) mobileAvatar.src = base64String;
+        
+        alert("¡Foto de perfil actualizada con éxito!");
+      }
+    }
+  };
+  reader.readAsDataURL(file);
 }
