@@ -540,32 +540,126 @@ function closeGlobalModal(event) {
   }
 }
 
-// Profile Dropdown
+// Profile Dropdown & Login Modal
 function toggleProfileDropdown() {
   const user = state.currentUser;
+  
+  if (!user || window.showLoginFormOnly) {
+    renderLoginFormModal();
+    return;
+  }
+  
   const createdDate = new Date(user.created_at).toLocaleDateString();
   
   let detailsHtml = `
     <div style="text-align:center; padding: 1rem 0;">
-      <img src="${user.avatar}" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--border-metallic-yellow); margin-bottom:1rem;">
+      <img src="${user.avatar}" style="width:90px; height:90px; border-radius:50%; object-fit:cover; border:3.5px solid var(--border-metallic-yellow); margin-bottom:1rem;">
       <h3 style="color:var(--text-primary); margin-bottom:0.25rem;">${user.name}</h3>
-      <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1rem;">${user.email}</p>
+      <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.2rem;">${user.email}</p>
       <div style="display:flex; justify-content:center; gap:0.5rem; margin-bottom:1.5rem;">
-        <span class="user-role-badge ${user.role}">${user.role}</span>
+        <span class="user-role-badge ${user.role}">${user.role === 'buyer' ? 'Comprador' : user.role === 'seller' ? 'Vendedor' : 'Admin'}</span>
         <span class="status-tag approved">${user.status}</span>
       </div>
       
-      <div style="border-top:1px solid var(--border-color); padding-top:1rem; text-align:left; font-size:0.85rem; color:var(--text-secondary);">
-        <p style="margin-bottom:0.5rem;"><strong>ID Usuario:</strong> ${user.id}</p>
-        <p style="margin-bottom:0.5rem;"><strong>Miembro desde:</strong> ${createdDate}</p>
+      <div style="border-top:1px solid var(--border-color); padding:1rem 0; text-align:left; font-size:0.85rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:0.4rem;">
+        <p><strong>ID Usuario:</strong> <code>${user.id}</code></p>
+        <p><strong>Miembro desde:</strong> ${createdDate}</p>
       </div>
       
-      <button class="btn-large secondary-btn" style="margin-top:1.5rem;" onclick="toggleGlobalModal(false)">Cerrar</button>
+      <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+        <button class="btn-large secondary-btn" style="flex:1;" onclick="handleUserLogout()">
+          <i data-lucide="log-out" style="width:0.95rem;height:0.95rem;display:inline-block;vertical-align:middle;margin-right:0.3rem;"></i>
+          Cerrar Sesión
+        </button>
+        <button class="btn-large primary-btn" style="flex:1;" onclick="toggleGlobalModal(false)">
+          Cerrar
+        </button>
+      </div>
     </div>
   `;
   
   toggleGlobalModal(true, "Tu Perfil de Usuario", detailsHtml);
+  lucide.createIcons();
 }
+
+function renderLoginFormModal() {
+  const formHtml = `
+    <div style="padding: 0.5rem 0;">
+      <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.5rem; text-align:center;">
+        Ingresa tus credenciales registradas en la base de datos de COLLECT X.
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:1.2rem;">
+        <div class="checkout-input-wrapper">
+          <label for="login-email">Correo Electrónico</label>
+          <input type="email" id="login-email" placeholder="admin@mail.com" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
+        </div>
+        <div class="checkout-input-wrapper">
+          <label for="login-password">Contraseña</label>
+          <input type="password" id="login-password" placeholder="••••••••" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
+        </div>
+        
+        <button class="btn-large primary-btn" style="margin-top:0.5rem; padding:0.9rem;" onclick="handleUserLoginSubmit()">
+          <i data-lucide="log-in" style="width:1.1rem;height:1.1rem;display:inline-block;vertical-align:middle;margin-right:0.4rem;"></i>
+          Iniciar Sesión
+        </button>
+      </div>
+
+      <div style="margin-top:1.5rem; border-top:1px solid var(--border-color); padding-top:1.2rem;">
+        <h4 style="font-size:0.8rem; color:var(--text-primary); margin-bottom:0.75rem; text-align:center;">Credenciales de Prueba (Demo logins):</h4>
+        <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.75rem; color:var(--text-secondary); background:#fafafa; padding:0.8rem; border-radius:6px; border:1px solid var(--border-color);">
+          <div>👑 <strong>Administrador:</strong> <code>admin@mail.com</code> / <code>admin123</code></div>
+          <div>🛍️ <strong>Vendedor:</strong> <code>geek@mail.com</code> / <code>seller123</code></div>
+          <div>👤 <strong>Comprador:</strong> <code>carlos@mail.com</code> / <code>buyer123</code></div>
+        </div>
+      </div>
+    </div>
+  `;
+  toggleGlobalModal(true, "Iniciar Sesión en COLLECT X", formHtml);
+  lucide.createIcons();
+}
+
+function handleUserLoginSubmit() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+
+  if (!email || !password) {
+    alert("Por favor completa el correo y la contraseña.");
+    return;
+  }
+
+  const users = db.get('users');
+  const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+  if (user && user.password_hash === password) {
+    db.setCurrentUserId(user.id);
+    state.refresh();
+    updateNavBar();
+    updateBadges();
+    
+    window.showLoginFormOnly = false;
+    toggleGlobalModal(false);
+    
+    // Redirect based on role
+    if (user.role === 'admin') {
+      router.navigate('admin');
+    } else if (user.role === 'seller') {
+      router.navigate('seller');
+    } else {
+      router.navigate('');
+    }
+    
+    alert(`¡Sesión iniciada con éxito! Bienvenido, ${user.name}.`);
+  } else {
+    alert("Credenciales incorrectas. Por favor verifica los datos ingresados.");
+  }
+}
+
+function handleUserLogout() {
+  window.showLoginFormOnly = true;
+  toggleProfileDropdown();
+}
+
 
 // Search interactions
 function handleSearchKeyPress(event) {
