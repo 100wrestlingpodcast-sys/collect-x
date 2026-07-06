@@ -257,7 +257,7 @@ function renderProductDetail(productId) {
                 <div class="review-item">
                   <div class="review-header">
                     <div class="review-user-info">
-                      <img src="${reviewer.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'}" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">
+                      <img src="${reviewer.avatar || window.GUEST_AVATAR}" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">
                       <span style="font-weight:600; color:var(--text-primary);">${reviewer.name}</span>
                       <span class="status-tag approved" style="font-size:0.6rem; padding: 0.05rem 0.3rem;">Compra Verificada</span>
                     </div>

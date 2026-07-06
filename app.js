@@ -462,7 +462,7 @@ function updateNavBar() {
     // Mobile Bottom Nav Profile Avatar Update
     const mobileNavAvatar = document.getElementById('mobile-nav-avatar');
     if (mobileNavAvatar) {
-      mobileNavAvatar.src = user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+      mobileNavAvatar.src = user.avatar || window.GUEST_AVATAR;
     }
 
     // Mobile Dashboard Button visibility
@@ -483,7 +483,7 @@ function updateNavBar() {
     if (sellerBtn) sellerBtn.style.display = (user.role === 'seller' || user.role === 'admin') ? 'flex' : 'none';
   } else {
     // Guest State
-    if (navAvatar) navAvatar.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+    if (navAvatar) navAvatar.src = window.GUEST_AVATAR;
     if (navName) navName.textContent = 'Iniciar Sesión';
     if (navRoleBadge) {
       navRoleBadge.className = 'user-role-badge guest';
@@ -493,7 +493,7 @@ function updateNavBar() {
     // Mobile Bottom Nav Profile Avatar Update
     const mobileNavAvatar = document.getElementById('mobile-nav-avatar');
     if (mobileNavAvatar) {
-      mobileNavAvatar.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+      mobileNavAvatar.src = window.GUEST_AVATAR;
     }
 
     // Mobile Dashboard Button visibility
@@ -810,7 +810,7 @@ function handleUserRegisterSubmit() {
     email: email,
     password_hash: password,
     role: role,
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+    avatar: window.GUEST_AVATAR,
     created_at: new Date().toISOString(),
     status: "active"
   };
