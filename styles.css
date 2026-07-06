@@ -1965,3 +1965,110 @@ footer {
     display: none !important;
   }
 }
+
+/* Mobile-first and Responsive Overrides */
+@media (max-width: 768px) {
+  /* Hide desktop-only nav links to avoid horizontal scroll */
+  .nav-links {
+    display: none !important;
+  }
+  
+  /* Show mobile-friendly bottom tab bar */
+  .mobile-bottom-nav {
+    display: flex !important;
+  }
+  
+  /* Add body padding so bottom nav doesn't overlap content */
+  body {
+    padding-bottom: 75px !important;
+  }
+  
+  /* Stack navbar vertically to fit screen width */
+  .navbar {
+    flex-direction: column !important;
+    gap: 0.6rem !important;
+    padding: 0.75rem 1rem !important;
+    align-items: center !important;
+  }
+  
+  /* Search input takes full width on mobile */
+  .nav-search {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Collapse profiles grids to prevent horizontal overflow */
+  .profile-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+
+  /* Compact quick role switcher on mobile */
+  .role-switcher-floating {
+    bottom: 80px !important; /* Move up to clear the bottom nav */
+    right: 10px !important;
+    max-width: 180px !important;
+    padding: 0.5rem !important;
+  }
+  
+  .role-switcher-title {
+    font-size: 0.7rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  .role-switch-btn {
+    padding: 0.3rem !important;
+    font-size: 0.7rem !important;
+  }
+}
+
+/* Mobile Bottom Navigation Bar Styles */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 65px;
+  background: #ffffff;
+  border-top: 2.5px solid var(--border-metallic-yellow);
+  display: none; /* Hidden on desktop */
+  justify-content: space-around;
+  align-items: center;
+  z-index: 1500; /* Stays above sliding drawer overlays */
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.08);
+  padding: 0 0.5rem;
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.7rem;
+  font-weight: 600;
+  gap: 0.2rem;
+  cursor: pointer;
+  flex: 1;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.mobile-nav-item:active {
+  transform: scale(0.95);
+}
+
+.mobile-nav-item span {
+  font-size: 0.65rem;
+  font-family: var(--font-heading);
+}
+
+.mobile-nav-item i {
+  color: var(--text-primary);
+  transition: color 0.2s ease;
+}
+
+.mobile-nav-item:hover i, .mobile-nav-item:hover span {
+  color: var(--gold-light);
+}

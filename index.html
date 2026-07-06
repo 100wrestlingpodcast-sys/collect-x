@@ -98,6 +98,36 @@
     </button>
   </div>
 
+  <!-- Mobile Bottom Navigation Bar (Hidden on Desktop) -->
+  <div class="mobile-bottom-nav">
+    <a class="mobile-nav-item" onclick="router.navigate('')">
+      <i data-lucide="shopping-bag" style="width:1.2rem;height:1.2rem;"></i>
+      <span>Tienda</span>
+    </a>
+    <a class="mobile-nav-item" onclick="router.navigate('favorites')">
+      <div style="position:relative; display:inline-block;">
+        <i data-lucide="heart" style="width:1.2rem;height:1.2rem;"></i>
+        <span class="badge-count" id="mobile-favorites-badge" style="display:none; position:absolute; top:-6px; right:-8px; font-size:0.6rem; padding:0.1rem 0.25rem;">0</span>
+      </div>
+      <span>Favoritos</span>
+    </a>
+    <a class="mobile-nav-item" onclick="toggleCartDrawer(true)">
+      <div style="position:relative; display:inline-block;">
+        <i data-lucide="shopping-cart" style="width:1.2rem;height:1.2rem;"></i>
+        <span class="badge-count" id="mobile-cart-badge" style="display:none; position:absolute; top:-6px; right:-8px; font-size:0.6rem; padding:0.1rem 0.25rem;">0</span>
+      </div>
+      <span>Carrito</span>
+    </a>
+    <a class="mobile-nav-item" id="mobile-nav-btn-dashboard" onclick="routeMobileDashboard()" style="display:none;">
+      <i data-lucide="layout-dashboard" style="width:1.2rem;height:1.2rem;"></i>
+      <span>Panel</span>
+    </a>
+    <a class="mobile-nav-item" onclick="toggleProfileDropdown()">
+      <img src="" alt="Avatar" id="mobile-nav-avatar" style="width:22px; height:22px; border-radius:50%; border:1.5px solid var(--border-metallic-yellow); object-fit:cover;">
+      <span>Perfil</span>
+    </a>
+  </div>
+
   <!-- Sliding Cart Drawer Backdrop -->
   <div class="cart-drawer-backdrop" id="cart-drawer-backdrop" onclick="toggleCartDrawer(false)"></div>
   

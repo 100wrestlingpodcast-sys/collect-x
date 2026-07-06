@@ -387,7 +387,7 @@ window.addEventListener('hashchange', () => {
 
 // --- Dynamic Badges and Headers ---
 function updateBadges() {
-  // Cart Badge
+  // Cart Badge (Desktop)
   const cartBadge = document.getElementById('cart-badge');
   const cartCount = state.cart.reduce((sum, item) => sum + item.quantity, 0);
   if (cartBadge) {
@@ -398,12 +398,23 @@ function updateBadges() {
       cartBadge.style.display = 'none';
     }
   }
+
+  // Cart Badge (Mobile)
+  const mobileCartBadge = document.getElementById('mobile-cart-badge');
+  if (mobileCartBadge) {
+    if (cartCount > 0) {
+      mobileCartBadge.textContent = cartCount;
+      mobileCartBadge.style.display = 'flex';
+    } else {
+      mobileCartBadge.style.display = 'none';
+    }
+  }
   
   // Drawer Cart Count
   const cartDrawerCount = document.getElementById('cart-drawer-count');
   if (cartDrawerCount) cartDrawerCount.textContent = cartCount;
   
-  // Favorites Badge
+  // Favorites Badge (Desktop)
   const favBadge = document.getElementById('favorites-badge');
   const favCount = state.favorites.length;
   if (favBadge) {
@@ -412,6 +423,17 @@ function updateBadges() {
       favBadge.style.display = 'flex';
     } else {
       favBadge.style.display = 'none';
+    }
+  }
+
+  // Favorites Badge (Mobile)
+  const mobileFavBadge = document.getElementById('mobile-favorites-badge');
+  if (mobileFavBadge) {
+    if (favCount > 0) {
+      mobileFavBadge.textContent = favCount;
+      mobileFavBadge.style.display = 'flex';
+    } else {
+      mobileFavBadge.style.display = 'none';
     }
   }
 }
@@ -430,6 +452,22 @@ function updateNavBar() {
     navRoleBadge.className = `user-role-badge ${user.role}`;
     navRoleBadge.textContent = user.role === 'buyer' ? 'comprador' : user.role === 'seller' ? 'vendedor' : 'admin';
   }
+
+  // Mobile Bottom Nav Profile Avatar Update
+  const mobileNavAvatar = document.getElementById('mobile-nav-avatar');
+  if (mobileNavAvatar) {
+    mobileNavAvatar.src = user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+  }
+
+  // Mobile Dashboard Button visibility
+  const mobileDashBtn = document.getElementById('mobile-nav-btn-dashboard');
+  if (mobileDashBtn) {
+    if (user.role === 'seller' || user.role === 'admin') {
+      mobileDashBtn.style.display = 'flex';
+    } else {
+      mobileDashBtn.style.display = 'none';
+    }
+  }
   
   // Toggle Admin / Seller buttons
   const adminBtn = document.getElementById('nav-btn-admin');
@@ -443,6 +481,14 @@ function updateNavBar() {
   if (user.id === 'usr_buyer_1') document.getElementById('role-btn-buyer')?.classList.add('active');
   if (user.id === 'usr_seller_1') document.getElementById('role-btn-seller')?.classList.add('active');
   if (user.id === 'usr_admin_1') document.getElementById('role-btn-admin')?.classList.add('active');
+}
+
+function routeMobileDashboard() {
+  if (state.currentUser.role === 'admin') {
+    router.navigate('admin');
+  } else if (state.currentUser.role === 'seller') {
+    router.navigate('seller');
+  }
 }
 
 // --- Quick Role Switcher ---
