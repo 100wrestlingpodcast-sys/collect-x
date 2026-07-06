@@ -717,8 +717,8 @@ function handleUserLogout() {
   updateNavBar();
   updateBadges();
   
-  window.showLoginFormOnly = true;
-  toggleProfileDropdown();
+  window.showLoginFormOnly = false;
+  toggleGlobalModal(false); // Close modal immediately
   router.navigate(''); // Redirect to home page on logout
 }
 
