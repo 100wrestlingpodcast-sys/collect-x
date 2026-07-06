@@ -3,7 +3,7 @@
 // --- Persistent Database Simulator using LocalStorage ---
 const db = {
   init() {
-    if (!localStorage.getItem('cm_initialized_v5')) {
+    if (!localStorage.getItem('cm_initialized_v6')) {
       // Clean old keys if exist
       localStorage.clear();
       
@@ -25,12 +25,16 @@ const db = {
       localStorage.setItem('cm_shipments', JSON.stringify(window.INITIAL_SHIPMENTS));
       localStorage.setItem('cm_package_evidence', JSON.stringify(window.INITIAL_PACKAGE_EVIDENCE));
       
+      // New CRM Notification and Follower tables
+      localStorage.setItem('cm_favorite_sellers', JSON.stringify([]));
+      localStorage.setItem('cm_notifications', JSON.stringify([]));
+      
       // Default session
       localStorage.setItem('cm_current_user_id', ''); // Empty (Guest) default
       localStorage.setItem('cm_cart', JSON.stringify([]));
       localStorage.setItem('cm_favorites', JSON.stringify([]));
       
-      localStorage.setItem('cm_initialized_v5', 'true');
+      localStorage.setItem('cm_initialized_v6', 'true');
     }
   },
   
@@ -565,8 +569,31 @@ function toggleProfileDropdown() {
         <p><strong>ID Usuario:</strong> <code>${user.id}</code></p>
         <p><strong>Miembro desde:</strong> ${createdDate}</p>
       </div>
+
+      <!-- Notification Preferences -->
+      <div style="border-top:1px solid var(--border-color); padding:0.85rem 0; text-align:left;">
+        <h4 style="font-size:0.8rem; margin-bottom:0.6rem; color:var(--text-primary); font-family:var(--font-heading);">Alertas de Vendedores:</h4>
+        <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.75rem; color:var(--text-secondary);">
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+            <input type="checkbox" id="pref-email-notif" ${user.email_notifications !== false ? 'checked' : ''} onchange="updateNotifPref('email', this.checked)">
+            Recibir alertas por Correo Electrónico
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+            <input type="checkbox" id="pref-sms-notif" ${user.sms_notifications === true ? 'checked' : ''} onchange="updateNotifPref('sms', this.checked)">
+            Recibir alertas por Mensaje de Texto (SMS)
+          </label>
+        </div>
+      </div>
+
+      <!-- Favorite Sellers List -->
+      <div style="border-top:1px solid var(--border-color); padding:0.85rem 0; text-align:left;">
+        <h4 style="font-size:0.8rem; margin-bottom:0.5rem; color:var(--text-primary); font-family:var(--font-heading);">Vendedores Favoritos:</h4>
+        <div style="display:flex; flex-direction:column; gap:0.35rem; max-height:100px; overflow-y:auto; padding-right:0.25rem;">
+          ${getFollowedSellersHtml()}
+        </div>
+      </div>
       
-      <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+      <div style="display:flex; gap:0.75rem; margin-top:1.2rem; border-top:1px solid var(--border-color); padding-top:1rem;">
         <button class="btn-large secondary-btn" style="flex:1;" onclick="handleUserLogout()">
           <i data-lucide="log-out" style="width:0.95rem;height:0.95rem;display:inline-block;vertical-align:middle;margin-right:0.3rem;"></i>
           Cerrar Sesión
@@ -839,3 +866,183 @@ window.addEventListener('DOMContentLoaded', () => {
   router.init();
   lucide.createIcons();
 });
+
+// --- Favorite/Follow Sellers Engine ---
+function isFollowingSeller(sellerId) {
+  if (!state.currentUser) return false;
+  const follows = db.get('favorite_sellers');
+  return follows.some(f => f.user_id === state.currentUser.id && f.seller_id === sellerId);
+}
+
+function toggleFollowSeller(sellerId, storeName) {
+  if (!state.currentUser) {
+    alert("Inicia sesión para agregar este vendedor a tus favoritos.");
+    renderLoginFormModal();
+    return;
+  }
+
+  const follows = db.get('favorite_sellers');
+  const idx = follows.findIndex(f => f.user_id === state.currentUser.id && f.seller_id === sellerId);
+
+  if (idx !== -1) {
+    follows.splice(idx, 1);
+    db.set('favorite_sellers', follows);
+    alert(`Has dejado de seguir a ${storeName}.`);
+  } else {
+    follows.push({
+      id: "fav_sel_" + Date.now(),
+      user_id: state.currentUser.id,
+      seller_id: sellerId,
+      created_at: new Date().toISOString()
+    });
+    db.set('favorite_sellers', follows);
+    alert(`¡Ahora sigues a ${storeName}! Recibirás notificaciones cuando suba nuevos artículos.`);
+  }
+
+  // Refresh current view
+  if (window.location.hash.startsWith('#product/')) {
+    renderProductDetails();
+  }
+  
+  // Refresh profile modal if open to show updated followed sellers list
+  if (document.getElementById('global-modal').classList.contains('open') && document.getElementById('modal-title').textContent === "Tu Perfil de Usuario") {
+    toggleProfileDropdown();
+  }
+  updateNavBar();
+}
+
+function updateNotifPref(type, enabled) {
+  if (!state.currentUser) return;
+  const users = db.get('users');
+  const idx = users.findIndex(u => u.id === state.currentUser.id);
+  if (idx !== -1) {
+    if (type === 'email') {
+      users[idx].email_notifications = enabled;
+    } else if (type === 'sms') {
+      users[idx].sms_notifications = enabled;
+    }
+    db.set('users', users);
+    state.currentUser = users[idx];
+    console.log("Preferencia de notificación actualizada:", type, enabled);
+  }
+}
+
+function getFollowedSellersHtml() {
+  if (!state.currentUser) return '';
+  const follows = db.get('favorite_sellers').filter(f => f.user_id === state.currentUser.id);
+  const profiles = db.get('seller_profiles');
+  
+  if (follows.length === 0) {
+    return `<p style="font-size:0.75rem; color:var(--text-muted); font-style:italic; text-align:center; padding: 0.5rem 0;">No sigues a ningún vendedor todavía.</p>`;
+  }
+
+  let html = '';
+  follows.forEach(f => {
+    let sName = 'Collectors Shop';
+    if (f.seller_id !== 'usr_admin_1') {
+      const p = profiles.find(prof => prof.user_id === f.seller_id);
+      if (p) sName = p.store_name;
+    } else {
+      sName = 'COLLECT X Tienda Oficial';
+    }
+    
+    html += `
+      <div style="display:flex; justify-content:space-between; align-items:center; background:#fafafa; border:1px solid var(--border-color); padding:0.4rem 0.6rem; border-radius:6px; font-size:0.75rem; color:var(--text-primary); margin-bottom:0.25rem;">
+        <span>🏪 ${sName}</span>
+        <a onclick="toggleFollowSeller('${f.seller_id}', '${sName.replace(/'/g, "\\'")}')" style="color:var(--gold-light); cursor:pointer; font-weight:700; text-decoration:underline;">Quitar</a>
+      </div>
+    `;
+  });
+  return html;
+}
+
+function notifyFollowers(sellerId, product) {
+  const follows = db.get('favorite_sellers').filter(f => f.seller_id === sellerId);
+  const users = db.get('users');
+  const profiles = db.get('seller_profiles');
+  const notifications = db.get('notifications') || [];
+  
+  let storeName = 'COLLECT X Tienda Oficial';
+  if (sellerId !== 'usr_admin_1') {
+    const prof = profiles.find(p => p.user_id === sellerId);
+    if (prof) storeName = prof.store_name;
+  }
+
+  let notificationCount = 0;
+
+  follows.forEach(f => {
+    const buyer = users.find(u => u.id === f.user_id);
+    if (!buyer) return;
+
+    // Check if buyer has email alerts enabled (default is true)
+    if (buyer.email_notifications !== false) {
+      const emailMsg = `¡Nueva figura de ${storeName} en COLLECT X! Hola ${buyer.name}, tu vendedor favorito ${storeName} acaba de publicar "${product.title}" por $${product.price.toFixed(2)}. ¡Entra ya para verla!`;
+      notifications.push({
+        id: "notif_email_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+        user_id: buyer.id,
+        type: "email",
+        recipient: buyer.email,
+        message: emailMsg,
+        sent_at: new Date().toISOString(),
+        status: "sent"
+      });
+      notificationCount++;
+    }
+
+    // Check if buyer has SMS alerts enabled (default is false)
+    if (buyer.sms_notifications === true) {
+      const smsMsg = `COLLECT X ALERTA: ¡${storeName} publicó "${product.title}" por $${product.price.toFixed(2)}! Ver en: #product/${product.id}`;
+      notifications.push({
+        id: "notif_sms_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+        user_id: buyer.id,
+        type: "sms",
+        recipient: buyer.phone || "+1 (555) 0199",
+        message: smsMsg,
+        sent_at: new Date().toISOString(),
+        status: "sent"
+      });
+      notificationCount++;
+    }
+  });
+
+  db.set('notifications', notifications);
+
+  if (notificationCount > 0) {
+    showNotificationToast(storeName, product.title, notificationCount);
+  }
+}
+
+function showNotificationToast(storeName, productTitle, count) {
+  let container = document.getElementById('toast-notification-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-notification-container';
+    container.style.cssText = 'position:fixed; top:80px; right:20px; z-index:3000; display:flex; flex-direction:column; gap:0.75rem; max-width:320px; width:90%;';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.style.cssText = 'background:var(--text-primary); color:white; border-left:4px solid var(--border-metallic-yellow); padding:0.85rem 1rem; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.2); font-size:0.8rem; transform:translateX(120%); transition:transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display:flex; flex-direction:column; gap:0.25rem;';
+  
+  toast.innerHTML = `
+    <div style="font-weight:700; color:var(--gold-light); display:flex; align-items:center; gap:0.3rem;">
+      <i data-lucide="bell" style="width:0.9rem;height:0.9rem;color:var(--gold-light);"></i>
+      <span>¡Notificaciones Despachadas!</span>
+    </div>
+    <div style="color:white; line-height:1.3;">Se enviaron ${count} alerta(s) de email/SMS a los seguidores de <strong>${storeName}</strong> por su nuevo artículo: "${productTitle}".</div>
+  `;
+
+  container.appendChild(toast);
+  lucide.createIcons();
+
+  setTimeout(() => {
+    toast.style.transform = 'translateX(0)';
+  }, 100);
+
+  setTimeout(() => {
+    toast.style.transform = 'translateX(120%)';
+    setTimeout(() => {
+      toast.remove();
+    }, 400);
+  }, 5000);
+}

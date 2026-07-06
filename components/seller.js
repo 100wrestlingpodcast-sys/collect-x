@@ -809,7 +809,7 @@ function submitAddProduct() {
     condition: condition,
     price: price,
     stock: stock,
-    status: "pending", // Always pending admin approval on publishing
+    status: state.currentUser.role === 'admin' ? "approved" : "pending",
     ebay_url: "",
     is_external_ebay: false,
     created_at: new Date().toISOString(),
@@ -839,7 +839,12 @@ function submitAddProduct() {
   db.set('product_media', media);
 
   toggleGlobalModal(false);
-  alert("¡Figura publicada con éxito! Queda pendiente de aprobación por el Administrador.");
+  if (state.currentUser.role === 'admin') {
+    alert("¡Figura publicada con éxito! Al ser el Administrador, se ha auto-aprobado y publicado.");
+    notifyFollowers(newProd.seller_id, newProd);
+  } else {
+    alert("¡Figura publicada con éxito! Queda pendiente de aprobación por el Administrador.");
+  }
   renderSellerDashboard();
 }
 

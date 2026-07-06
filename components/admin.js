@@ -69,6 +69,10 @@ function renderAdminDashboard() {
             <i data-lucide="percent" style="width:1.05rem;height:1.05rem;"></i>
             Banners y Cupones
           </a>
+          <a class="db-menu-item ${window.activeAdminTab === 'notifications' ? 'active' : ''}" onclick="setAdminTab('notifications')">
+            <i data-lucide="bell" style="width:1.05rem;height:1.05rem;"></i>
+            Logs de Alertas
+          </a>
         </aside>
 
         <!-- Dynamic Content Area -->
@@ -560,7 +564,70 @@ function renderAdminSubTab(tab, data) {
         </div>
       </div>
     `;
+  } else if (tab === 'notifications') {
+    renderAdminNotificationsTab(container);
   }
+}
+
+function renderAdminNotificationsTab(container) {
+  const notifications = db.get('notifications') || [];
+  const users = db.get('users');
+
+  container.innerHTML = `
+    <div>
+      <div style="margin-bottom:1.5rem;">
+        <h3>Logs de Alertas a Compradores</h3>
+        <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">Historial de notificaciones automáticas por Email y SMS enviadas a los seguidores de vendedores favoritos.</p>
+      </div>
+
+      <div class="db-table-card">
+        <div class="db-table-wrapper">
+          <table class="db-table">
+            <thead>
+              <tr>
+                <th>Destinatario</th>
+                <th>Tipo</th>
+                <th>Contacto</th>
+                <th>Mensaje enviado</th>
+                <th>Fecha de Envío</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${notifications.length === 0 ? `
+                <tr>
+                  <td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted); font-style:italic;">
+                    No se han registrado envíos de alertas todavía.
+                  </td>
+                </tr>
+              ` : notifications.slice().reverse().map(n => {
+                const u = users.find(usr => usr.id === n.user_id);
+                const userName = u ? u.name : 'Usuario';
+                return `
+                  <tr>
+                    <td><strong>${userName}</strong></td>
+                    <td>
+                      <span class="status-tag ${n.type === 'email' ? 'approved' : 'pending'}" style="text-transform:uppercase; font-size:0.65rem;">
+                        ${n.type}
+                      </span>
+                    </td>
+                    <td><code>${n.recipient}</code></td>
+                    <td style="max-width:300px; white-space:normal; font-size:0.75rem; line-height:1.4;">${n.message}</td>
+                    <td>${new Date(n.sent_at).toLocaleString()}</td>
+                    <td>
+                      <span class="status-tag approved" style="font-size:0.65rem;">
+                        ${n.status}
+                      </span>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // Admin Shipping Operations
@@ -619,6 +686,7 @@ function approveProduct(prodId, isApproved) {
     if (isApproved) {
       products[index].status = "approved";
       alert("¡Producto aprobado y publicado en la tienda!");
+      notifyFollowers(products[index].seller_id, products[index]);
     } else {
       products[index].status = "rejected";
       alert("Producto rechazado.");

@@ -129,7 +129,7 @@ function renderProductDetail(productId) {
           </div>
 
           <!-- Seller Profile Box -->
-          <div class="seller-profile-card">
+          <div class="seller-profile-card" style="display:flex; justify-content:space-between; align-items:center;">
             <div class="seller-profile-info">
               <i data-lucide="store" style="width:2rem;height:2rem;color:var(--gold-light);"></i>
               <div>
@@ -138,11 +138,21 @@ function renderProductDetail(productId) {
                   <i data-lucide="star" style="width:0.8rem;height:0.8rem;fill:var(--gold-light);"></i>
                   <span>${sellerRating.toFixed(1)} / 5.0 Rating</span>
                 </div>
+                <span style="font-size:0.75rem; color:var(--text-muted); font-style:italic; display:block; margin-top:0.25rem;">
+                  ${commissionText}
+                </span>
               </div>
             </div>
-            <span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">
-              ${commissionText}
-            </span>
+            
+            <!-- Follow/Favorite Seller Button -->
+            ${!isOwnProduct ? `
+              <button class="btn-small ${state.currentUser && isFollowingSeller(sellerUserId) ? 'primary-btn' : 'secondary-btn'}" 
+                      style="width:auto; padding:0.4rem 0.8rem; font-size:0.75rem; display:flex; align-items:center; gap:0.25rem;" 
+                      onclick="toggleFollowSeller('${sellerUserId}', '${sellerName.replace(/'/g, "\\'")}')">
+                <i data-lucide="heart" style="width:0.85rem; height:0.85rem; fill:${state.currentUser && isFollowingSeller(sellerUserId) ? 'var(--text-primary)' : 'none'};"></i>
+                <span>${state.currentUser && isFollowingSeller(sellerUserId) ? 'Siguiendo' : 'Seguir Tienda'}</span>
+              </button>
+            ` : ''}
           </div>
 
           <!-- Action buttons -->
