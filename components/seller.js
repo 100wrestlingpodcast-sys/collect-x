@@ -768,40 +768,44 @@ function openAddProductModal() {
         </div>
       </div>
       
-      <!-- Shippo Parcel Dimensions & Collectibles Rules -->
+      <!-- Shippo Parcel Dimensions & Collectibles Rules (Collapsible) -->
       <div style="border: 1px solid var(--border-color); padding:0.8rem; border-radius:6px; background:#fafafa;">
-        <h4 style="font-size:0.85rem; margin-bottom:0.75rem; color:var(--text-primary); display:flex; align-items:center; gap:0.4rem;">
+        <h4 style="font-size:0.85rem; margin-bottom:0; color:var(--text-primary); display:flex; align-items:center; gap:0.4rem; cursor:pointer;" onclick="const t = document.getElementById('shipping-advanced-opts'); t.style.display = t.style.display === 'none' ? 'block' : 'none';">
           <i data-lucide="package" style="width:1rem;height:1rem;color:var(--gold-light);"></i>
-          Configuración de Paquete Shippo (Envío)
+          ${tr('Opciones de Envío Avanzadas (Peso y Tamaño)', 'Advanced Shipping Options')} 
+          <i data-lucide="chevron-down" style="width:0.9rem;height:0.9rem; margin-left:auto;"></i>
         </h4>
-        <div class="checkout-form-group" style="margin-bottom:0.5rem;">
-          <div class="checkout-input-wrapper">
-            <label>Peso (oz)</label>
-            <input type="number" id="frm-prod-weight" value="16">
+        <div id="shipping-advanced-opts" style="display:none; margin-top:1rem; padding-top:1rem; border-top:1px dashed var(--border-color);">
+          <p style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:0.75rem;">${tr('Los valores por defecto aplican para figuras tamaño estándar (ej. Funko Pops). Si vendes una edición de coleccionista grande o una estatua, actualiza estos valores.', 'Default values apply for standard size figures (e.g. Funko Pops). Update these if selling large editions or statues.')}</p>
+          <div class="checkout-form-group" style="margin-bottom:0.5rem;">
+            <div class="checkout-input-wrapper">
+              <label>${tr('Peso (oz)', 'Weight (oz)')}</label>
+              <input type="number" id="frm-prod-weight" value="16">
+            </div>
+            <div class="checkout-input-wrapper">
+              <label>${tr('Largo (in)', 'Length (in)')}</label>
+              <input type="number" id="frm-prod-length" value="8">
+            </div>
+            <div class="checkout-input-wrapper">
+              <label>${tr('Ancho (in)', 'Width (in)')}</label>
+              <input type="number" id="frm-prod-width" value="6">
+            </div>
+            <div class="checkout-input-wrapper">
+              <label>${tr('Alto (in)', 'Height (in)')}</label>
+              <input type="number" id="frm-prod-height" value="4">
+            </div>
           </div>
-          <div class="checkout-input-wrapper">
-            <label>Largo (in)</label>
-            <input type="number" id="frm-prod-length" value="8">
+          
+          <div style="display:flex; flex-direction:column; gap:0.4rem; font-size:0.8rem; margin-top:0.75rem;">
+            <label style="display:flex; align-items:center; gap:0.4rem;">
+              <input type="checkbox" id="frm-prod-fragile">
+              <span>${tr('Marcar como artículo frágil (Recomienda embalaje y transportista premium)', 'Mark as fragile (Recommends premium carrier)')}</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:0.4rem;">
+              <input type="checkbox" id="frm-prod-insurance">
+              <span>${tr('Requerir Seguro del paquete (Auto-activado si cuesta > $100)', 'Require parcel insurance (Auto-activated if > $100)')}</span>
+            </label>
           </div>
-          <div class="checkout-input-wrapper">
-            <label>Ancho (in)</label>
-            <input type="number" id="frm-prod-width" value="6">
-          </div>
-          <div class="checkout-input-wrapper">
-            <label>Alto (in)</label>
-            <input type="number" id="frm-prod-height" value="4">
-          </div>
-        </div>
-        
-        <div style="display:flex; flex-direction:column; gap:0.4rem; font-size:0.8rem; margin-top:0.75rem;">
-          <label style="display:flex; align-items:center; gap:0.4rem;">
-            <input type="checkbox" id="frm-prod-fragile">
-            <span>Marcar como artículo frágil (Recomienda embalaje y transportista premium)</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:0.4rem;">
-            <input type="checkbox" id="frm-prod-insurance">
-            <span>Requerir Seguro del paquete (Auto-activado si cuesta > $100)</span>
-          </label>
         </div>
       </div>
 
@@ -979,40 +983,43 @@ function openEditProductModal(prodId) {
         </div>
       </div>
 
-      <!-- Shippo Parcel Dimensions & Collectibles Rules -->
+      <!-- Shippo Parcel Dimensions & Collectibles Rules (Collapsible) -->
       <div style="border: 1px solid var(--border-color); padding:0.8rem; border-radius:6px; background:#fafafa;">
-        <h4 style="font-size:0.85rem; margin-bottom:0.75rem; color:var(--text-primary); display:flex; align-items:center; gap:0.4rem;">
+        <h4 style="font-size:0.85rem; margin-bottom:0; color:var(--text-primary); display:flex; align-items:center; gap:0.4rem; cursor:pointer;" onclick="const t = document.getElementById('edit-shipping-advanced-opts'); t.style.display = t.style.display === 'none' ? 'block' : 'none';">
           <i data-lucide="package" style="width:1rem;height:1rem;color:var(--gold-light);"></i>
-          Configuración de Paquete Shippo (Envío)
+          ${tr('Opciones de Envío Avanzadas (Peso y Tamaño)', 'Advanced Shipping Options')}
+          <i data-lucide="chevron-down" style="width:0.9rem;height:0.9rem; margin-left:auto;"></i>
         </h4>
-        <div class="checkout-form-group" style="margin-bottom:0.5rem;">
-          <div class="checkout-input-wrapper">
-            <label>Peso (oz)</label>
-            <input type="number" id="edit-prod-weight" value="${p.weight || 16}">
+        <div id="edit-shipping-advanced-opts" style="display:none; margin-top:1rem; padding-top:1rem; border-top:1px dashed var(--border-color);">
+          <div class="checkout-form-group" style="margin-bottom:0.5rem;">
+            <div class="checkout-input-wrapper">
+              <label>${tr('Peso (oz)', 'Weight (oz)')}</label>
+              <input type="number" id="edit-prod-weight" value="${p.weight || 16}">
+            </div>
+            <div class="checkout-input-wrapper">
+              <label>${tr('Largo (in)', 'Length (in)')}</label>
+              <input type="number" id="edit-prod-length" value="${p.length || 8}">
+            </div>
+            <div class="checkout-input-wrapper">
+              <label>${tr('Ancho (in)', 'Width (in)')}</label>
+              <input type="number" id="edit-prod-width" value="${p.width || 6}">
+            </div>
+            <div class="checkout-input-wrapper">
+              <label>${tr('Alto (in)', 'Height (in)')}</label>
+              <input type="number" id="edit-prod-height" value="${p.height || 4}">
+            </div>
           </div>
-          <div class="checkout-input-wrapper">
-            <label>Largo (in)</label>
-            <input type="number" id="edit-prod-length" value="${p.length || 8}">
+          
+          <div style="display:flex; flex-direction:column; gap:0.4rem; font-size:0.8rem; margin-top:0.75rem;">
+            <label style="display:flex; align-items:center; gap:0.4rem;">
+              <input type="checkbox" id="edit-prod-fragile" ${p.fragile ? 'checked' : ''}>
+              <span>${tr('Marcar como artículo frágil', 'Mark as fragile')}</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:0.4rem;">
+              <input type="checkbox" id="edit-prod-insurance" ${p.insurance_required ? 'checked' : ''}>
+              <span>${tr('Requerir Seguro del paquete', 'Require parcel insurance')}</span>
+            </label>
           </div>
-          <div class="checkout-input-wrapper">
-            <label>Ancho (in)</label>
-            <input type="number" id="edit-prod-width" value="${p.width || 6}">
-          </div>
-          <div class="checkout-input-wrapper">
-            <label>Alto (in)</label>
-            <input type="number" id="edit-prod-height" value="${p.height || 4}">
-          </div>
-        </div>
-        
-        <div style="display:flex; flex-direction:column; gap:0.4rem; font-size:0.8rem; margin-top:0.75rem;">
-          <label style="display:flex; align-items:center; gap:0.4rem;">
-            <input type="checkbox" id="edit-prod-fragile" ${p.fragile ? 'checked' : ''}>
-            <span>Marcar como artículo frágil</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:0.4rem;">
-            <input type="checkbox" id="edit-prod-insurance" ${p.insurance_required ? 'checked' : ''}>
-            <span>Requerir Seguro del paquete</span>
-          </label>
         </div>
       </div>
 
