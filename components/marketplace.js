@@ -175,8 +175,8 @@ function renderMarketplace() {
           <div class="filter-group">
             <span class="filter-label">${tr('Rango de Precio', 'Price Range')}</span>
             <div class="price-inputs">
-              <input type="number" id="filter-min-price" placeholder="Min" value="${window.activeFilters.minPrice}" oninput="updateFilterPrice()">
-              <input type="number" id="filter-max-price" placeholder="Max" value="${window.activeFilters.maxPrice}" oninput="updateFilterPrice()">
+              <input type="number" id="filter-min-price" placeholder="Min" value="${window.activeFilters.minPrice}" onchange="updateFilterPrice()">
+              <input type="number" id="filter-max-price" placeholder="Max" value="${window.activeFilters.maxPrice}" onchange="updateFilterPrice()">
             </div>
           </div>
 
