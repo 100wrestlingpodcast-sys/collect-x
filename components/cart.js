@@ -664,7 +664,6 @@ function formatExpiry(input) {
   }
 }
 
-// Simulate Quick checkout Express pay
 function simulateExpressPay(providerName) {
   showToast(tr(`Ventana de ${providerName} emergente. Autenticando biométricos...`, `${providerName} popup. Authenticating biometrics...`), 'info');
   // Check if user has shipping addresses
@@ -673,12 +672,18 @@ function simulateExpressPay(providerName) {
     const defAddr = addresses.find(a => a.is_default) || addresses[0];
     window.selectedAddressId = defAddr.id;
   }
-
-  document.getElementById('stripe-card-num').value = "4242 4242 4242 4242";
-  document.getElementById('stripe-card-expiry').value = "09/29";
-  document.getElementById('stripe-card-cvc').value = "422";
   
+  // Render first so the inputs are in the DOM and won't be cleared
   renderCheckoutView();
+
+  const numInput = document.getElementById('stripe-card-num');
+  const expInput = document.getElementById('stripe-card-expiry');
+  const cvcInput = document.getElementById('stripe-card-cvc');
+
+  if (numInput) numInput.value = "4242 4242 4242 4242";
+  if (expInput) expInput.value = "09/29";
+  if (cvcInput) cvcInput.value = "422";
+  
   showToast(tr(`¡Autenticación con ${providerName} Exitosa! Dirección de envío y tarjeta precargadas.`, `Authentication with ${providerName} Successful! Shipping address and card preloaded.`), 'success');
 }
 
