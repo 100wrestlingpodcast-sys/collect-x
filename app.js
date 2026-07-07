@@ -78,7 +78,7 @@ window.showToast = function(message, type = 'info') {
   
   const toast = document.createElement('div');
   const bg = type === 'success' ? 'var(--success-color, #10b981)' : type === 'error' ? 'var(--danger-color, #ef4444)' : '#333';
-  toast.style.cssText = \`background: \${bg}; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 500; font-family: var(--font-body, 'Inter', sans-serif); box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);\`;
+  toast.style.cssText = `background: ${bg}; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 500; font-family: var(--font-body, 'Inter', sans-serif); box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);`;
   toast.innerText = message;
   
   container.appendChild(toast);
