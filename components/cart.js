@@ -124,9 +124,9 @@ function renderCheckoutView() {
   if (state.cart.length === 0) {
     viewport.innerHTML = `
       <div class="section-container" style="text-align:center; padding:5rem 0;">
-        <h2>Tu Carrito está vacío</h2>
-        <p style="color:var(--text-secondary); margin-top:1rem;">No tienes artículos para comprar en este momento.</p>
-        <button class="btn-large primary-btn" style="width:auto; margin: 1.5rem auto 0;" onclick="router.navigate('')">Explorar Marketplace</button>
+        <h2>${tr('Tu Carrito está vacío', 'Your Cart is empty')}</h2>
+        <p style="color:var(--text-secondary); margin-top:1rem;">${tr('No tienes artículos para comprar en este momento.', 'You have no items to buy at this time.')}</p>
+        <button class="btn-large primary-btn" style="width:auto; margin: 1.5rem auto 0;" onclick="router.navigate('')">${tr('Explorar Marketplace', 'Explore Marketplace')}</button>
       </div>
     `;
     return;
@@ -287,8 +287,8 @@ function renderCheckoutView() {
   });
 
   const couponText = activeCoupon 
-    ? `<span style="color:#10b981;">Cupón: ${activeCoupon.code} (-$${discount.toFixed(2)})</span>`
-    : '<span style="color:var(--text-muted);">Ninguno</span>';
+    ? `<span style="color:#10b981;">${tr('Cupón:', 'Coupon:')} ${activeCoupon.code} (-$${discount.toFixed(2)})</span>`
+    : `<span style="color:var(--text-muted);">${tr('Ninguno', 'None')}</span>`;
 
   // Address Options selector HTML
   const addressOptionsHtml = addresses.map(addr => `
@@ -301,7 +301,7 @@ function renderCheckoutView() {
   let ratesSelectionHtml = `
     <div style="padding: 1.5rem; text-align:center; border: 1.5px dashed var(--border-color); border-radius:8px; color:var(--text-secondary);">
       <i data-lucide="truck" style="width:2rem; height:2rem; margin-bottom:0.5rem; opacity:0.5;"></i>
-      <p style="font-size:0.9rem;">Por favor selecciona o añade una dirección de envío para cotizar tarifas.</p>
+      <p style="font-size:0.9rem;">${tr('Por favor selecciona o añade una dirección de envío para cotizar tarifas.', 'Please select or add a shipping address to quote rates.')}</p>
     </div>
   `;
 
@@ -317,16 +317,16 @@ function renderCheckoutView() {
             <div>
               <div style="font-weight:700; display:flex; align-items:center; gap:0.4rem; color:var(--text-primary);">
                 <span>${rate.carrier} ${rate.service}</span>
-                ${isRecommended ? `<span class="status-tag approved" style="font-size:0.6rem; padding: 0.1rem 0.4rem; border-color:#d97706; color:#d97706;">Recomendado</span>` : ''}
+                ${isRecommended ? `<span class="status-tag approved" style="font-size:0.6rem; padding: 0.1rem 0.4rem; border-color:#d97706; color:#d97706;">${tr('Recomendado', 'Recommended')}</span>` : ''}
               </div>
               <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.15rem;">
-                Tiempo de tránsito: ${rate.days} ${rate.days === 1 ? 'día' : 'días'} | Nivel: ${rate.tier}
+                ${tr('Tiempo de tránsito:', 'Transit time:')} ${rate.days} ${rate.days === 1 ? tr('día', 'day') : tr('días', 'days')} | ${tr('Nivel:', 'Tier:')} ${rate.tier}
               </div>
               ${rate.notes ? `<div style="font-size:0.75rem; color:#f59e0b; margin-top:0.25rem;">⚠️ ${rate.notes}</div>` : ''}
             </div>
             <div style="text-align:right;">
               <div style="font-weight:700; color:var(--gold-light); font-size:1.1rem;">$${rate.shipping_cost.toFixed(2)}</div>
-              ${rate.insurance_cost > 0 ? `<div style="font-size:0.7rem; color:var(--text-muted);">Seguro: +$${rate.insurance_cost.toFixed(2)}</div>` : ''}
+              ${rate.insurance_cost > 0 ? `<div style="font-size:0.7rem; color:var(--text-muted);">${tr('Seguro:', 'Insurance:')} +$${rate.insurance_cost.toFixed(2)}</div>` : ''}
             </div>
           </div>
         </label>
@@ -339,9 +339,9 @@ function renderCheckoutView() {
   if (activeAddress) {
     activeAddressBlock = `
       <div style="background:#fafafa; border:1px solid var(--border-color); border-radius:6px; padding:0.8rem; margin-top:1rem; font-size:0.85rem; line-height:1.5;">
-        <strong>Destinatario:</strong> ${activeAddress.name}<br>
-        <strong>Dirección:</strong> ${activeAddress.street}, ${activeAddress.city}, ${activeAddress.state} ${activeAddress.zip}, ${activeAddress.country}<br>
-        <strong>Teléfono:</strong> ${activeAddress.phone}
+        <strong>${tr('Destinatario:', 'Recipient:')}</strong> ${activeAddress.name}<br>
+        <strong>${tr('Dirección:', 'Address:')}</strong> ${activeAddress.street}, ${activeAddress.city}, ${activeAddress.state} ${activeAddress.zip}, ${activeAddress.country}<br>
+        <strong>${tr('Teléfono:', 'Phone:')}</strong> ${activeAddress.phone}
       </div>
     `;
   }
@@ -349,8 +349,8 @@ function renderCheckoutView() {
   viewport.innerHTML = `
     <div class="section-container">
       <div style="margin-bottom: 2rem;">
-        <h2>Pasarela de Pago Segura</h2>
-        <p style="color:var(--text-secondary); margin-top:0.25rem;">Completa tu orden utilizando Stripe & Shippo Integrations</p>
+        <h2>${tr('Pasarela de Pago Segura', 'Secure Checkout Gateway')}</h2>
+        <p style="color:var(--text-secondary); margin-top:0.25rem;">${tr('Completa tu orden utilizando Stripe & Shippo Integrations', 'Complete your order using Stripe & Shippo Integrations')}</p>
       </div>
 
       <div class="checkout-grid">
@@ -361,17 +361,17 @@ function renderCheckoutView() {
             <h3 class="checkout-subtitle" style="display:flex; justify-content:space-between; align-items:center;">
               <span style="display:flex; align-items:center; gap:0.5rem;">
                 <i data-lucide="map-pin" style="color:var(--primary-light);"></i>
-                Dirección de Envío
+                ${tr('Dirección de Envío', 'Shipping Address')}
               </span>
               <button class="action-btn-small approve" style="font-size:0.75rem; padding:0.3rem 0.6rem;" onclick="openNewAddressModal()">
-                + Agregar Nueva
+                ${tr('+ Agregar Nueva', '+ Add New')}
               </button>
             </h3>
             
             <div class="checkout-input-wrapper" style="margin-top:1rem;">
-              <label for="checkout-address-select">Selecciona una dirección guardada</label>
+              <label for="checkout-address-select">${tr('Selecciona una dirección guardada', 'Select a saved address')}</label>
               <select id="checkout-address-select" onchange="changeCheckoutAddress(this.value)" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); width:100%; border-radius:6px; padding:0.5rem; outline:none;">
-                ${addresses.length === 0 ? '<option value="">No tienes direcciones guardadas</option>' : addressOptionsHtml}
+                ${addresses.length === 0 ? `<option value="">${tr('No tienes direcciones guardadas', 'You have no saved addresses')}</option>` : addressOptionsHtml}
               </select>
             </div>
             
@@ -382,14 +382,14 @@ function renderCheckoutView() {
           <div class="checkout-card">
             <h3 class="checkout-subtitle">
               <i data-lucide="truck" style="color:#f59e0b;"></i>
-              Comparador de Envíos Shippo
+              ${tr('Comparador de Envíos Shippo', 'Shippo Shipping Comparer')}
             </h3>
             
             ${shippoRatesData && shippoRatesData.insurance_suggested ? `
               <div class="alert-info-box" style="background:#fef3c7; border: 1px solid #fcd34d; border-radius:6px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:#b45309; display:flex; align-items:center; gap:0.5rem;">
                 <i data-lucide="shield" style="width:1.2rem; height:1.2rem; flex-shrink:0;"></i>
                 <div>
-                  <strong>Seguro Shippo Recomendado:</strong> Este paquete incluye artículos especiales o de alto valor (> $100). El costo del seguro se agregará automáticamente al transportista seleccionado para cubrir posibles daños o pérdida en el correo.
+                  <strong>${tr('Seguro Shippo Recomendado:', 'Shippo Insurance Recommended:')}</strong> ${tr('Este paquete incluye artículos especiales o de alto valor (> $100). El costo del seguro se agregará automáticamente al transportista seleccionado para cubrir posibles daños o pérdida en el correo.', 'This package includes special or high-value items (> $100). The insurance cost will be added automatically to the selected carrier to cover potential damage or loss in transit.')}
                 </div>
               </div>
             ` : ''}
@@ -398,7 +398,7 @@ function renderCheckoutView() {
               <div class="alert-info-box" style="background:#fee2e2; border: 1px solid #fecaca; border-radius:6px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:#b91c1c; display:flex; align-items:center; gap:0.5rem;">
                 <i data-lucide="alert-triangle" style="width:1.2rem; height:1.2rem; flex-shrink:0;"></i>
                 <div>
-                  <strong>Artículo Frágil:</strong> Se ha añadido un recargo de protección física y se aconseja seleccionar opciones de transporte prioritario.
+                  <strong>${tr('Artículo Frágil:', 'Fragile Item:')}</strong> ${tr('Se ha añadido un recargo de protección física y se aconseja seleccionar opciones de transporte prioritario.', 'A physical protection surcharge has been added and priority transport options are advised.')}
                 </div>
               </div>
             ` : ''}
@@ -413,27 +413,27 @@ function renderCheckoutView() {
             <h3 class="checkout-subtitle" style="display:flex; justify-content:space-between; align-items:center;">
               <span style="display:flex; align-items:center; gap:0.5rem;">
                 <i data-lucide="credit-card" style="color:#6366f1;"></i>
-                Pago con Stripe
+                ${tr('Pago con Stripe', 'Pay with Stripe')}
               </span>
-              <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Modo Prueba Activo</span>
+              <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">${tr('Modo Prueba Activo', 'Test Mode Active')}</span>
             </h3>
             
             <!-- Quick Apple / Google Pay mock buttons if compatible -->
             <div style="display:flex; gap:1rem; margin-bottom:1.5rem;">
               <button class="btn-large" style="background:#000; color:white; font-size:0.9rem; padding: 0.6rem; border:1px solid rgba(255,255,255,0.15);" onclick="simulateExpressPay('Apple Pay')">
-                <i data-lucide="smartphone" style="width:1rem;height:1rem;"></i> Pagar con Apple Pay
+                <i data-lucide="smartphone" style="width:1rem;height:1rem;"></i> ${tr('Pagar con Apple Pay', 'Pay with Apple Pay')}
               </button>
               <button class="btn-large" style="background:#fff; color:#000; font-size:0.9rem; padding: 0.6rem; border:1px solid #ddd;" onclick="simulateExpressPay('Google Pay')">
-                <i data-lucide="smartphone" style="width:1rem;height:1rem;"></i> Pagar con Google Pay
+                <i data-lucide="smartphone" style="width:1rem;height:1rem;"></i> ${tr('Pagar con Google Pay', 'Pay with Google Pay')}
               </button>
             </div>
 
             <div style="margin-bottom:1rem; text-align:center; color:var(--text-muted); font-size:0.8rem; border-bottom:1px solid var(--border-color); padding-bottom:1rem;">
-              o paga con tarjeta de crédito/débito
+              ${tr('o paga con tarjeta de crédito/débito', 'or pay with credit/debit card')}
             </div>
 
             <div class="checkout-input-wrapper" style="margin-bottom:1rem;">
-              <label>Número de Tarjeta</label>
+              <label>${tr('Número de Tarjeta', 'Card Number')}</label>
               <div style="position:relative;">
                 <input type="text" id="stripe-card-num" placeholder="4242 4242 4242 4242" maxlength="19" style="padding-left: 2.5rem; letter-spacing:0.1em;" oninput="formatCardNumber(this)">
                 <i data-lucide="credit-card" style="position:absolute; left:0.75rem; top:0.75rem; width:1.1rem; height:1.1rem; color:var(--text-muted);"></i>
@@ -442,11 +442,11 @@ function renderCheckoutView() {
 
             <div class="checkout-form-group">
               <div class="checkout-input-wrapper">
-                <label>Vencimiento (MM/AA)</label>
+                <label>${tr('Vencimiento (MM/AA)', 'Expiration (MM/YY)')}</label>
                 <input type="text" id="stripe-card-expiry" placeholder="12/28" maxlength="5" oninput="formatExpiry(this)">
               </div>
               <div class="checkout-input-wrapper">
-                <label>CVC / Código Seguridad</label>
+                <label>${tr('CVC / Código Seguridad', 'CVC / Security Code')}</label>
                 <input type="password" id="stripe-card-cvc" placeholder="***" maxlength="4">
               </div>
             </div>
@@ -456,44 +456,44 @@ function renderCheckoutView() {
         <!-- Order Summary & Stripe Connect Split visualizer -->
         <div>
           <div class="checkout-card" style="position:sticky; top:90px;">
-            <h3 class="checkout-subtitle">Resumen del Pedido</h3>
+            <h3 class="checkout-subtitle">${tr('Resumen del Pedido', 'Order Summary')}</h3>
             
             <div style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:1.5rem;">
               <div style="display:flex; justify-content:space-between; font-size:0.95rem;">
-                <span>Subtotal Figuras</span>
+                <span>${tr('Subtotal Figuras', 'Figures Subtotal')}</span>
                 <span>$${subtotal.toFixed(2)}</span>
               </div>
               <div style="display:flex; justify-content:space-between; font-size:0.95rem;">
-                <span>Descuento</span>
+                <span>${tr('Descuento', 'Discount')}</span>
                 <span>${discount > 0 ? `-$${discount.toFixed(2)}` : '$0.00'}</span>
               </div>
               <div style="display:flex; justify-content:space-between; font-size:0.95rem;">
-                <span>Envío Shippo (${activeRate ? activeRate.carrier : 'Carrier'})</span>
+                <span>${tr('Envío Shippo', 'Shippo Shipping')} (${activeRate ? activeRate.carrier : 'Carrier'})</span>
                 <span>$${shippingCost.toFixed(2)}</span>
               </div>
               ${insuranceCost > 0 ? `
                 <div style="display:flex; justify-content:space-between; font-size:0.95rem; color:#b45309;">
-                  <span>Seguro de Coleccionable</span>
+                  <span>${tr('Seguro de Coleccionable', 'Collectible Insurance')}</span>
                   <span>+$${insuranceCost.toFixed(2)}</span>
                 </div>
               ` : ''}
               <div style="display:flex; justify-content:space-between; font-size:0.95rem;">
-                <span>Impuestos (IVA 8%)</span>
+                <span>${tr('Impuestos (IVA 8%)', 'Taxes (8% VAT)')}</span>
                 <span>$${taxesCost.toFixed(2)}</span>
               </div>
               <div style="display:flex; justify-content:space-between; font-size:1.15rem; font-weight:700; border-top:1px dashed var(--border-color); padding-top:0.75rem; color:var(--text-primary);">
-                <span>Total a Pagar</span>
+                <span>${tr('Total a Pagar', 'Total to Pay')}</span>
                 <span style="color:var(--gold-light);">$${grandTotal.toFixed(2)}</span>
               </div>
             </div>
 
             <!-- Coupon Input -->
             <div style="margin-bottom:1.5rem; display:flex; gap:0.5rem;">
-              <input type="text" id="checkout-coupon-code" placeholder="Código de Cupón" style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.5rem; color:var(--text-primary); flex-grow:1; text-transform:uppercase; outline:none;" value="${activeCoupon ? activeCoupon.code : ''}">
-              <button class="btn-large primary-btn" style="width:auto; padding: 0.5rem 1rem; font-size:0.85rem;" onclick="applyCouponCode()">Aplicar</button>
+              <input type="text" id="checkout-coupon-code" placeholder="${tr('Código de Cupón', 'Coupon Code')}" style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.5rem; color:var(--text-primary); flex-grow:1; text-transform:uppercase; outline:none;" value="${activeCoupon ? activeCoupon.code : ''}">
+              <button class="btn-large primary-btn" style="width:auto; padding: 0.5rem 1rem; font-size:0.85rem;" onclick="applyCouponCode()">${tr('Aplicar', 'Apply')}</button>
             </div>
             <div style="margin-top:-1rem; margin-bottom:1.5rem; font-size:0.8rem;">
-              Estado del Cupón: ${couponText}
+              ${tr('Estado del Cupón:', 'Coupon Status:')} ${couponText}
             </div>
 
             <!-- Payout Split Card -->
@@ -526,7 +526,7 @@ function renderCheckoutView() {
             <!-- Complete Order Button -->
             <button class="btn-large primary-btn" style="margin-top:1.5rem; padding: 1rem;" onclick="processPaymentSubmit(${grandTotal}, ${platformCommissionTotal}, ${stripeProcessingFeeTotal}, ${shippingCost})">
               <i data-lucide="shield-check"></i>
-              Confirmar y Pagar
+              ${tr('Confirmar y Pagar', 'Confirm and Pay')}
             </button>
           </div>
         </div>

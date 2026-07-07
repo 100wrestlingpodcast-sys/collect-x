@@ -484,7 +484,7 @@ function updateNavBar() {
     if (navName) navName.textContent = user.name;
     if (navRoleBadge) {
       navRoleBadge.className = `user-role-badge ${user.role}`;
-      navRoleBadge.textContent = user.role === 'buyer' ? 'comprador' : user.role === 'seller' ? 'vendedor' : 'admin';
+      navRoleBadge.textContent = user.role === 'buyer' ? tr('comprador', 'buyer') : user.role === 'seller' ? tr('vendedor', 'seller') : 'admin';
     }
 
     // Mobile Bottom Nav Profile Avatar Update
@@ -681,7 +681,7 @@ function toggleProfileDropdown() {
       <h3 style="color:var(--text-primary); margin-bottom:0.25rem;">${user.name}</h3>
       <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.2rem;">${user.email}</p>
       <div style="display:flex; justify-content:center; gap:0.5rem; margin-bottom:1.5rem;">
-        <span class="user-role-badge ${user.role}">${user.role === 'buyer' ? 'Comprador' : user.role === 'seller' ? 'Vendedor' : 'Admin'}</span>
+        <span class="user-role-badge ${user.role}">${user.role === 'buyer' ? tr('Comprador', 'Buyer') : user.role === 'seller' ? tr('Vendedor', 'Seller') : 'Admin'}</span>
         <span class="status-tag approved">${user.status}</span>
       </div>
       
@@ -812,7 +812,7 @@ function renderRegisterFormModal() {
   const formHtml = `
     <div style="padding: 0.5rem 0;">
       <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.5rem; text-align:center;">
-        Crea tu cuenta de Comprador o Vendedor en COLLECT X.
+        ${tr('Crea tu cuenta de Comprador o Vendedor en COLLECT X.', 'Create your Buyer or Seller account at COLLECT X.')}
       </p>
 
       <div style="display:flex; flex-direction:column; gap:1rem;">
@@ -829,10 +829,10 @@ function renderRegisterFormModal() {
           <input type="password" id="reg-password" placeholder="••••••••" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
         </div>
         <div class="checkout-input-wrapper">
-          <label for="reg-role">¿Qué deseas hacer?</label>
+          <label for="reg-role">${tr('¿Qué deseas hacer?', 'What do you want to do?')}</label>
           <select id="reg-role" onchange="toggleRegisterSellerFields(this.value)" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
-            <option value="buyer">Comprar Figuras (Comprador)</option>
-            <option value="seller">Vender Figuras (Vendedor)</option>
+            <option value="buyer">${tr('Comprar Figuras (Comprador)', 'Buy Figures (Buyer)')}</option>
+            <option value="seller">${tr('Vender Figuras (Vendedor)', 'Sell Figures (Seller)')}</option>
           </select>
         </div>
 
