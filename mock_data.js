@@ -26,7 +26,19 @@ const INITIAL_SELLER_PROFILES = [
     commission_rate: 0.00, // Admin pays 0% commission on sales
     approved: true,
     rating_average: 5.0,
-    total_sales: 0.00
+    total_sales: 0.00,
+    
+    // Compliance & Shipping Stats
+    total_orders: 0,
+    ontime_orders: 0,
+    delayed_orders: 0,
+    cancelled_orders: 0,
+    disputes_count: 0,
+    active_strikes: 0,
+    suspension_until: null,
+    banned_permanently: false,
+    reliability_score: 100,
+    avg_dispatch_hours: 0
   }
 ];
 const INITIAL_PRODUCTS = [];
@@ -70,6 +82,11 @@ const INITIAL_SHIPPING_ADDRESSES = [
 const INITIAL_SHIPMENTS = [];
 const INITIAL_PACKAGE_EVIDENCE = [];
 
+// New Compliance & Fulfillment Tables
+const INITIAL_STRIKES = [];
+const INITIAL_EXTENSION_REQUESTS = [];
+const INITIAL_COMPLIANCE_AUDIT_LOGS = [];
+
 // Expose these as global objects for our scripts when loaded
 window.INITIAL_USERS = INITIAL_USERS;
 window.INITIAL_SELLER_PROFILES = INITIAL_SELLER_PROFILES;
@@ -86,3 +103,6 @@ window.INITIAL_COUPONS = INITIAL_COUPONS;
 window.INITIAL_SHIPPING_ADDRESSES = INITIAL_SHIPPING_ADDRESSES;
 window.INITIAL_SHIPMENTS = INITIAL_SHIPMENTS;
 window.INITIAL_PACKAGE_EVIDENCE = INITIAL_PACKAGE_EVIDENCE;
+window.INITIAL_STRIKES = INITIAL_STRIKES;
+window.INITIAL_EXTENSION_REQUESTS = INITIAL_EXTENSION_REQUESTS;
+window.INITIAL_COMPLIANCE_AUDIT_LOGS = INITIAL_COMPLIANCE_AUDIT_LOGS;

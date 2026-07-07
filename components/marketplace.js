@@ -85,6 +85,15 @@ function renderMarketplace() {
     });
   }
 
+  // Sort by Seller Reliability Score (Higher score = Higher ranking)
+  filteredProducts.sort((a, b) => {
+    const sellerA = profiles.find(prof => prof.user_id === a.seller_id);
+    const sellerB = profiles.find(prof => prof.user_id === b.seller_id);
+    const scoreA = sellerA ? (sellerA.reliability_score || 0) : 0;
+    const scoreB = sellerB ? (sellerB.reliability_score || 0) : 0;
+    return scoreB - scoreA; // Descending order
+  });
+
   // Build Hero Slider markup
   let heroMarkup = '';
   // Only show hero banner on home page without search query

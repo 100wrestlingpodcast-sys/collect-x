@@ -1640,7 +1640,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .status-tag.approved, .status-tag.paid, .status-tag.delivered { background: rgba(16, 185, 129, 0.12); color: #059669; }
-.status-tag.pending, .status-tag.processing { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+.status-tag.pending, .status-tag.processing, .status-tag.en_riesgo { background: rgba(245, 158, 11, 0.12); color: #d97706; }
 .status-tag.rejected, .status-tag.cancelled, .status-tag.refunded { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
 .status-tag.shipped { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
 .status-tag.disputed { background: rgba(168, 85, 247, 0.12); color: #7c3aed; border: 1.5px solid #7c3aed; }

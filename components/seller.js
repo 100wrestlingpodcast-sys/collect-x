@@ -19,7 +19,7 @@ function renderSellerDashboard() {
   if (!sellerProf) {
     viewport.innerHTML = `
       <div class="section-container" style="text-align:center; padding:5rem 0;">
-        <h2>Tu perfil de vendedor está pendiente de aprobación</h2>
+        <h2>${tr('Tu perfil de vendedor está pendiente de aprobación', 'Your seller profile is pending approval')}</h2>
         <p style="color:var(--text-secondary); margin-top:1rem;">El administrador está revisando tu cuenta. Te notificaremos una vez aprobada.</p>
         <button class="btn-large primary-btn" style="width:auto; margin: 1.5rem auto 0;" onclick="router.navigate('')">Ir al Marketplace</button>
       </div>
@@ -57,7 +57,7 @@ function renderSellerDashboard() {
   viewport.innerHTML = `
     <div class="section-container">
       <div style="margin-bottom: 1.5rem;">
-        <h2 class="section-title">Panel del Vendedor</h2>
+        <h2 class="section-title">${tr('Panel del Vendedor', 'Seller Dashboard')}</h2>
         <p style="color:var(--text-secondary); margin-top:0.25rem;">
           Gestiona tu tienda: <strong>${sellerProf.store_name}</strong> | Plan: <span class="status-tag approved" style="font-weight:700;">${sellerProf.subscription_plan}</span>
         </p>
@@ -68,27 +68,27 @@ function renderSellerDashboard() {
         <aside class="dashboard-sidebar">
           <a class="db-menu-item ${window.activeSellerTab === 'overview' ? 'active' : ''}" onclick="setSellerTab('overview')">
             <i data-lucide="bar-chart-3" style="width:1.05rem;height:1.05rem;"></i>
-            Resumen Financiero
+            ${tr('Resumen Financiero', 'Financial Overview')}
           </a>
           <a class="db-menu-item ${window.activeSellerTab === 'products' ? 'active' : ''}" onclick="setSellerTab('products')">
             <i data-lucide="tag" style="width:1.05rem;height:1.05rem;"></i>
-            Mis Productos (${sellerProducts.length})
+            ${tr('Mis Productos', 'My Products')} (${sellerProducts.length})
           </a>
           <a class="db-menu-item ${window.activeSellerTab === 'shipping' ? 'active' : ''}" onclick="setSellerTab('shipping')">
             <i data-lucide="package" style="width:1.05rem;height:1.05rem;"></i>
-            Envíos y Etiquetas (${shipments.length})
+            ${tr('Envíos y Etiquetas', 'Shipping & Labels')} (${shipments.length})
           </a>
           <a class="db-menu-item ${window.activeSellerTab === 'orders' ? 'active' : ''}" onclick="setSellerTab('orders')">
             <i data-lucide="truck" style="width:1.05rem;height:1.05rem;"></i>
-            Órdenes Recibidas (${sellerOrders.length})
+            ${tr('Órdenes Recibidas', 'Orders Received')} (${sellerOrders.length})
           </a>
           <a class="db-menu-item ${window.activeSellerTab === 'reviews' ? 'active' : ''}" onclick="setSellerTab('reviews')">
             <i data-lucide="star" style="width:1.05rem;height:1.05rem;"></i>
-            Valoraciones (${sellerReviews.length})
+            ${tr('Valoraciones', 'Ratings')} (${sellerReviews.length})
           </a>
           <a class="db-menu-item ${window.activeSellerTab === 'subscription' ? 'active' : ''}" onclick="setSellerTab('subscription')">
             <i data-lucide="credit-card" style="width:1.05rem;height:1.05rem;"></i>
-            Mi Suscripción
+            ${tr('Mi Suscripción', 'My Subscription')}
           </a>
         </aside>
 
@@ -161,7 +161,7 @@ function renderSellerSubTab(tab, data) {
       <!-- sales history chart -->
       <div class="db-table-card">
         <div class="db-table-header">
-          <h3>Historial de Transacciones Recientes (Stripe Connect)</h3>
+          <h3>${tr('Historial de Transacciones Recientes (Stripe Connect)', 'Recent Transaction History (Stripe Connect)')}</h3>
         </div>
         <div class="db-table-wrapper">
           <table class="db-table">
@@ -200,7 +200,7 @@ function renderSellerSubTab(tab, data) {
   else if (tab === 'products') {
     container.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3>Inventario de Figuras (${data.sellerProducts.length})</h3>
+        <h3>${tr('Inventario de Figuras', 'Figure Inventory')} (${data.sellerProducts.length})</h3>
         <button class="btn-large primary-btn" style="width:auto; padding: 0.5rem 1rem;" onclick="openAddProductModal()">
           <i data-lucide="plus"></i> Publicar Figura
         </button>
@@ -261,11 +261,39 @@ function renderSellerSubTab(tab, data) {
     const evidenceLogs = db.get('package_evidence');
 
     container.innerHTML = `
-      <div style="margin-bottom:1.5rem;">
-        <h3>Envíos y Etiquetas (Shippo Integrado)</h3>
-        <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">
-          Genera etiquetas de envío, sube fotos del empaque y administra los trackings para liberar tus fondos de Stripe Connect.
-        </p>
+      <div style="margin-bottom:1.5rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h3>${tr('Rendimiento y Envíos', 'Performance & Shipping')}</h3>
+          <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">
+            Tu índice de confiabilidad determina tu posicionamiento en el marketplace. Mantén tus envíos a tiempo.
+          </p>
+        </div>
+        
+        <div style="display: flex; gap: 1rem;">
+          <div style="background:var(--bg-card); padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); display:flex; align-items:center; gap:0.75rem;">
+            <div style="font-size:2rem; font-weight:800; color: ${data.sellerProf.reliability_score >= 90 ? '#10b981' : data.sellerProf.reliability_score >= 70 ? '#f59e0b' : '#ef4444'};">
+              ${data.sellerProf.reliability_score}<span style="font-size:1rem;">/100</span>
+            </div>
+            <div>
+              <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Confiabilidad</div>
+              <div style="font-size:0.8rem; font-weight:600; color:var(--text-primary);">
+                ${data.sellerProf.reliability_score >= 90 ? 'Excelente (Prioridad Alta)' : data.sellerProf.reliability_score >= 70 ? 'Regular' : 'En Riesgo'}
+              </div>
+            </div>
+          </div>
+          
+          <div style="background:var(--bg-card); padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); display:flex; align-items:center; gap:0.75rem;">
+            <div style="font-size:1.8rem; font-weight:800; color: ${data.sellerProf.active_strikes > 0 ? '#ef4444' : '#10b981'};">
+              ${data.sellerProf.active_strikes}
+            </div>
+            <div>
+              <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Strikes Activos</div>
+              <div style="font-size:0.8rem; font-weight:600; color:var(--text-primary);">
+                ${data.sellerProf.active_strikes >= 4 ? 'Cuenta Baneada' : data.sellerProf.active_strikes >= 3 ? 'Cuenta Suspendida (30d)' : data.sellerProf.active_strikes >= 2 ? 'Creación Bloqueada' : 'Cuenta Saludable'}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="db-table-card">
@@ -373,7 +401,7 @@ function renderSellerSubTab(tab, data) {
 
   else if (tab === 'orders') {
     container.innerHTML = `
-      <h3>Órdenes Recibidas por Compradores</h3>
+      <h3>${tr('Órdenes Recibidas por Compradores', 'Orders Received from Buyers')}</h3>
       
       <div class="db-table-card">
         <div class="db-table-wrapper">
@@ -385,7 +413,7 @@ function renderSellerSubTab(tab, data) {
                 <th>Artículos Comprados</th>
                 <th>Monto Payout</th>
                 <th>Estado Envío</th>
-                <th>Tracking</th>
+                <th>Tracking / Deadline</th>
               </tr>
             </thead>
             <tbody>
@@ -401,6 +429,23 @@ function renderSellerSubTab(tab, data) {
                   const p = productsList.find(pr => pr.id === i.product_id);
                   return `${p ? p.title : 'Figura'} (x${i.quantity})`;
                 }).join(', ');
+                
+                // Calculate compliance time limit
+                let deadlineHtml = '';
+                if (!o.tracking_number && o.order_status !== 'cancelled' && o.order_status !== 'refunded') {
+                  const hoursPassed = Math.abs(new Date() - new Date(o.created_at)) / 36e5;
+                  const hoursLeft = 120 - hoursPassed;
+                  
+                  if (hoursLeft <= 0) {
+                    deadlineHtml = `<div style="color:#ef4444; font-size:0.75rem; font-weight:700;">TIEMPO AGOTADO</div>`;
+                  } else if (hoursLeft < 48) {
+                    deadlineHtml = `<div style="color:#ef4444; font-size:0.75rem; font-weight:700;">EN RIESGO (${Math.floor(hoursLeft)}h restantes)</div>`;
+                  } else if (hoursLeft < 72) {
+                    deadlineHtml = `<div style="color:#f59e0b; font-size:0.75rem; font-weight:600;">URGENTE (${Math.floor(hoursLeft)}h restantes)</div>`;
+                  } else {
+                    deadlineHtml = `<div style="color:var(--text-secondary); font-size:0.75rem;">${Math.floor(hoursLeft)}h restantes</div>`;
+                  }
+                }
 
                 return `
                   <tr>
@@ -414,7 +459,10 @@ function renderSellerSubTab(tab, data) {
                     <td>
                       ${o.tracking_number ? `
                         <span style="font-size:0.8rem;"><code>${o.tracking_number}</code> (${o.shipping_carrier})</span>
-                      ` : '<span style="color:var(--text-muted); font-size:0.8rem;">Label Pendiente</span>'}
+                      ` : `
+                        <span style="color:var(--text-muted); font-size:0.8rem;">Label Pendiente</span>
+                        ${deadlineHtml}
+                      `}
                     </td>
                   </tr>
                 `;
@@ -428,7 +476,7 @@ function renderSellerSubTab(tab, data) {
   
   else if (tab === 'reviews') {
     container.innerHTML = `
-      <h3>Valoraciones y Reseñas de tu Tienda</h3>
+      <h3>${tr('Valoraciones y Reseñas de tu Tienda', 'Store Ratings and Reviews')}</h3>
       <div style="font-size:0.95rem; color:var(--text-secondary); margin-bottom:1rem;">
         Tu promedio de estrellas actual es <strong>${data.sellerProf.rating_average.toFixed(1)} / 5.0</strong>.
       </div>
@@ -455,7 +503,7 @@ function renderSellerSubTab(tab, data) {
   else if (tab === 'subscription') {
     container.innerHTML = `
       <div style="margin-bottom:1.5rem;">
-        <h3>Administración de Suscripción</h3>
+        <h3>${tr('Administración de Suscripción', 'Subscription Management')}</h3>
         <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">
           Tu plan de suscripción actual determina tu límite de publicaciones y la tasa de comisión retenida por COLLECT X.
         </p>
@@ -678,6 +726,12 @@ function updateSellerPlan(planName) {
 
 // Open add/edit modal actions
 function openAddProductModal() {
+  const sellerProf = db.get('seller_profiles').find(p => p.user_id === state.currentUser.id);
+  if (sellerProf && sellerProf.active_strikes >= 2) {
+    alert("⛔ Tienes 2 o más strikes activos por retrasos en envíos. La creación de nuevos artículos ha sido temporalmente bloqueada.");
+    return;
+  }
+  
   window.newProductMedia = []; // Reset local media storage
   const categoriesOptions = CATEGORIES.slice(1).map(cat => `<option value="${cat}">${cat}</option>`).join('');
   
@@ -797,7 +851,6 @@ function submitAddProduct() {
   const condition = document.getElementById('frm-prod-condition').value;
   const stock = parseInt(document.getElementById('frm-prod-stock').value) || 0;
   const price = parseFloat(document.getElementById('frm-prod-price').value) || 0.00;
-  const imgUrl = document.getElementById('frm-prod-img-base64').value || document.getElementById('frm-prod-img').value.trim() || 'https://images.unsplash.com/photo-1608889174649-414430997ee6?w=600&auto=format&fit=crop&q=80';
   const desc = document.getElementById('frm-prod-desc').value.trim();
 
   // Shipping inputs
@@ -1009,7 +1062,6 @@ function submitEditProduct(productId) {
   const condition = document.getElementById('edit-prod-condition').value;
   const stock = parseInt(document.getElementById('edit-prod-stock').value) || 0;
   const price = parseFloat(document.getElementById('edit-prod-price').value) || 0.00;
-  const imgUrl = document.getElementById('edit-prod-img-base64').value || document.getElementById('edit-prod-img').value.trim();
   const desc = document.getElementById('edit-prod-desc').value.trim();
 
   // Shipping

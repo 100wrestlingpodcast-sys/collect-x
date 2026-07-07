@@ -8,7 +8,7 @@ window.tr = function(es, en) {
 // --- Persistent Database Simulator using LocalStorage ---
 const db = {
   init() {
-    if (!localStorage.getItem('cm_initialized_v6')) {
+    if (!localStorage.getItem('cm_initialized_v7')) {
       // Clean old keys if exist
       localStorage.clear();
       
@@ -34,12 +34,17 @@ const db = {
       localStorage.setItem('cm_favorite_sellers', JSON.stringify([]));
       localStorage.setItem('cm_notifications', JSON.stringify([]));
       
+      // Compliance Tables (v7)
+      localStorage.setItem('cm_strikes', JSON.stringify(window.INITIAL_STRIKES || []));
+      localStorage.setItem('cm_extension_requests', JSON.stringify(window.INITIAL_EXTENSION_REQUESTS || []));
+      localStorage.setItem('cm_compliance_audit_logs', JSON.stringify(window.INITIAL_COMPLIANCE_AUDIT_LOGS || []));
+      
       // Default session
       localStorage.setItem('cm_current_user_id', ''); // Empty (Guest) default
       localStorage.setItem('cm_cart', JSON.stringify([]));
       localStorage.setItem('cm_favorites', JSON.stringify([]));
       
-      localStorage.setItem('cm_initialized_v6', 'true');
+      localStorage.setItem('cm_initialized_v7', 'true');
     }
   },
   
@@ -387,7 +392,21 @@ function renderCategoryTabs() {
   container.innerHTML = CATEGORIES.map(cat => {
     const isActive = (cat === 'Todos' && selectedCategory === 'Todos') || (cat === selectedCategory);
     const clickHandler = cat === 'Todos' ? `router.navigate('')` : `router.navigate('category/${encodeURIComponent(cat)}')`;
-    return `<button class="category-tab ${isActive ? 'active' : ''}" onclick="${clickHandler}">${cat}</button>`;
+    
+    // Category translations map
+    const catTranslations = {
+      'Todos': 'All',
+      'Acción (Retro)': 'Action (Retro)',
+      'Funko Pop': 'Funko Pop',
+      'Wrestling': 'Wrestling',
+      'Anime': 'Anime',
+      'Marvel / DC': 'Marvel / DC',
+      'Autografiados': 'Autographed',
+      'Ediciones limitadas': 'Limited Editions'
+    };
+    
+    const translatedCat = tr(cat, catTranslations[cat] || cat);
+    return `<button class="category-tab ${isActive ? 'active' : ''}" onclick="${clickHandler}">${translatedCat}</button>`;
   }).join('');
 }
 
@@ -1193,9 +1212,145 @@ function changeLanguage(lang) {
   updateNavBar();
   updateBadges();
   
-  // Re-run router resolve to translate the current view
+// Re-run router resolve to translate the current view
   router.resolve();
   
   // Re-render categories tabs
   renderCategoryTabs();
 }
+
+// --- Compliance & Fulfillment Engine ---
+window.ComplianceEngine = {
+  // Test utility: Shifts an order's created_at date BACKWARDS by X hours to simulate time passing
+  fastForwardOrderTime(orderId, hours) {
+    const orders = db.get('orders');
+    const idx = orders.findIndex(o => o.id === orderId);
+    if (idx > -1) {
+      const currentCreatedAt = new Date(orders[idx].created_at);
+      currentCreatedAt.setHours(currentCreatedAt.getHours() - hours);
+      orders[idx].created_at = currentCreatedAt.toISOString();
+      db.set('orders', orders);
+      console.log(`Order ${orderId} fast-forwarded by ${hours} hours. New created_at: ${orders[idx].created_at}`);
+      this.runFulfillmentChecker();
+      state.refresh();
+    }
+  },
+
+  runFulfillmentChecker() {
+    const orders = db.get('orders');
+    const profiles = db.get('seller_profiles');
+    const transactions = db.get('transactions');
+    const strikes = db.get('strikes');
+    const auditLogs = db.get('compliance_audit_logs');
+    
+    let dbUpdated = false;
+    const now = new Date();
+
+    orders.forEach(order => {
+      // Only care about paid orders that haven't been shipped/cancelled/refunded yet
+      if (order.order_status !== 'paid' && order.order_status !== 'preparing' && order.order_status !== 'en_riesgo') return;
+
+      const orderDate = new Date(order.created_at);
+      const hoursPassed = Math.abs(now - orderDate) / 36e5;
+
+      const sellerId = order.items[0].seller_id; 
+      const profileIdx = profiles.findIndex(p => p.id === sellerId);
+      if (profileIdx === -1) return;
+      
+      const p = profiles[profileIdx];
+
+      // 5-Day (120h) Auto-Cancel & Strike
+      if (hoursPassed >= 120 && order.order_status !== 'refunded') {
+        order.order_status = 'refunded'; // Auto-refund
+        
+        // Find transaction and refund
+        const txIdx = transactions.findIndex(t => t.order_id === order.id);
+        if (txIdx > -1) {
+          transactions[txIdx].status = 'refunded';
+          transactions[txIdx].updated_at = new Date().toISOString();
+        }
+
+        // Apply Strike
+        const newStrike = {
+          id: 'strk_' + Date.now(),
+          seller_id: p.id,
+          order_id: order.id,
+          reason: 'Fallo de envío - 5 días superados (Reembolso Automático)',
+          created_at: new Date().toISOString(),
+          status: 'active'
+        };
+        strikes.push(newStrike);
+        
+        // Update seller stats
+        p.active_strikes += 1;
+        p.cancelled_orders += 1;
+        
+        auditLogs.push({
+          id: 'aud_' + Date.now(),
+          type: 'auto_cancel_strike',
+          seller_id: p.id,
+          order_id: order.id,
+          details: 'Orden cancelada y strike aplicado por superar los 5 días de envío.',
+          created_at: new Date().toISOString()
+        });
+        
+        // Re-calculate reliability
+        this.recalculateReliability(p);
+        
+        dbUpdated = true;
+      }
+      // 72-Hour Risk Alert
+      else if (hoursPassed >= 72 && hoursPassed < 120 && order.order_status !== 'en_riesgo' && !order.tracking_number) {
+        order.order_status = 'en_riesgo'; // Put in risk
+        
+        auditLogs.push({
+          id: 'aud_' + Date.now(),
+          type: 'risk_warning',
+          seller_id: p.id,
+          order_id: order.id,
+          details: 'Orden marcada EN RIESGO (72h sin envío).',
+          created_at: new Date().toISOString()
+        });
+        
+        dbUpdated = true;
+      }
+    });
+
+    if (dbUpdated) {
+      db.set('orders', orders);
+      db.set('seller_profiles', profiles);
+      db.set('transactions', transactions);
+      db.set('strikes', strikes);
+      db.set('compliance_audit_logs', auditLogs);
+    }
+  },
+
+  recalculateReliability(profile) {
+    // Basic formula: Start at 100
+    // -20 pts per active strike
+    // -5 pts per delayed order (not leading to cancel)
+    // +1 pt for on-time order
+    
+    let score = 100;
+    score -= (profile.active_strikes * 20);
+    score -= (profile.delayed_orders * 5);
+    score += (profile.ontime_orders * 1);
+    
+    // Check suspension thresholds
+    if (profile.active_strikes >= 4) {
+      profile.banned_permanently = true;
+      score = 0;
+    } else if (profile.active_strikes >= 3) {
+      // 30 day lock
+      const lockDate = new Date();
+      lockDate.setDate(lockDate.getDate() + 30);
+      profile.suspension_until = lockDate.toISOString();
+    }
+    
+    if (score < 0) score = 0;
+    if (score > 100) score = 100;
+    
+    profile.reliability_score = score;
+  }
+};
+
