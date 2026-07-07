@@ -1,6 +1,6 @@
 // collectors-market/mock_data.js
 
-window.GUEST_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="%23a0a0a0"><rect width="100" height="100" fill="%23e5e7eb"/><path d="M50 50c8.28 0 15-6.72 15-15s-6.72-15-15-15-15 6.72-15 15 6.72 15 15 15zm0 8c-10.02 0-30 5.03-30 15v7h60v-7c0-9.97-19.98-15-30-15z"/></svg>`;
+window.GUEST_AVATAR = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiBmaWxsPSIjYTBhMGEwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2U1ZTdlYiIvPjxwYXRoIGQ9Ik01MCA1MGM4LjI4IDAgMTUtNi43MiAxNS0xNXMtNi43Mi0xNS0xNS0xNS0xNSA2LjcyLTE1IDE1IDYuNzIgMTUgMTUgMTV6bTAgOGMtMTAuMDIgMC0zMCA1LjAzLTMwIDE1djdoNjB2LTdjMC05Ljk3LTE5Ljk4LTE1LTMwLTE1eiIvPjwvc3ZnPg==`;
 
 const INITIAL_USERS = [
   {

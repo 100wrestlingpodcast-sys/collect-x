@@ -308,6 +308,17 @@ const state = {
     
     // Load User
     const users = db.get('users');
+    let dbUpdated = false;
+    users.forEach(u => {
+      if (u.avatar && u.avatar.startsWith('data:image/svg+xml;utf8')) {
+        u.avatar = window.GUEST_AVATAR;
+        dbUpdated = true;
+      }
+    });
+    if (dbUpdated) {
+      db.set('users', users);
+    }
+
     const currId = db.getCurrentUserId();
     this.currentUser = users.find(u => u.id === currId) || null;
     

@@ -344,7 +344,12 @@ function renderCheckoutView() {
         <strong>${tr('Teléfono:', 'Phone:')}</strong> ${activeAddress.phone}
       </div>
     `;
-  }
+  window.checkoutTotals = {
+    grandTotal: grandTotal,
+    platformFeeTotal: platformCommissionTotal,
+    processingFeeTotal: stripeProcessingFeeTotal,
+    shippingCost: shippingCost
+  };
 
   viewport.innerHTML = `
     <div class="section-container">
@@ -665,13 +670,18 @@ function formatExpiry(input) {
 }
 
 function simulateExpressPay(providerName) {
-  showToast(tr(`Ventana de ${providerName} emergente. Autenticando biométricos...`, `${providerName} popup. Authenticating biometrics...`), 'info');
-  // Check if user has shipping addresses
   const addresses = db.get('shipping_addresses').filter(a => a.user_id === state.currentUser.id);
-  if (addresses.length > 0) {
-    const defAddr = addresses.find(a => a.is_default) || addresses[0];
-    window.selectedAddressId = defAddr.id;
+  if (addresses.length === 0) {
+    showToast(tr("Por favor agrega una dirección de envío antes de usar pago rápido.", "Please add a shipping address before using express checkout."), 'error');
+    openNewAddressModal();
+    return;
   }
+
+  showToast(tr(`Ventana de ${providerName} emergente. Autenticando biométricos...`, `${providerName} popup. Authenticating biometrics...`), 'info');
+  
+  const defAddr = addresses.find(a => a.is_default) || addresses[0];
+  window.selectedAddressId = defAddr.id;
+  window.selectedPaymentMethod = providerName;
   
   // Render first so the inputs are in the DOM and won't be cleared
   renderCheckoutView();
@@ -684,7 +694,19 @@ function simulateExpressPay(providerName) {
   if (expInput) expInput.value = "09/29";
   if (cvcInput) cvcInput.value = "422";
   
-  showToast(tr(`¡Autenticación con ${providerName} Exitosa! Dirección de envío y tarjeta precargadas.`, `Authentication with ${providerName} Successful! Shipping address and card preloaded.`), 'success');
+  showToast(tr(`¡Autenticación con ${providerName} Exitosa! Procesando pago...`, `Authentication with ${providerName} Successful! Processing payment...`), 'success');
+
+  // Auto-submit checkout after a brief delay
+  setTimeout(() => {
+    if (window.checkoutTotals) {
+      processPaymentSubmit(
+        window.checkoutTotals.grandTotal,
+        window.checkoutTotals.platformFeeTotal,
+        window.checkoutTotals.processingFeeTotal,
+        window.checkoutTotals.shippingCost
+      );
+    }
+  }, 1500);
 }
 
 // Apply Coupon
@@ -849,7 +871,7 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
       platform_fee: platformFee,
       processing_fee: stripeShare,
       seller_net: sellerNet,
-      payment_provider: "stripe",
+      payment_provider: (window.selectedPaymentMethod || "Stripe").toLowerCase().replace(" ", "_"),
       status: "succeeded", // Succeeded payout to platform, seller payout is held
       created_at: new Date().toISOString()
     };
@@ -892,8 +914,15 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
   window.appliedCoupon = null;
   window.selectedRateId = null;
 
-  showToast(tr("¡Compra procesada con éxito! Se ha cargado el pago en Stripe, transferido el split en custodia Connect y generado el Shipping Label automático en Shippo.", "Purchase processed successfully! Payment charged in Stripe, split transferred in Connect custody, and automatic Shipping Label generated in Shippo."), 'success');
+  const activeProvider = window.selectedPaymentMethod || "Stripe";
+  showToast(tr(`¡Compra procesada con éxito! Se ha cargado el pago con ${activeProvider}, transferido el split en custodia Connect y generado el Shipping Label automático en Shippo.`, `Purchase processed successfully! Payment charged with ${activeProvider}, split transferred in Connect custody, and automatic Shipping Label generated in Shippo.`), 'success');
   
   // Navigate to marketplace
   router.navigate('');
 }
+
+window.proceedToCheckout = function() {
+  toggleCartDrawer(false);
+  router.navigate('checkout');
+};
+
