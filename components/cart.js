@@ -497,7 +497,7 @@ function renderCheckoutView() {
             </div>
 
             <!-- Payout Split Card -->
-            <div class="stripe-payout-visualizer">
+            <div class="stripe-payout-visualizer" style="display:none;">
               <div style="font-family:var(--font-heading); font-size:0.85rem; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:0.4rem;">
                 <i data-lucide="git-fork" style="width:0.9rem;height:0.9rem;color:#6366f1;"></i>
                 Transferencia Automática de Fondos
