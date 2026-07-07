@@ -5,8 +5,10 @@ window.tr = function(es, en) {
   return lang === 'en' ? en : es;
 };
 
-// --- Persistent Database Simulator using LocalStorage ---
+// --- Persistent Database Simulator and Firebase Firestore Sync ---
 const db = {
+  cloudSynced: false,
+
   init() {
     if (!localStorage.getItem('cm_initialized_v7')) {
       // Clean old keys if exist
@@ -30,11 +32,11 @@ const db = {
       localStorage.setItem('cm_shipments', JSON.stringify(window.INITIAL_SHIPMENTS));
       localStorage.setItem('cm_package_evidence', JSON.stringify(window.INITIAL_PACKAGE_EVIDENCE));
       
-      // New CRM Notification and Follower tables
+      // New CRM tables
       localStorage.setItem('cm_favorite_sellers', JSON.stringify([]));
       localStorage.setItem('cm_notifications', JSON.stringify([]));
       
-      // Compliance Tables (v7)
+      // Compliance Tables
       localStorage.setItem('cm_strikes', JSON.stringify(window.INITIAL_STRIKES || []));
       localStorage.setItem('cm_extension_requests', JSON.stringify(window.INITIAL_EXTENSION_REQUESTS || []));
       localStorage.setItem('cm_compliance_audit_logs', JSON.stringify(window.INITIAL_COMPLIANCE_AUDIT_LOGS || []));
@@ -46,6 +48,12 @@ const db = {
       
       localStorage.setItem('cm_initialized_v7', 'true');
     }
+
+    // Cloud Synchronization On Load
+    if (window.firebaseActive && !this.cloudSynced) {
+      this.cloudSynced = true;
+      this.syncCloud();
+    }
   },
   
   get(table) {
@@ -54,6 +62,23 @@ const db = {
   
   set(table, data) {
     localStorage.setItem(`cm_${table}`, JSON.stringify(data));
+    if (window.firebaseActive) {
+      const colRef = window.dbCloud.collection(table);
+      data.forEach(item => {
+        if (item.id) {
+          colRef.doc(item.id).set(item).catch(err => console.error(`Firestore sync write error on ${table}:`, err));
+        }
+      });
+      // Handle deleted items
+      colRef.get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const exists = data.some(item => item.id === doc.id);
+          if (!exists) {
+            colRef.doc(doc.id).delete().catch(err => console.error(`Firestore sync delete error on ${table}:`, err));
+          }
+        });
+      }).catch(err => console.error("Firestore fetch comparison error:", err));
+    }
   },
   
   getCurrentUserId() {
@@ -63,6 +88,77 @@ const db = {
   
   setCurrentUserId(id) {
     localStorage.setItem('cm_current_user_id', id);
+  },
+
+  syncCloud() {
+    const collections = [
+      'users', 'seller_profiles', 'products', 'product_media', 'reviews', 'review_media',
+      'orders', 'order_items', 'transactions', 'seller_subscriptions', 'banners', 'coupons',
+      'shipping_addresses', 'shipments', 'package_evidence', 'favorite_sellers', 'notifications',
+      'strikes', 'extension_requests', 'compliance_audit_logs'
+    ];
+
+    // Seed empty Firestore tables on very first start
+    window.dbCloud.collection('products').limit(1).get().then(snapshot => {
+      if (snapshot.empty) {
+        console.log("🔥 Sembrando base de datos de Firestore vacía...");
+        this.seedCollection('users', window.INITIAL_USERS);
+        this.seedCollection('seller_profiles', window.INITIAL_SELLER_PROFILES);
+        this.seedCollection('products', window.INITIAL_PRODUCTS);
+        this.seedCollection('product_media', window.INITIAL_PRODUCT_MEDIA);
+        this.seedCollection('reviews', window.INITIAL_REVIEWS);
+        this.seedCollection('review_media', window.INITIAL_REVIEW_MEDIA);
+        this.seedCollection('orders', window.INITIAL_ORDERS);
+        this.seedCollection('order_items', window.INITIAL_ORDER_ITEMS);
+        this.seedCollection('transactions', window.INITIAL_TRANSACTIONS);
+        this.seedCollection('seller_subscriptions', window.INITIAL_SELLER_SUBSCRIPTIONS);
+        this.seedCollection('banners', window.INITIAL_BANNERS);
+        this.seedCollection('coupons', window.INITIAL_COUPONS);
+        this.seedCollection('shipping_addresses', window.INITIAL_SHIPPING_ADDRESSES);
+        this.seedCollection('shipments', window.INITIAL_SHIPMENTS);
+        this.seedCollection('package_evidence', window.INITIAL_PACKAGE_EVIDENCE);
+      }
+    }).catch(err => console.error("Error checking Firestore status:", err));
+
+    // Connect real-time listeners to auto-mirror cloud changes
+    let collectionsLoaded = 0;
+    collections.forEach(table => {
+      window.dbCloud.collection(table).onSnapshot(snapshot => {
+        const data = [];
+        snapshot.forEach(doc => {
+          data.push(doc.data());
+        });
+        
+        localStorage.setItem(`cm_${table}`, JSON.stringify(data));
+        
+        collectionsLoaded++;
+        if (collectionsLoaded >= collections.length) {
+          state.refresh();
+          if (window.router) {
+            const currentRoute = window.location.hash.replace('#', '') || '';
+            router.handleRoute(currentRoute);
+          }
+        } else {
+          state.refresh();
+          if (window.router) {
+            const currentRoute = window.location.hash.replace('#', '') || '';
+            router.handleRoute(currentRoute);
+          }
+        }
+      }, err => {
+        console.error(`Sync error on cloud table ${table}:`, err);
+      });
+    });
+  },
+
+  seedCollection(table, initialData) {
+    if (!initialData) return;
+    const colRef = window.dbCloud.collection(table);
+    initialData.forEach(item => {
+      if (item.id) {
+        colRef.doc(item.id).set(item).catch(err => console.error(`Seed error on cloud table ${table}:`, err));
+      }
+    });
   }
 };
 
@@ -816,6 +912,37 @@ function handleUserLoginSubmit() {
     return;
   }
 
+  // Firebase Auth integration
+  if (window.firebaseActive) {
+    window.auth.signInWithEmailAndPassword(email, password)
+      .then(userCredential => {
+        const users = db.get('users');
+        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        if (user) {
+          db.setCurrentUserId(user.id);
+          state.refresh();
+          updateNavBar();
+          updateBadges();
+          
+          window.showLoginFormOnly = false;
+          toggleGlobalModal(false);
+          
+          if (user.role === 'admin') router.navigate('admin');
+          else if (user.role === 'seller') router.navigate('seller');
+          else router.navigate('');
+          
+          showToast(tr(`¡Sesión iniciada con éxito! Bienvenido, ${user.name}.`, `Login successful! Welcome, ${user.name}.`), 'success');
+        } else {
+          showToast(tr("Perfil de usuario no sincronizado. Refresca la página.", "User profile not synced yet. Refresh the page."), 'error');
+        }
+      })
+      .catch(err => {
+        console.error("Firebase Login Error:", err);
+        showToast(tr("Credenciales incorrectas o error de autenticación.", "Incorrect credentials or authentication error."), 'error');
+      });
+    return;
+  }
+
   const users = db.get('users');
   const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
@@ -927,6 +1054,87 @@ function handleUserRegisterSubmit() {
     return;
   }
 
+  // Firebase Auth integration
+  if (window.firebaseActive) {
+    window.auth.createUserWithEmailAndPassword(email, password)
+      .then(userCredential => {
+        const newUserId = "usr_" + userCredential.user.uid;
+        const newUser = {
+          id: newUserId,
+          name: name,
+          email: email,
+          password_hash: "", // Securely leave empty in database collection
+          role: role,
+          avatar: window.GUEST_AVATAR,
+          created_at: new Date().toISOString(),
+          status: "active"
+        };
+        
+        const users = db.get('users');
+        users.push(newUser);
+        db.set('users', users);
+
+        if (role === 'seller') {
+          const storeName = document.getElementById('reg-store-name').value.trim() || `${name} Shop`;
+          const storeDesc = document.getElementById('reg-store-desc').value.trim() || 'Vendedor de figuras coleccionables.';
+          
+          const profiles = db.get('seller_profiles');
+          profiles.push({
+            id: "prof_" + Date.now(),
+            user_id: newUserId,
+            store_name: storeName,
+            store_desc: storeDesc,
+            reliability_score: 1.0,
+            active_strikes: 0,
+            total_sales: 0,
+            approved: false,
+            stripe_connect_id: null,
+            subscription_plan: "Basic",
+            commission_rate: 0.10
+          });
+          db.set('seller_profiles', profiles);
+        } else {
+          // Create default empty shipping address for buyer
+          const addresses = db.get('shipping_addresses');
+          addresses.push({
+            id: "addr_" + Date.now(),
+            user_id: newUserId,
+            name: name,
+            street: "123 Main St",
+            city: "San Jose",
+            state: "CA",
+            zip: "95112",
+            country: "US",
+            phone: "555-555-5555",
+            is_default: true
+          });
+          db.set('shipping_addresses', addresses);
+        }
+
+        // Set logged-in user in state
+        db.setCurrentUserId(newUserId);
+        state.refresh();
+        updateNavBar();
+        updateBadges();
+        
+        window.showLoginFormOnly = false;
+        toggleGlobalModal(false);
+        
+        if (role === 'seller') {
+          router.navigate('seller');
+          showToast(tr("¡Cuenta registrada! Tu perfil de vendedor está pendiente de aprobación por el Administrador.", "Account registered! Your seller profile is pending approval by the Administrator."), 'success');
+        } else {
+          router.navigate('');
+          showToast(tr(`¡Cuenta creada y sesión iniciada con éxito! Bienvenido, ${name}.`, `Account created and logged in! Welcome, ${name}.`), 'success');
+        }
+      })
+      .catch(err => {
+        console.error("Firebase Registration Error:", err);
+        showToast(tr(`Error de registro: ${err.message}`, `Registration error: ${err.message}`), 'error');
+      });
+    return;
+  }
+
   const users = db.get('users');
   const exists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
 
@@ -955,16 +1163,17 @@ function handleUserRegisterSubmit() {
     
     const profiles = db.get('seller_profiles');
     profiles.push({
-      id: "sel_prof_" + Date.now(),
+      id: "prof_" + Date.now(),
       user_id: newUserId,
       store_name: storeName,
-      description: storeDesc,
-      stripe_connect_id: "",
-      subscription_plan: "Free",
-      commission_rate: 0.12,
-      approved: false, // Starts as pending admin approval!
-      rating_average: 5.0,
-      total_sales: 0.00
+      store_desc: storeDesc,
+      reliability_score: 1.0,
+      active_strikes: 0,
+      total_sales: 0,
+      approved: false,
+      stripe_connect_id: null,
+      subscription_plan: "Basic",
+      commission_rate: 0.10
     });
     db.set('seller_profiles', profiles);
     

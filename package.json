@@ -1,0 +1,13 @@
+{
+  "name": "collectors-market",
+  "version": "1.0.0",
+  "description": "Collectors Market Production Build",
+  "main": "app.js",
+  "dependencies": {
+    "stripe": "^12.18.0",
+    "shippo": "^1.7.1"
+  },
+  "scripts": {
+    "dev": "npx netlify dev"
+  }
+}

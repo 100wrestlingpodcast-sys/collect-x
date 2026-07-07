@@ -128,8 +128,29 @@ function renderSellerSubTab(tab, data) {
   const container = document.getElementById('seller-db-content');
   if (!container) return;
 
+  let stripeAlertHtml = '';
+  if (!data.sellerProf.stripe_connect_id) {
+    stripeAlertHtml = `
+      <div class="alert-info-box" style="background:#fee2e2; border: 1px solid #fecaca; border-radius:8px; padding:1.2rem; margin-bottom:1.5rem; color:#b91c1c; font-family:var(--font-body, sans-serif);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <i data-lucide="shield-alert" style="width:2rem; height:2rem; flex-shrink:0;"></i>
+            <div>
+              <h4 style="font-weight:700; margin-bottom:0.15rem; color:#b91c1c; margin-top:0;">${tr('Stripe Connect Desconectado', 'Stripe Connect Disconnected')}</h4>
+              <p style="font-size:0.8rem; color:#7f1d1d; margin:0;">${tr('Para recibir transferencias bancarias reales por tus ventas, necesitas configurar tus datos de cobro con Stripe.', 'To receive real bank transfers for your sales, you need to configure your payout details with Stripe.')}</p>
+            </div>
+          </div>
+          <button class="btn-large primary-btn" style="width:auto; padding:0.5rem 1.2rem; background:#b91c1c; border-color:#b91c1c; font-size:0.85rem;" onclick="startStripeOnboarding()">
+            <i data-lucide="external-link"></i> ${tr('Vincular Cuenta de Stripe', 'Link Stripe Account')}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
   if (tab === 'overview') {
     container.innerHTML = `
+      ${stripeAlertHtml}
       <!-- Stats Cards -->
       <div class="stat-cards-grid">
         <div class="stat-card">
@@ -1228,4 +1249,61 @@ function renderFormMediaGallery() {
 function removeFormMediaItem(index) {
   window.newProductMedia.splice(index, 1);
   renderFormMediaGallery();
+}
+
+function startStripeOnboarding() {
+  const sellerProf = db.get('seller_profiles').find(p => p.user_id === state.currentUser.id);
+  if (!sellerProf) return;
+
+  showToast(tr("Generando enlace de vinculación seguro con Stripe...", "Generating secure Stripe onboarding link..."), 'info');
+
+  const payload = {
+    email: state.currentUser.email,
+    storeName: sellerProf.store_name,
+    returnOrigin: window.location.origin
+  };
+
+  const url = window.firebaseActive ? '/.netlify/functions/stripe-connect-onboard' : null;
+
+  if (!url) {
+    // Simulator fallback
+    setTimeout(() => {
+      sellerProf.stripe_connect_id = `acct_1N_${state.currentUser.id}_sim`;
+      const profiles = db.get('seller_profiles');
+      const idx = profiles.findIndex(p => p.user_id === state.currentUser.id);
+      if (idx > -1) {
+        profiles[idx] = sellerProf;
+        db.set('seller_profiles', profiles);
+      }
+      showToast(tr("¡Vínculo de Stripe Connect simulado con éxito!", "Stripe Connect link simulated successfully!"), 'success');
+      renderSellerDashboard();
+    }, 1500);
+    return;
+  }
+
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) throw new Error(data.error);
+    
+    // Save stripe connect ID in the profile (will sync to Firestore)
+    sellerProf.stripe_connect_id = data.stripeConnectId;
+    const profiles = db.get('seller_profiles');
+    const idx = profiles.findIndex(p => p.user_id === state.currentUser.id);
+    if (idx > -1) {
+      profiles[idx] = sellerProf;
+      db.set('seller_profiles', profiles);
+    }
+    
+    // Redirect the seller to Stripe to complete their bank details
+    window.location.href = data.onboardingUrl;
+  })
+  .catch(err => {
+    console.error("Stripe Onboarding error:", err);
+    showToast(tr(`Error de conexión con Stripe: ${err.message}`, `Stripe Connection Error: ${err.message}`), 'error');
+  });
 }

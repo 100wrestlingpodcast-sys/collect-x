@@ -106,6 +106,67 @@ function removeFromCart(productId) {
   renderCartDrawer();
 }
 
+function fetchRealShippoRates(parcel, fromAddress, toAddress) {
+  if (window.shippoRatesLoading) return;
+  window.shippoRatesLoading = true;
+  window.currentShippoRates = null;
+  window.selectedRateId = null;
+  window.shippoInsuranceSuggested = false;
+  window.shippoFragileWarning = false;
+
+  // Render immediately to show the loading spinner
+  renderCheckoutView();
+
+  const url = window.firebaseActive 
+    ? '/.netlify/functions/get-shippo-rates' 
+    : null; // Fallback to local simulator if Firebase is inactive
+    
+  if (!url) {
+    // Local simulator fallback
+    setTimeout(() => {
+      const data = shippoAPI.calculateRates(parcel, fromAddress, toAddress);
+      window.currentShippoRates = data.rates;
+      window.selectedRateId = data.recommended_rate_id;
+      window.recommendedRateId = data.recommended_rate_id;
+      window.shippoInsuranceSuggested = data.insurance_suggested;
+      window.shippoFragileWarning = data.fragile_warning;
+      window.shippoRatesLoading = false;
+      renderCheckoutView();
+    }, 1000);
+    return;
+  }
+
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ parcel, fromAddress, toAddress })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) throw new Error(data.error);
+    window.currentShippoRates = data.rates;
+    window.selectedRateId = data.recommended_rate_id;
+    window.recommendedRateId = data.recommended_rate_id;
+    window.shippoInsuranceSuggested = data.insurance_suggested;
+    window.shippoFragileWarning = data.fragile_warning;
+    window.shippoRatesLoading = false;
+    renderCheckoutView();
+  })
+  .catch(err => {
+    console.error("Shippo fetch error:", err);
+    window.shippoRatesLoading = false;
+    showToast(tr("Error al cotizar envío con Shippo. Usando simulación local.", "Error quoting shipping with Shippo. Using local simulation."), "error");
+    // Fallback to simulator
+    const data = shippoAPI.calculateRates(parcel, fromAddress, toAddress);
+    window.currentShippoRates = data.rates;
+    window.selectedRateId = data.recommended_rate_id;
+    window.recommendedRateId = data.recommended_rate_id;
+    window.shippoInsuranceSuggested = data.insurance_suggested;
+    window.shippoFragileWarning = data.fragile_warning;
+    renderCheckoutView();
+  });
+}
+
 // --- Checkout view renderer with Shippo Integration ---
 function renderCheckoutView() {
   const viewport = document.getElementById('app-viewport');
@@ -189,7 +250,6 @@ function renderCheckoutView() {
   };
 
   // 4. Fetch Shippo Rates based on active address
-  let shippoRatesData = null;
   let fromAddressDetails = null;
 
   if (activeAddress) {
@@ -197,13 +257,10 @@ function renderCheckoutView() {
     const allAddresses = db.get('shipping_addresses');
     fromAddressDetails = allAddresses.find(a => a.user_id === sellerIdForShipping) || allAddresses.find(a => a.user_id === "usr_admin_1");
     
-    // Call Shippo API Simulator
-    shippoRatesData = shippoAPI.calculateRates(parcel, fromAddressDetails, activeAddress);
-    window.currentShippoRates = shippoRatesData.rates;
-    
-    // Default selected rate
-    if (!window.selectedRateId) {
-      window.selectedRateId = shippoRatesData.recommended_rate_id;
+    if (window.currentShippoRates === undefined || window.currentShippoRates === null) {
+      if (!window.shippoRatesLoading) {
+        fetchRealShippoRates(parcel, fromAddressDetails, activeAddress);
+      }
     }
   }
 
@@ -305,9 +362,16 @@ function renderCheckoutView() {
     </div>
   `;
 
-  if (shippoRatesData && shippoRatesData.rates) {
-    ratesSelectionHtml = shippoRatesData.rates.map(rate => {
-      const isRecommended = rate.id === shippoRatesData.recommended_rate_id;
+  if (window.shippoRatesLoading) {
+    ratesSelectionHtml = `
+      <div style="padding: 2rem; text-align:center; border: 1px solid var(--border-color); border-radius:8px;">
+        <div class="spinner" style="margin: 0 auto 1rem;"></div>
+        <p style="font-size:0.85rem; color:var(--text-secondary);">${tr('Cotizando tarifas reales con Shippo...', 'Quoting real rates with Shippo...')}</p>
+      </div>
+    `;
+  } else if (window.currentShippoRates) {
+    ratesSelectionHtml = window.currentShippoRates.map(rate => {
+      const isRecommended = rate.id === window.recommendedRateId;
       const isSelected = rate.id === window.selectedRateId;
 
       return `
@@ -390,7 +454,7 @@ function renderCheckoutView() {
               ${tr('Comparador de Envíos Shippo', 'Shippo Shipping Comparer')}
             </h3>
             
-            ${shippoRatesData && shippoRatesData.insurance_suggested ? `
+            ${window.shippoInsuranceSuggested ? `
               <div class="alert-info-box" style="background:#fef3c7; border: 1px solid #fcd34d; border-radius:6px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:#b45309; display:flex; align-items:center; gap:0.5rem;">
                 <i data-lucide="shield" style="width:1.2rem; height:1.2rem; flex-shrink:0;"></i>
                 <div>
@@ -399,7 +463,7 @@ function renderCheckoutView() {
               </div>
             ` : ''}
 
-            ${shippoRatesData && shippoRatesData.fragile_warning ? `
+            ${window.shippoFragileWarning ? `
               <div class="alert-info-box" style="background:#fee2e2; border: 1px solid #fecaca; border-radius:6px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:#b91c1c; display:flex; align-items:center; gap:0.5rem;">
                 <i data-lucide="alert-triangle" style="width:1.2rem; height:1.2rem; flex-shrink:0;"></i>
                 <div>
@@ -545,6 +609,7 @@ function renderCheckoutView() {
 function changeCheckoutAddress(addrId) {
   window.selectedAddressId = addrId;
   window.selectedRateId = null; // Reset selected rate to recalculate recommended
+  window.currentShippoRates = null; // Clear cached rates to trigger a new fetch
   renderCheckoutView();
 }
 
@@ -756,8 +821,60 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
     return;
   }
 
-  showToast(tr("Procesando pago de Stripe en los servidores... (Simulando API call)", "Processing Stripe payment on servers... (Simulating API call)"), 'info');
-  
+  // Find seller stripe account ID
+  const products = db.get('products');
+  const profiles = db.get('seller_profiles');
+  const firstCartItem = state.cart[0];
+  const firstProduct = firstCartItem ? products.find(p => p.id === firstCartItem.product_id) : null;
+  const sellerId = firstProduct ? firstProduct.seller_id : null;
+  const sellerProfile = sellerId ? profiles.find(p => p.user_id === sellerId) : null;
+  const sellerStripeAccountId = sellerProfile ? sellerProfile.stripe_connect_id : null;
+
+  showToast(tr("Procesando cobro en los servidores de Stripe...", "Processing payment on Stripe servers..."), 'info');
+
+  const paymentData = {
+    amount: grandTotal,
+    applicationFeeAmount: platformFeeTotal,
+    sellerStripeAccountId: sellerStripeAccountId,
+    card: {
+      number: cardNum,
+      expiry: expiry,
+      cvc: cvc
+    },
+    description: `Compra en COLLECT X: ${firstProduct ? firstProduct.title : 'Artículos Coleccionables'}`
+  };
+
+  const url = window.firebaseActive ? '/.netlify/functions/create-payment-intent' : null;
+
+  if (!url) {
+    // Simulator fallback
+    setTimeout(() => {
+      completeCheckoutLocal(grandTotal, platformFeeTotal, processingFeeTotal, shippingCost, activeAddress, activeRate);
+    }, 1500);
+    return;
+  }
+
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(paymentData)
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) throw new Error(data.error);
+    if (data.success) {
+      completeCheckoutLocal(grandTotal, platformFeeTotal, processingFeeTotal, shippingCost, activeAddress, activeRate, data.paymentIntentId);
+    } else {
+      showToast(tr("La confirmación de pago de Stripe falló.", "Stripe payment confirmation failed."), 'error');
+    }
+  })
+  .catch(err => {
+    console.error("Stripe payment error:", err);
+    showToast(tr(`Error en la pasarela de pago real: ${err.message}`, `Error in real payment gateway: ${err.message}`), 'error');
+  });
+}
+
+function completeCheckoutLocal(grandTotal, platformFeeTotal, processingFeeTotal, shippingCost, activeAddress, activeRate, paymentIntentId) {
   const orders = db.get('orders');
   const orderItems = db.get('order_items');
   const transactions = db.get('transactions');
@@ -824,7 +941,7 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
       seller_payout: sellerPayout,
       payment_status: "paid",
       order_status: "paid", // Paid status, needs shipment creation
-      stripe_payment_intent_id: "pi_" + Math.random().toString(36).substr(2, 15),
+      stripe_payment_intent_id: paymentIntentId || ("pi_" + Math.random().toString(36).substr(2, 15)),
       tracking_number: "", // Filled after transaction
       shipping_carrier: "",
       created_at: new Date().toISOString()
