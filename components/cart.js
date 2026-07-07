@@ -79,14 +79,14 @@ function addToCart(productId) {
   if (!p) return;
 
   if (p.stock <= 0) {
-    alert("Lo sentimos, este artículo se encuentra agotado.");
+    showToast(tr("Lo sentimos, este artículo se encuentra agotado.", "Sorry, this item is out of stock."), 'error');
     return;
   }
 
   const existing = state.cart.find(item => item.product_id === productId);
   if (existing) {
     if (existing.quantity >= p.stock) {
-      alert(`No puedes añadir más piezas. Stock disponible: ${p.stock}`);
+      showToast(tr(`No puedes añadir más piezas. Stock disponible: ${p.stock}`, `You cannot add more items. Stock available: ${p.stock}`), 'error');
       return;
     }
     existing.quantity += 1;
@@ -95,7 +95,7 @@ function addToCart(productId) {
   }
 
   state.saveCart();
-  alert(`¡${p.title} añadida al carrito!`);
+  showToast(tr(`¡${p.title} añadida al carrito!`, `¡${p.title} added to cart!`), 'success');
   renderCartDrawer();
   toggleCartDrawer(true);
 }
@@ -115,7 +115,7 @@ function renderCheckoutView() {
   const profiles = db.get('seller_profiles');
 
   if (!state.currentUser) {
-    alert("Inicia sesión para proceder al checkout de tu compra.");
+    showToast(tr("Inicia sesión para proceder al checkout de tu compra.", "Log in to proceed to checkout."), 'error');
     renderLoginFormModal();
     router.navigate('');
     return;
@@ -594,14 +594,14 @@ function saveNewAddress() {
   const phone = document.getElementById('new-addr-phone').value.trim();
 
   if (!name || !street || !city || !stateVal || !zip || !phone) {
-    alert("Por favor completa todos los campos.");
+    showToast(tr("Por favor completa todos los campos.", "Please fill in all fields."), 'error');
     return;
   }
 
   // Address verification
   const verification = shippoAPI.verifyAddress({ street, zip });
   if (!verification.isValid) {
-    alert(`Error de Verificación Shippo: ${verification.error}`);
+    showToast(tr(`Error de Verificación Shippo: ${verification.error}`, `Shippo Verification Error: ${verification.error}`), 'error');
     return;
   }
 
@@ -634,7 +634,7 @@ function saveNewAddress() {
 
   toggleGlobalModal(false);
   renderCheckoutView();
-  alert("¡Dirección agregada y verificada exitosamente con Shippo!");
+  showToast(tr("¡Dirección agregada y verificada exitosamente con Shippo!", "Address added and verified successfully with Shippo!"), 'success');
 }
 
 // Format Input fields
@@ -666,7 +666,7 @@ function formatExpiry(input) {
 
 // Simulate Quick checkout Express pay
 function simulateExpressPay(providerName) {
-  alert(`Ventana de ${providerName} emergente. Autenticando biométricos...`);
+  showToast(tr(`Ventana de ${providerName} emergente. Autenticando biométricos...`, `${providerName} popup. Authenticating biometrics...`), 'info');
   // Check if user has shipping addresses
   const addresses = db.get('shipping_addresses').filter(a => a.user_id === state.currentUser.id);
   if (addresses.length > 0) {
@@ -679,7 +679,7 @@ function simulateExpressPay(providerName) {
   document.getElementById('stripe-card-cvc').value = "422";
   
   renderCheckoutView();
-  alert(`¡Autenticación con ${providerName} Exitosa! Dirección de envío y tarjeta precargadas.`);
+  showToast(tr(`¡Autenticación con ${providerName} Exitosa! Dirección de envío y tarjeta precargadas.`, `Authentication with ${providerName} Successful! Shipping address and card preloaded.`), 'success');
 }
 
 // Apply Coupon
@@ -696,10 +696,10 @@ function applyCouponCode() {
 
   if (match) {
     window.appliedCoupon = match;
-    alert(`¡Cupón ${code} aplicado correctamente!`);
+    showToast(tr(`¡Cupón ${code} aplicado correctamente!`, `Coupon ${code} applied successfully!`), 'success');
   } else {
     window.appliedCoupon = null;
-    alert("Código de cupón inválido o expirado.");
+    showToast(tr("Código de cupón inválido o expirado.", "Invalid or expired coupon code."), 'error');
   }
   renderCheckoutView();
 }
@@ -711,11 +711,11 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
   const cvc = document.getElementById('stripe-card-cvc').value.trim();
 
   if (!window.selectedAddressId) {
-    alert("Por favor selecciona o agrega una dirección de envío.");
+    showToast(tr("Por favor selecciona o agrega una dirección de envío.", "Please select or add a shipping address."), 'error');
     return;
   }
   if (!cardNum || !expiry || !cvc) {
-    alert("Por favor completa la información de pago de tu tarjeta.");
+    showToast(tr("Por favor completa la información de pago de tu tarjeta.", "Please complete your card payment information."), 'error');
     return;
   }
 
@@ -725,11 +725,11 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
   const activeRate = window.currentShippoRates.find(r => r.id === window.selectedRateId);
 
   if (!activeAddress || !activeRate) {
-    alert("Error de configuración de envío.");
+    showToast(tr("Error de configuración de envío.", "Shipping configuration error."), 'error');
     return;
   }
 
-  alert("Procesando pago de Stripe en los servidores... (Simulando API call)");
+  showToast(tr("Procesando pago de Stripe en los servidores... (Simulando API call)", "Processing Stripe payment on servers... (Simulating API call)"), 'info');
   
   const orders = db.get('orders');
   const orderItems = db.get('order_items');
@@ -887,7 +887,7 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
   window.appliedCoupon = null;
   window.selectedRateId = null;
 
-  alert("¡Compra procesada con éxito! Se ha cargado el pago en Stripe, transferido el split en custodia Connect y generado el Shipping Label automático en Shippo.");
+  showToast(tr("¡Compra procesada con éxito! Se ha cargado el pago en Stripe, transferido el split en custodia Connect y generado el Shipping Label automático en Shippo.", "Purchase processed successfully! Payment charged in Stripe, split transferred in Connect custody, and automatic Shipping Label generated in Shippo."), 'success');
   
   // Navigate to marketplace
   router.navigate('');

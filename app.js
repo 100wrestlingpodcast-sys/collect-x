@@ -66,6 +66,40 @@ const db = {
   }
 };
 
+// --- Toast Notification System ---
+window.showToast = function(message, type = 'info') {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:10px; pointer-events:none;';
+    document.body.appendChild(container);
+  }
+  
+  const toast = document.createElement('div');
+  const bg = type === 'success' ? 'var(--success-color, #10b981)' : type === 'error' ? 'var(--danger-color, #ef4444)' : '#333';
+  toast.style.cssText = \`background: \${bg}; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 500; font-family: var(--font-body, 'Inter', sans-serif); box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);\`;
+  toast.innerText = message;
+  
+  container.appendChild(toast);
+  
+  // Animate in
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+  });
+  
+  // Animate out and remove
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 300);
+  }, 3500);
+};
+
+
 // --- Secure Shippo API Simulator (Backend Endpoint Simulation) ---
 const shippoAPI = {
   verifyAddress(address) {
@@ -342,7 +376,7 @@ const router = {
       renderCheckoutView();
     } else if (route === 'admin') {
       if (!state.currentUser || state.currentUser.role !== 'admin') {
-        alert("Acceso denegado. Se requieren privilegios de Administrador.");
+        showToast(tr("Acceso denegado. Se requieren privilegios de Administrador.", "Access denied. Administrator privileges required."), 'error');
         this.navigate('');
         return;
       }
@@ -350,7 +384,7 @@ const router = {
       renderAdminDashboard();
     } else if (route === 'seller') {
       if (!state.currentUser || (state.currentUser.role !== 'seller' && state.currentUser.role !== 'admin')) {
-        alert("Acceso denegado. Se requiere cuenta de Vendedor.");
+        showToast(tr("Acceso denegado. Se requiere cuenta de Vendedor.", "Access denied. Seller account required."), 'error');
         this.navigate('');
         return;
       }
@@ -767,7 +801,7 @@ function handleUserLoginSubmit() {
   const password = document.getElementById('login-password').value.trim();
 
   if (!email || !password) {
-    alert("Por favor completa el correo y la contraseña.");
+    showToast(tr("Por favor completa el correo y la contraseña.", "Please fill in email and password."), 'error');
     return;
   }
 
@@ -792,9 +826,10 @@ function handleUserLoginSubmit() {
       router.navigate('');
     }
     
-    alert(`¡Sesión iniciada con éxito! Bienvenido, ${user.name}.`);
+    showToast(tr(`¡Sesión iniciada con éxito! Bienvenido, ${user.name}.`, `Login successful! Welcome, ${user.name}.`), 'success');
+    toggleGlobalModal(false);
   } else {
-    alert("Credenciales incorrectas. Por favor verifica los datos ingresados.");
+    showToast(tr("Credenciales incorrectas. Por favor verifica los datos ingresados.", "Incorrect credentials. Please verify your data."), 'error');
   }
 }
 
@@ -877,7 +912,7 @@ function handleUserRegisterSubmit() {
   const role = document.getElementById('reg-role').value;
 
   if (!name || !email || !password) {
-    alert("Por favor completa todos los campos principales (Nombre, Email y Contraseña).");
+    showToast(tr("Por favor completa todos los campos principales (Nombre, Email y Contraseña).", "Please fill in all main fields (Name, Email, and Password)."), 'error');
     return;
   }
 
@@ -885,7 +920,7 @@ function handleUserRegisterSubmit() {
   const exists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
 
   if (exists) {
-    alert("Este correo electrónico ya está registrado.");
+    showToast(tr("Este correo electrónico ya está registrado.", "This email is already registered."), 'error');
     return;
   }
 
@@ -922,7 +957,7 @@ function handleUserRegisterSubmit() {
     });
     db.set('seller_profiles', profiles);
     
-    alert(`¡Registro de vendedor exitoso! Tu perfil está pendiente de aprobación por el Administrador.`);
+    showToast(tr("¡Registro de vendedor exitoso! Tu perfil está pendiente de aprobación por el Administrador.", "Seller registration successful! Your profile is pending Administrator approval."), 'success');
   } else {
     // Create default empty shipping address for buyer
     const addresses = db.get('shipping_addresses');
@@ -939,7 +974,7 @@ function handleUserRegisterSubmit() {
       is_default: true
     });
     db.set('shipping_addresses', addresses);
-    alert(`¡Cuenta creada con éxito! Bienvenido a COLLECT X, ${name}.`);
+    showToast(tr(`¡Cuenta creada con éxito! Bienvenido a COLLECT X, ${name}.`, `Account successfully created! Welcome to COLLECT X, ${name}.`), 'success');
   }
 
   // Auto login
@@ -998,7 +1033,7 @@ function isFollowingSeller(sellerId) {
 
 function toggleFollowSeller(sellerId, storeName) {
   if (!state.currentUser) {
-    alert("Inicia sesión para agregar este vendedor a tus favoritos.");
+    showToast(tr("Inicia sesión para agregar este vendedor a tus favoritos.", "Log in to add this seller to your favorites."), 'error');
     renderLoginFormModal();
     return;
   }
@@ -1009,7 +1044,7 @@ function toggleFollowSeller(sellerId, storeName) {
   if (idx !== -1) {
     follows.splice(idx, 1);
     db.set('favorite_sellers', follows);
-    alert(`Has dejado de seguir a ${storeName}.`);
+    showToast(tr(`Has dejado de seguir a ${storeName}.`, `You have unfollowed ${storeName}.`), 'info');
   } else {
     follows.push({
       id: "fav_sel_" + Date.now(),
@@ -1018,7 +1053,7 @@ function toggleFollowSeller(sellerId, storeName) {
       created_at: new Date().toISOString()
     });
     db.set('favorite_sellers', follows);
-    alert(`¡Ahora sigues a ${storeName}! Recibirás notificaciones cuando suba nuevos artículos.`);
+    showToast(tr(`¡Ahora sigues a ${storeName}! Recibirás notificaciones cuando suba nuevos artículos.`, `You are now following ${storeName}! You will receive notifications when they post new items.`), 'success');
   }
 
   // Refresh current view
@@ -1197,7 +1232,7 @@ function handleAvatarUpload(input) {
         const mobileAvatar = document.getElementById('mobile-nav-avatar');
         if (mobileAvatar) mobileAvatar.src = base64String;
         
-        alert("¡Foto de perfil actualizada con éxito!");
+        showToast(tr("¡Foto de perfil actualizada con éxito!", "Profile photo successfully updated!"), 'success');
       }
     }
   };

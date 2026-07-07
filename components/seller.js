@@ -648,7 +648,7 @@ function simulatePackageCameraCapture(shipmentId) {
   db.set('package_evidence', evidenceLogs);
 
   toggleGlobalModal(false);
-  alert("📸 ¡Evidencia de empaque guardada con éxito! El sistema ahora te permitirá entregar la orden al carrier.");
+  showToast(tr("📸 ¡Evidencia de empaque guardada con éxito! El sistema ahora te permitirá entregar la orden al carrier.", "📸 Packing evidence saved successfully! The system will now allow you to hand over the order to the carrier."), 'success');
   renderSellerDashboard();
 }
 
@@ -668,24 +668,24 @@ function triggerDeliverToCarrier(shipmentId) {
   const hasEvidence = evidenceLogs.some(ev => ev.shipment_id === shipmentId);
 
   if (!hasEvidence) {
-    alert("⚠️ REGLA DE COLECCIONABLES: Debes subir una foto de evidencia del empaque antes de marcar el paquete como entregado al transportista.");
+    showToast(tr("⚠️ REGLA DE COLECCIONABLES: Debes subir una foto de evidencia del empaque antes de marcar el paquete como entregado al transportista.", "⚠️ COLLECTIBLES RULE: You must upload packing evidence before marking the package as dropped off."), 'error');
     return;
   }
 
   shippoAPI.updateShipmentStatus(shipmentId, "entregado_al_carrier");
-  alert("🚚 El paquete ha sido marcado como entregado al carrier. El tracking se ha activado.");
+  showToast(tr("🚚 El paquete ha sido marcado como entregado al carrier. El tracking se ha activado.", "🚚 Package marked as dropped off. Tracking is now active."), 'success');
   renderSellerDashboard();
 }
 
 function triggerSimulateTransit(shipmentId) {
   shippoAPI.updateShipmentStatus(shipmentId, "en_transito");
-  alert("📡 En tránsito. El paquete está siendo transportado al destino final.");
+  showToast(tr("📡 En tránsito. El paquete está siendo transportado al destino final.", "📡 In transit. The package is being transported to the final destination."), 'info');
   renderSellerDashboard();
 }
 
 function triggerSimulateDelivery(shipmentId) {
   shippoAPI.updateShipmentStatus(shipmentId, "delivered");
-  alert("🎯 Paquete entregado. El tracking ha marcado entrega exitosa. El saldo ha sido liberado de la custodia.");
+  showToast(tr("🎯 Paquete entregado. El tracking ha marcado entrega exitosa. El saldo ha sido liberado de la custodia.", "🎯 Package delivered. Tracking shows successful delivery. Balance has been released from escrow."), 'success');
   renderSellerDashboard();
 }
 
@@ -719,7 +719,7 @@ function updateSellerPlan(planName) {
     subs.push(newSub);
     db.set('seller_subscriptions', subs);
 
-    alert(`¡Tu plan ha sido cambiado exitosamente a ${planName}! La comisión ahora es del ${(rate * 100).toFixed(0)}%.`);
+    showToast(tr(`¡Tu plan ha sido cambiado exitosamente a ${planName}! La comisión ahora es del ${(rate * 100).toFixed(0)}%.`, `Your plan has been successfully changed to ${planName}! The commission is now ${(rate * 100).toFixed(0)}%.`), 'success');
     renderSellerDashboard();
   }
 }
@@ -728,7 +728,7 @@ function updateSellerPlan(planName) {
 function openAddProductModal() {
   const sellerProf = db.get('seller_profiles').find(p => p.user_id === state.currentUser.id);
   if (sellerProf && sellerProf.active_strikes >= 2) {
-    alert("⛔ Tienes 2 o más strikes activos por retrasos en envíos. La creación de nuevos artículos ha sido temporalmente bloqueada.");
+    showToast(tr("⛔ Tienes 2 o más strikes activos por retrasos en envíos. La creación de nuevos artículos ha sido temporalmente bloqueada.", "⛔ You have 2 or more active strikes for shipping delays. Creating new items has been temporarily blocked."), 'error');
     return;
   }
   
@@ -866,7 +866,7 @@ function submitAddProduct() {
   const insurance = document.getElementById('frm-prod-insurance').checked || (price > 100);
 
   if (!title || !brand || !price || !desc) {
-    alert("Por favor completa los campos principales (Título, Marca, Precio y Descripción).");
+    showToast(tr("Por favor completa los campos principales (Título, Marca, Precio y Descripción).", "Please fill in the main fields (Title, Brand, Price, and Description)."), 'error');
     return;
   }
 
@@ -926,10 +926,10 @@ function submitAddProduct() {
 
   toggleGlobalModal(false);
   if (state.currentUser.role === 'admin') {
-    alert("¡Figura publicada con éxito! Al ser el Administrador, se ha auto-aprobado y publicado.");
+    showToast(tr("¡Figura publicada con éxito! Al ser el Administrador, se ha auto-aprobado y publicado.", "Figure published successfully! Since you are an Admin, it has been auto-approved and published."), 'success');
     notifyFollowers(newProd.seller_id, newProd);
   } else {
-    alert("¡Figura publicada con éxito! Queda pendiente de aprobación por el Administrador.");
+    showToast(tr("¡Figura publicada con éxito! Queda pendiente de aprobación por el Administrador.", "Figure published successfully! It is pending approval by an Administrator."), 'success');
   }
   renderSellerDashboard();
 }
@@ -1129,7 +1129,7 @@ function submitEditProduct(productId) {
     db.set('product_media', updatedMedia);
 
     toggleGlobalModal(false);
-    alert("¡Cambios guardados con éxito! El producto volverá a revisión administrativa antes de salir a la venta.");
+    showToast(tr("¡Cambios guardados con éxito! El producto volverá a revisión administrativa antes de salir a la venta.", "Changes saved successfully! The product will go back to admin review before going live."), 'success');
     renderSellerDashboard();
   }
 }
@@ -1140,13 +1140,13 @@ function handleProductFormMultiMediaUpload(input) {
 
   const remainingSlots = 5 - window.newProductMedia.length;
   if (remainingSlots <= 0) {
-    alert("Ya has alcanzado el límite de 5 fotos o videos por artículo.");
+    showToast(tr("Ya has alcanzado el límite de 5 fotos o videos por artículo.", "You have already reached the limit of 5 photos or videos per item."), 'error');
     return;
   }
 
   const targetFiles = Array.from(files).slice(0, remainingSlots);
   if (files.length > remainingSlots) {
-    alert(`Solo se agregaron los primeros ${remainingSlots} archivos para no exceder el límite de 5.`);
+    showToast(tr(`Solo se agregaron los primeros ${remainingSlots} archivos para no exceder el límite de 5.`, `Only the first ${remainingSlots} files were added to not exceed the limit of 5.`), 'error');
   }
 
   let loadedCount = 0;
@@ -1173,7 +1173,7 @@ function handleAddMediaUrl(inputId) {
   if (!url) return;
 
   if (window.newProductMedia.length >= 5) {
-    alert("Puedes agregar un máximo de 5 fotos o videos por artículo.");
+    showToast(tr("Puedes agregar un máximo de 5 fotos o videos por artículo.", "You can add a maximum of 5 photos or videos per item."), 'error');
     return;
   }
 

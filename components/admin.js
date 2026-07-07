@@ -701,7 +701,7 @@ function adminRemoveStrike(sellerId) {
     // Recalculate
     ComplianceEngine.recalculateReliability(profiles[idx]);
     db.set('seller_profiles', profiles);
-    alert('Strike removido con éxito.');
+    showToast(tr("Strike removido con éxito.", "Strike successfully removed."), 'success');
     renderAdminDashboard();
   }
 }
@@ -719,7 +719,7 @@ function adminForceBan(sellerId) {
     // Auto reject all their pending products or set approved to pending maybe?
     // Not done here for brevity, but good practice
     
-    alert('Vendedor baneado permanentemente.');
+    showToast(tr("Vendedor baneado permanentemente.", "Seller permanently banned."), 'success');
     renderAdminDashboard();
   }
 }
@@ -789,19 +789,19 @@ function renderAdminNotificationsTab(container) {
 // Admin Shipping Operations
 function adminTriggerDisputedShipping(shipmentId) {
   shippoAPI.updateShipmentStatus(shipmentId, "problema");
-  alert("🚨 Se ha registrado una Disputa sobre este envío. El Payout correspondiente quedará bloqueado en Stripe Connect.");
+  showToast(tr("🚨 Se ha registrado una Disputa sobre este envío. El Payout correspondiente quedará bloqueado en Stripe Connect.", "🚨 A Dispute has been registered for this shipment. The corresponding Payout will be locked in Stripe Connect."), 'error');
   renderAdminDashboard();
 }
 
 function adminResolveDisputedShipping(shipmentId) {
   shippoAPI.updateShipmentStatus(shipmentId, "delivered");
-  alert("🔓 Disputa resuelta. Se ha liberado la retención de los fondos. El vendedor recibirá su payout.");
+  showToast(tr("🔓 Disputa resuelta. Se ha liberado la retención de los fondos. El vendedor recibirá su payout.", "🔓 Dispute resolved. Funds hold has been released. The seller will receive their payout."), 'success');
   renderAdminDashboard();
 }
 
 function adminTriggerReturnedShipping(shipmentId) {
   shippoAPI.updateShipmentStatus(shipmentId, "devuelto");
-  alert("🔄 Se ha registrado la devolución del paquete al vendedor. La orden se considerará reembolsada.");
+  showToast(tr("🔄 Se ha registrado la devolución del paquete al vendedor. La orden se considerará reembolsada.", "🔄 Package return to seller registered. The order will be considered refunded."), 'info');
   renderAdminDashboard();
 }
 
@@ -824,10 +824,10 @@ function approveSellerProfile(userId, isApproved) {
     if (isApproved) {
       profiles[index].approved = true;
       profiles[index].stripe_connect_id = `acct_1N_${userId}`;
-      alert("¡Cuenta de Vendedor aprobada exitosamente y cuenta de Stripe Connect vinculada!");
+      showToast(tr("¡Cuenta de Vendedor aprobada exitosamente y cuenta de Stripe Connect vinculada!", "Seller account successfully approved and Stripe Connect account linked!"), 'success');
     } else {
       profiles.splice(index, 1);
-      alert("Solicitud de vendedor rechazada y perfil eliminado.");
+      showToast(tr("Solicitud de vendedor rechazada y perfil eliminado.", "Seller request rejected and profile deleted."), 'info');
     }
     db.set('seller_profiles', profiles);
     renderAdminDashboard();
@@ -841,11 +841,11 @@ function approveProduct(prodId, isApproved) {
   if (index > -1) {
     if (isApproved) {
       products[index].status = "approved";
-      alert("¡Producto aprobado y publicado en la tienda!");
+      showToast(tr("¡Producto aprobado y publicado en la tienda!", "Product approved and published in the store!"), 'success');
       notifyFollowers(products[index].seller_id, products[index]);
     } else {
       products[index].status = "rejected";
-      alert("Producto rechazado.");
+      showToast(tr("Producto rechazado.", "Product rejected."), 'error');
     }
     db.set('products', products);
     renderAdminDashboard();
@@ -856,7 +856,7 @@ function removeProductAdmin(prodId) {
   if (confirm("¿Estás seguro de eliminar este producto del marketplace permanentemente?")) {
     const products = db.get('products').filter(p => p.id !== prodId);
     db.set('products', products);
-    alert("Producto eliminado exitosamente.");
+    showToast(tr("Producto eliminado exitosamente.", "Product successfully deleted."), 'success');
     renderAdminDashboard();
   }
 }
@@ -867,7 +867,7 @@ function moderateReviewAdmin(reviewId, status) {
   if (index > -1) {
     reviews[index].status = status;
     db.set('reviews', reviews);
-    alert(`Estado de la reseña cambiado a: ${status === 'approved' ? 'Habilitada' : 'Oculta'}`);
+    showToast(tr(`Estado de la reseña cambiado a: ${status === 'approved' ? 'Habilitada' : 'Oculta'}`, `Review status changed to: ${status === 'approved' ? 'Enabled' : 'Hidden'}`), 'info');
     renderAdminDashboard();
   }
 }
@@ -879,7 +879,7 @@ function toggleCouponStatus(code, currentStatus) {
   if (index > -1) {
     coupons[index].active = !currentStatus;
     db.set('coupons', coupons);
-    alert(`Cupón ${code} ha sido ${!currentStatus ? 'activado' : 'desactivado'}.`);
+    showToast(tr(`Cupón ${code} ha sido ${!currentStatus ? 'activado' : 'desactivado'}.`, `Coupon ${code} has been ${!currentStatus ? 'activated' : 'deactivated'}.`), 'success');
     renderAdminDashboard();
   }
 }
@@ -890,7 +890,7 @@ function toggleBannerActive(id, currentStatus) {
   if (index > -1) {
     banners[index].active = !currentStatus;
     db.set('banners', banners);
-    alert(`El banner ha sido ${!currentStatus ? 'activado' : 'pausado'}.`);
+    showToast(tr(`El banner ha sido ${!currentStatus ? 'activado' : 'pausado'}.`, `The banner has been ${!currentStatus ? 'activated' : 'paused'}.`), 'success');
     renderAdminDashboard();
   }
 }
@@ -932,7 +932,7 @@ function submitCreateCoupon() {
   const min = parseFloat(document.getElementById('frm-coupon-min').value) || 0;
 
   if (!code || val <= 0) {
-    alert("Por favor completa los datos del cupón.");
+    showToast(tr("Por favor completa los datos del cupón.", "Please fill in the coupon details."), 'error');
     return;
   }
 
@@ -947,7 +947,7 @@ function submitCreateCoupon() {
   db.set('coupons', coupons);
 
   toggleGlobalModal(false);
-  alert(`¡Cupón ${code} creado exitosamente!`);
+  showToast(tr(`¡Cupón ${code} creado exitosamente!`, `Coupon ${code} successfully created!`), 'success');
   renderAdminDashboard();
 }
 
@@ -1016,7 +1016,7 @@ function submitAdminAddProduct() {
   const desc = document.getElementById('adm-prod-desc').value.trim();
 
   if (!title || !brand || !price || !desc) {
-    alert("Por favor completa los campos principales.");
+    showToast(tr("Por favor completa los campos principales.", "Please fill in the main fields."), 'error');
     return;
   }
 
@@ -1054,7 +1054,7 @@ function submitAdminAddProduct() {
   db.set('product_media', media);
 
   toggleGlobalModal(false);
-  alert("¡Producto de la tienda oficial publicado con éxito!");
+  showToast(tr("¡Producto de la tienda oficial publicado con éxito!", "Official store product published successfully!"), 'success');
   renderAdminDashboard();
 }
 
@@ -1164,7 +1164,7 @@ function submitAdminEditProduct(productId) {
     }
 
     toggleGlobalModal(false);
-    alert("¡Cambios aplicados exitosamente en el catálogo!");
+    showToast(tr("¡Cambios aplicados exitosamente en el catálogo!", "Changes successfully applied to the catalog!"), 'success');
     renderAdminDashboard();
   }
 }
