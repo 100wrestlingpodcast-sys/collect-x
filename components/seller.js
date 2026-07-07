@@ -202,7 +202,7 @@ function renderSellerSubTab(tab, data) {
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <h3>${tr('Inventario de Figuras', 'Figure Inventory')} (${data.sellerProducts.length})</h3>
         <button class="btn-large primary-btn" style="width:auto; padding: 0.5rem 1rem;" onclick="openAddProductModal()">
-          <i data-lucide="plus"></i> Publicar Figura
+          <i data-lucide="plus"></i> ${tr('Publicar Figura', 'Publish Figure')}
         </button>
       </div>
 
@@ -211,20 +211,20 @@ function renderSellerSubTab(tab, data) {
           <table class="db-table">
             <thead>
               <tr>
-                <th>Título</th>
-                <th>Marca / Cat</th>
-                <th>Condición</th>
-                <th>Precio</th>
-                <th>Stock</th>
-                <th>Dimensiones / Peso</th>
-                <th>Estado</th>
-                <th>Acción</th>
+                <th>${tr('Título', 'Title')}</th>
+                <th>${tr('Marca / Cat', 'Brand / Cat')}</th>
+                <th>${tr('Condición', 'Condition')}</th>
+                <th>${tr('Precio', 'Price')}</th>
+                <th>${tr('Stock', 'Stock')}</th>
+                <th>${tr('Dimensiones / Peso', 'Dimensions / Weight')}</th>
+                <th>${tr('Estado', 'Status')}</th>
+                <th>${tr('Acción', 'Action')}</th>
               </tr>
             </thead>
             <tbody>
               ${data.sellerProducts.length === 0 ? `
                 <tr>
-                  <td colspan="8" style="text-align:center; padding:3rem;">No tienes figuras publicadas aún. Presiona "Publicar Figura" para comenzar.</td>
+                  <td colspan="8" style="text-align:center; padding:3rem;">${tr('No tienes figuras publicadas aún. Presiona "Publicar Figura" para comenzar.', 'You have no figures published yet. Press "Publish Figure" to begin.')}</td>
                 </tr>
               ` : data.sellerProducts.map(p => {
                 const condClass = p.condition.toLowerCase().replace(/\s+/g, '');
@@ -240,11 +240,11 @@ function renderSellerSubTab(tab, data) {
                     </td>
                     <td>
                       <span class="status-tag ${p.status}">
-                        ${p.status === 'approved' ? 'Aprobado' : p.status === 'pending' ? 'Pendiente Admin' : p.status === 'rejected' ? 'Rechazado' : 'Agotado'}
+                        ${p.status === 'approved' ? tr('Aprobado', 'Approved') : p.status === 'pending' ? tr('Pendiente Admin', 'Pending Admin') : p.status === 'rejected' ? tr('Rechazado', 'Rejected') : tr('Agotado', 'Sold Out')}
                       </span>
                     </td>
                     <td>
-                      <button class="action-btn-small suspend" onclick="openEditProductModal('${p.id}')">Editar</button>
+                      <button class="action-btn-small suspend" onclick="openEditProductModal('${p.id}')">${tr('Editar', 'Edit')}</button>
                     </td>
                   </tr>
                 `;
@@ -265,7 +265,7 @@ function renderSellerSubTab(tab, data) {
         <div>
           <h3>${tr('Rendimiento y Envíos', 'Performance & Shipping')}</h3>
           <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">
-            Tu índice de confiabilidad determina tu posicionamiento en el marketplace. Mantén tus envíos a tiempo.
+            ${tr('Tu índice de confiabilidad determina tu posicionamiento en el marketplace. Mantén tus envíos a tiempo.', 'Your reliability index determines your marketplace ranking. Keep your shipments on time.')}
           </p>
         </div>
         
@@ -275,9 +275,9 @@ function renderSellerSubTab(tab, data) {
               ${data.sellerProf.reliability_score}<span style="font-size:1rem;">/100</span>
             </div>
             <div>
-              <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Confiabilidad</div>
+              <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">${tr('Confiabilidad', 'Reliability')}</div>
               <div style="font-size:0.8rem; font-weight:600; color:var(--text-primary);">
-                ${data.sellerProf.reliability_score >= 90 ? 'Excelente (Prioridad Alta)' : data.sellerProf.reliability_score >= 70 ? 'Regular' : 'En Riesgo'}
+                ${data.sellerProf.reliability_score >= 90 ? tr('Excelente (Prioridad Alta)', 'Excellent (High Priority)') : data.sellerProf.reliability_score >= 70 ? tr('Regular', 'Fair') : tr('En Riesgo', 'At Risk')}
               </div>
             </div>
           </div>
@@ -287,9 +287,9 @@ function renderSellerSubTab(tab, data) {
               ${data.sellerProf.active_strikes}
             </div>
             <div>
-              <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Strikes Activos</div>
+              <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">${tr('Strikes Activos', 'Active Strikes')}</div>
               <div style="font-size:0.8rem; font-weight:600; color:var(--text-primary);">
-                ${data.sellerProf.active_strikes >= 4 ? 'Cuenta Baneada' : data.sellerProf.active_strikes >= 3 ? 'Cuenta Suspendida (30d)' : data.sellerProf.active_strikes >= 2 ? 'Creación Bloqueada' : 'Cuenta Saludable'}
+                ${data.sellerProf.active_strikes >= 4 ? tr('Cuenta Baneada', 'Account Banned') : data.sellerProf.active_strikes >= 3 ? tr('Cuenta Suspendida (30d)', 'Account Suspended (30d)') : data.sellerProf.active_strikes >= 2 ? tr('Creación Bloqueada', 'Creation Blocked') : tr('Cuenta Saludable', 'Healthy Account')}
               </div>
             </div>
           </div>
@@ -301,20 +301,20 @@ function renderSellerSubTab(tab, data) {
           <table class="db-table">
             <thead>
               <tr>
-                <th>ID Orden / Fecha</th>
-                <th>Destinatario</th>
-                <th>Carrier / Tarifa</th>
-                <th>Código de Tracking</th>
-                <th>Seguro / Frágil</th>
-                <th>Evidencia Empaque</th>
-                <th>Estado Envío</th>
-                <th>Gestión</th>
+                <th>${tr('ID Orden / Fecha', 'Order ID / Date')}</th>
+                <th>${tr('Destinatario', 'Recipient')}</th>
+                <th>${tr('Carrier / Tarifa', 'Carrier / Rate')}</th>
+                <th>${tr('Código de Tracking', 'Tracking Code')}</th>
+                <th>${tr('Seguro / Frágil', 'Insurance / Fragile')}</th>
+                <th>${tr('Evidencia Empaque', 'Packing Evidence')}</th>
+                <th>${tr('Estado Envío', 'Shipping Status')}</th>
+                <th>${tr('Gestión', 'Management')}</th>
               </tr>
             </thead>
             <tbody>
               ${data.shipments.length === 0 ? `
                 <tr>
-                  <td colspan="8" style="text-align:center; padding:3rem; color:var(--text-muted); font-style:italic;">No tienes envíos registrados aún.</td>
+                  <td colspan="8" style="text-align:center; padding:3rem; color:var(--text-muted); font-style:italic;">${tr('No tienes envíos registrados aún.', 'You have no registered shipments yet.')}</td>
                 </tr>
               ` : data.shipments.map(s => {
                 const evidence = evidenceLogs.find(ev => ev.shipment_id === s.id);
@@ -326,7 +326,7 @@ function renderSellerSubTab(tab, data) {
                       <code>${s.order_id}</code>
                       <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.2rem;">${new Date(s.created_at).toLocaleDateString()}</div>
                     </td>
-                    <td>${db.get('shipping_addresses').find(a => a.user_id === s.buyer_id)?.name || 'Comprador'}</td>
+                    <td>${db.get('shipping_addresses').find(a => a.user_id === s.buyer_id)?.name || tr('Comprador', 'Buyer')}</td>
                     <td>
                       <strong>${s.carrier}</strong>
                       <div style="font-size:0.75rem; color:var(--text-secondary);">${s.service_level}</div>
@@ -337,23 +337,23 @@ function renderSellerSubTab(tab, data) {
                         <a href="${s.tracking_url}" target="_blank" style="color:var(--primary-light); font-weight:600; text-decoration:underline;">
                           <code>${s.tracking_number}</code>
                         </a>
-                      ` : '<span style="color:var(--text-muted);">Sin generar</span>'}
+                      ` : `<span style="color:var(--text-muted);">${tr('Sin generar', 'Not generated')}</span>`}
                     </td>
                     <td>
                       <div style="font-size:0.8rem;">
-                        ${s.insurance_amount > 0 ? `🛡️ Seguro ($${s.insurance_amount.toFixed(2)})` : '❌ Sin seguro'}<br>
-                        ${db.get('orders').find(o => o.id === s.order_id)?.total_amount > 100 ? '⚠️ Valor alto (>100)' : ''}
+                        ${s.insurance_amount > 0 ? `🛡️ ${tr('Seguro', 'Insured')} ($${s.insurance_amount.toFixed(2)})` : `❌ ${tr('Sin seguro', 'No insurance')}`}<br>
+                        ${db.get('orders').find(o => o.id === s.order_id)?.total_amount > 100 ? `⚠️ ${tr('Valor alto', 'High value')} (>100)` : ''}
                       </div>
                     </td>
                     <td id="evidence-td-${s.id}">
                       ${evidence ? `
                         <div style="display:flex; flex-direction:column; align-items:center; gap:0.25rem;">
                           <img src="${evidence.image_url}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1.5px solid var(--border-metallic-yellow);" onclick="viewEvidencePhoto('${evidence.image_url}')">
-                          <span style="font-size:0.6rem; color:#10b981; font-weight:700;">REGISTRADA</span>
+                          <span style="font-size:0.6rem; color:#10b981; font-weight:700;">${tr('REGISTRADA', 'REGISTERED')}</span>
                         </div>
                       ` : `
                         <button class="action-btn-small suspend" style="padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="openUploadEvidenceModal('${s.id}')">
-                          📸 Subir Foto
+                          📸 ${tr('Subir Foto', 'Upload Photo')}
                         </button>
                       `}
                     </td>
@@ -364,12 +364,12 @@ function renderSellerSubTab(tab, data) {
                     </td>
                     <td style="display:flex; flex-direction:column; gap:0.4rem;">
                       <button class="action-btn-small approve" onclick="openLabelPrint('${s.id}')">
-                        🖨️ Imprimir Label
+                        🖨️ ${tr('Imprimir Label', 'Print Label')}
                       </button>
                       
                       ${s.status === 'label_generado' ? `
                         <button class="action-btn-small suspend" style="background:#4f46e5; border-color:#4f46e5;" onclick="triggerDeliverToCarrier('${s.id}')">
-                          🚚 Entregar al Carrier
+                          🚚 ${tr('Entregar al Carrier', 'Deliver to Carrier')}
                         </button>
                       ` : ''}
 
