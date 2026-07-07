@@ -393,14 +393,15 @@ function renderCategoryTabs() {
     const isActive = (cat === 'Todos' && selectedCategory === 'Todos') || (cat === selectedCategory);
     const clickHandler = cat === 'Todos' ? `router.navigate('')` : `router.navigate('category/${encodeURIComponent(cat)}')`;
     
-    // Category translations map
     const catTranslations = {
       'Todos': 'All',
-      'Acción (Retro)': 'Action (Retro)',
       'Funko Pop': 'Funko Pop',
-      'Wrestling': 'Wrestling',
+      'WWE / Wrestling': 'WWE / Wrestling',
+      'NBA / Deportes': 'NBA / Sports',
       'Anime': 'Anime',
       'Marvel / DC': 'Marvel / DC',
+      'Gaming': 'Gaming',
+      'Figuras vintage': 'Vintage Figures',
       'Autografiados': 'Autographed',
       'Ediciones limitadas': 'Limited Editions'
     };
