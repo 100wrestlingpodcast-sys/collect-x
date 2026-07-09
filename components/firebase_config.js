@@ -3,12 +3,13 @@
 // TODO: Reemplaza estos valores con las credenciales de tu proyecto de Firebase
 // Puedes obtenerlas en la consola de Firebase: https://console.firebase.google.com/
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBqarHVOxKyZg74kNBOD7lZNLtdtwFD1-k",
+  authDomain: "collect-x-marketplace.firebaseapp.com",
+  projectId: "collect-x-marketplace",
+  storageBucket: "collect-x-marketplace.firebasestorage.app",
+  messagingSenderId: "736787383049",
+  appId: "1:736787383049:web:86eb1adf90c691bec249d8",
+  measurementId: "G-YNE951DH9X"
 };
 
 // Inicialización de los servicios de Firebase

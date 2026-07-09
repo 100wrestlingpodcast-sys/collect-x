@@ -18,34 +18,10 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { amount, applicationFeeAmount, sellerStripeAccountId, card, description } = JSON.parse(event.body);
+    const { amount, applicationFeeAmount, sellerStripeAccountId, description } = JSON.parse(event.body);
 
     if (!amount || amount <= 0) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid amount.' }) };
-    }
-
-    let paymentMethodId = null;
-
-    // Create payment method on the server if card details are passed
-    if (card && card.number) {
-      const parts = card.expiry.split('/');
-      const exp_month = parseInt(parts[0]);
-      const exp_year = parseInt(parts[1]);
-
-      // Handle two-digit year (e.g. "28" -> 2028)
-      const currentYearPrefix = Math.floor(new Date().getFullYear() / 100) * 100;
-      const full_exp_year = exp_year < 100 ? currentYearPrefix + exp_year : exp_year;
-
-      const paymentMethod = await stripe.paymentMethods.create({
-        type: 'card',
-        card: {
-          number: card.number.replace(/\s+/g, ''),
-          exp_month: exp_month,
-          exp_year: full_exp_year,
-          cvc: card.cvc,
-        },
-      });
-      paymentMethodId = paymentMethod.id;
     }
 
     const paymentIntentConfig = {
@@ -57,11 +33,6 @@ exports.handler = async (event, context) => {
         allow_redirects: 'never'
       }
     };
-
-    if (paymentMethodId) {
-      paymentIntentConfig.payment_method = paymentMethodId;
-      paymentIntentConfig.confirm = true;
-    }
 
     // Set destination Connected Account details if it's a seller transaction
     if (sellerStripeAccountId && sellerStripeAccountId.startsWith('acct_')) {
@@ -77,7 +48,7 @@ exports.handler = async (event, context) => {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        success: paymentIntent.status === 'succeeded',
+        clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id
       })
     };

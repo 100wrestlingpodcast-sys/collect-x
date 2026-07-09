@@ -7,3 +7,21 @@ Thumbs.db
 *.log
 .agents/
 .gemini/
+
+# Local Netlify folder
+.netlify
+
+# Secrets / Environment variables
+.env
+.env.local
+.env.*
+
+# Dependency folders
+node_modules/
+package-lock.json
+deno.lock
+
+# Documentation & scripts
+CollectX_Manual_Tecnico.pdf
+generate_pdf.js
+setup_env.sh

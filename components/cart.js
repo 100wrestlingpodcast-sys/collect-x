@@ -1,5 +1,61 @@
 // collectors-market/components/cart.js
 
+let stripeInstance = null;
+let cardElementInstance = null;
+
+async function initStripeElements() {
+  if (!window.firebaseActive) return;
+  const container = document.getElementById('stripe-card-element');
+  if (!container) return;
+
+  try {
+    // 1. Get or initialize Stripe instance
+    if (!stripeInstance) {
+      const res = await fetch('/.netlify/functions/get-stripe-config');
+      const { publishableKey } = await res.json();
+      if (!publishableKey || publishableKey.includes("PLACEHOLDER") || publishableKey === "") {
+        console.warn("Stripe public key not configured in environment variables.");
+        container.innerHTML = `<div style="color:var(--danger-color, #ef4444); padding:8px; border:1px solid #fecaca; border-radius:6px; background:#fef2f2; font-size:0.85rem;">Stripe no está configurado en el servidor.</div>`;
+        return;
+      }
+      stripeInstance = Stripe(publishableKey);
+    }
+
+    // 2. Create and mount a new Card Element
+    const elements = stripeInstance.elements();
+    cardElementInstance = elements.create('card', {
+      style: {
+        base: {
+          fontSize: '16px',
+          color: '#1f2937',
+          fontFamily: '"Outfit", sans-serif',
+          '::placeholder': { color: '#9ca3af' }
+        },
+        invalid: {
+          color: '#ef4444',
+          iconColor: '#ef4444'
+        }
+      }
+    });
+    cardElementInstance.mount('#stripe-card-element');
+
+    // Add error handler
+    cardElementInstance.on('change', (event) => {
+      const displayError = document.getElementById('card-errors');
+      if (displayError) {
+        if (event.error) {
+          displayError.textContent = event.error.message;
+        } else {
+          displayError.textContent = '';
+        }
+      }
+    });
+  } catch (e) {
+    console.error("Error setting up Stripe Elements:", e);
+    container.innerHTML = `<div style="color:var(--danger-color, #ef4444); padding:8px; border:1px solid #fecaca; border-radius:6px; background:#fef2f2; font-size:0.85rem;">Error cargando Stripe: ${e.message}</div>`;
+  }
+}
+
 // --- Cart Drawer Renderer ---
 function renderCartDrawer() {
   const container = document.getElementById('cart-drawer-items');
@@ -408,6 +464,7 @@ function renderCheckoutView() {
         <strong>${tr('Teléfono:', 'Phone:')}</strong> ${activeAddress.phone}
       </div>
     `;
+  }
   window.checkoutTotals = {
     grandTotal: grandTotal,
     platformFeeTotal: platformCommissionTotal,
@@ -487,6 +544,7 @@ function renderCheckoutView() {
               <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">${tr('Modo Prueba Activo', 'Test Mode Active')}</span>
             </h3>
             
+            ${!window.firebaseActive ? `
             <!-- Quick Apple / Google Pay mock buttons if compatible -->
             <div style="display:flex; gap:1rem; margin-bottom:1.5rem;">
               <button class="btn-large" style="background:#000; color:white; font-size:0.9rem; padding: 0.6rem; border:1px solid rgba(255,255,255,0.15);" onclick="simulateExpressPay('Apple Pay')">
@@ -500,24 +558,14 @@ function renderCheckoutView() {
             <div style="margin-bottom:1rem; text-align:center; color:var(--text-muted); font-size:0.8rem; border-bottom:1px solid var(--border-color); padding-bottom:1rem;">
               ${tr('o paga con tarjeta de crédito/débito', 'or pay with credit/debit card')}
             </div>
+            ` : ''}
 
             <div class="checkout-input-wrapper" style="margin-bottom:1rem;">
-              <label>${tr('Número de Tarjeta', 'Card Number')}</label>
-              <div style="position:relative;">
-                <input type="text" id="stripe-card-num" placeholder="4242 4242 4242 4242" maxlength="19" style="padding-left: 2.5rem; letter-spacing:0.1em;" oninput="formatCardNumber(this)">
-                <i data-lucide="credit-card" style="position:absolute; left:0.75rem; top:0.75rem; width:1.1rem; height:1.1rem; color:var(--text-muted);"></i>
+              <label>${tr('Tarjeta de Crédito o Débito', 'Credit or Debit Card')}</label>
+              <div id="stripe-card-element" style="padding: 12px; border: 1px solid var(--border-color, #d1d5db); border-radius: 8px; background: white; min-height: 20px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);">
+                <!-- Stripe Element will be mounted here -->
               </div>
-            </div>
-
-            <div class="checkout-form-group">
-              <div class="checkout-input-wrapper">
-                <label>${tr('Vencimiento (MM/AA)', 'Expiration (MM/YY)')}</label>
-                <input type="text" id="stripe-card-expiry" placeholder="12/28" maxlength="5" oninput="formatExpiry(this)">
-              </div>
-              <div class="checkout-input-wrapper">
-                <label>${tr('CVC / Código Seguridad', 'CVC / Security Code')}</label>
-                <input type="password" id="stripe-card-cvc" placeholder="***" maxlength="4">
-              </div>
+              <div id="card-errors" role="alert" style="color: var(--danger-color, #ef4444); font-size: 0.85rem; margin-top: 0.5rem; font-weight: 500;"></div>
             </div>
           </div>
         </div>
@@ -604,6 +652,9 @@ function renderCheckoutView() {
   `;
 
   lucide.createIcons();
+  if (window.firebaseActive) {
+    initStripeElements();
+  }
 }
 
 function changeCheckoutAddress(addrId) {
@@ -735,6 +786,11 @@ function formatExpiry(input) {
 }
 
 function simulateExpressPay(providerName) {
+  if (window.firebaseActive) {
+    showToast(tr("Pago rápido no disponible en entorno real de Stripe.", "Express checkout not available in real Stripe environment."), 'error');
+    return;
+  }
+
   const addresses = db.get('shipping_addresses').filter(a => a.user_id === state.currentUser.id);
   if (addresses.length === 0) {
     showToast(tr("Por favor agrega una dirección de envío antes de usar pago rápido.", "Please add a shipping address before using express checkout."), 'error');
@@ -798,16 +854,8 @@ function applyCouponCode() {
 
 // Complete payment submit
 function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, shippingCost) {
-  const cardNum = document.getElementById('stripe-card-num').value.trim();
-  const expiry = document.getElementById('stripe-card-expiry').value.trim();
-  const cvc = document.getElementById('stripe-card-cvc').value.trim();
-
   if (!window.selectedAddressId) {
     showToast(tr("Por favor selecciona o agrega una dirección de envío.", "Please select or add a shipping address."), 'error');
-    return;
-  }
-  if (!cardNum || !expiry || !cvc) {
-    showToast(tr("Por favor completa la información de pago de tu tarjeta.", "Please complete your card payment information."), 'error');
     return;
   }
 
@@ -830,29 +878,40 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
   const sellerProfile = sellerId ? profiles.find(p => p.user_id === sellerId) : null;
   const sellerStripeAccountId = sellerProfile ? sellerProfile.stripe_connect_id : null;
 
-  showToast(tr("Procesando cobro en los servidores de Stripe...", "Processing payment on Stripe servers..."), 'info');
-
-  const paymentData = {
-    amount: grandTotal,
-    applicationFeeAmount: platformFeeTotal,
-    sellerStripeAccountId: sellerStripeAccountId,
-    card: {
-      number: cardNum,
-      expiry: expiry,
-      cvc: cvc
-    },
-    description: `Compra en COLLECT X: ${firstProduct ? firstProduct.title : 'Artículos Coleccionables'}`
-  };
-
   const url = window.firebaseActive ? '/.netlify/functions/create-payment-intent' : null;
 
   if (!url) {
     // Simulator fallback
+    const cardNum = document.getElementById('stripe-card-num') ? document.getElementById('stripe-card-num').value.trim() : "";
+    const expiry = document.getElementById('stripe-card-expiry') ? document.getElementById('stripe-card-expiry').value.trim() : "";
+    const cvc = document.getElementById('stripe-card-cvc') ? document.getElementById('stripe-card-cvc').value.trim() : "";
+
+    if (!cardNum || !expiry || !cvc) {
+      showToast(tr("Por favor completa la información de pago de tu tarjeta.", "Please complete your card payment information."), 'error');
+      return;
+    }
+
+    showToast(tr("Procesando cobro simulado...", "Processing simulated payment..."), 'info');
     setTimeout(() => {
       completeCheckoutLocal(grandTotal, platformFeeTotal, processingFeeTotal, shippingCost, activeAddress, activeRate);
     }, 1500);
     return;
   }
+
+  // Real secure Stripe Elements payment confirmation
+  if (!stripeInstance || !cardElementInstance) {
+    showToast(tr("El procesador de pagos Stripe no se ha inicializado.", "The Stripe payment processor has not been initialized."), 'error');
+    return;
+  }
+
+  showToast(tr("Iniciando cobro seguro con Stripe...", "Starting secure payment with Stripe..."), 'info');
+
+  const paymentData = {
+    amount: grandTotal,
+    applicationFeeAmount: platformFeeTotal,
+    sellerStripeAccountId: sellerStripeAccountId,
+    description: `Compra en COLLECT X: ${firstProduct ? firstProduct.title : 'Artículos Coleccionables'}`
+  };
 
   fetch(url, {
     method: 'POST',
@@ -862,11 +921,33 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
   .then(res => res.json())
   .then(data => {
     if (data.error) throw new Error(data.error);
-    if (data.success) {
-      completeCheckoutLocal(grandTotal, platformFeeTotal, processingFeeTotal, shippingCost, activeAddress, activeRate, data.paymentIntentId);
-    } else {
-      showToast(tr("La confirmación de pago de Stripe falló.", "Stripe payment confirmation failed."), 'error');
-    }
+    if (!data.clientSecret) throw new Error("No se recibió el token de confirmación (clientSecret) del servidor.");
+
+    showToast(tr("Verificando tarjeta con Stripe...", "Verifying card with Stripe..."), 'info');
+
+    return stripeInstance.confirmCardPayment(data.clientSecret, {
+      payment_method: {
+        card: cardElementInstance,
+        billing_details: {
+          name: activeAddress.name,
+          address: {
+            line1: activeAddress.street,
+            city: activeAddress.city,
+            state: activeAddress.state,
+            postal_code: activeAddress.zip,
+            country: 'US'
+          }
+        }
+      }
+    }).then(result => {
+      if (result.error) {
+        throw new Error(result.error.message);
+      } else if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+        completeCheckoutLocal(grandTotal, platformFeeTotal, processingFeeTotal, shippingCost, activeAddress, activeRate, data.paymentIntentId);
+      } else {
+        throw new Error("El pago no pudo completarse con éxito.");
+      }
+    });
   })
   .catch(err => {
     console.error("Stripe payment error:", err);

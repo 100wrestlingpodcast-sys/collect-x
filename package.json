@@ -4,8 +4,9 @@
   "description": "Collectors Market Production Build",
   "main": "app.js",
   "dependencies": {
-    "stripe": "^12.18.0",
-    "shippo": "^1.7.1"
+    "pdfkit": "^0.19.1",
+    "shippo": "^1.7.1",
+    "stripe": "^12.18.0"
   },
   "scripts": {
     "dev": "npx netlify dev"
