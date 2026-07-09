@@ -654,10 +654,10 @@ function updateNavBar() {
   } else {
     // Guest State
     if (navAvatar) navAvatar.src = window.GUEST_AVATAR;
-    if (navName) navName.textContent = 'Iniciar Sesión';
+    if (navName) navName.textContent = tr('Iniciar Sesión', 'Login');
     if (navRoleBadge) {
       navRoleBadge.className = 'user-role-badge guest';
-      navRoleBadge.textContent = 'visitante';
+      navRoleBadge.textContent = tr('visitante', 'guest');
     }
 
     // Mobile Bottom Nav Profile Avatar Update
@@ -875,31 +875,31 @@ function renderLoginFormModal() {
   const formHtml = `
     <div style="padding: 0.5rem 0;">
       <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.5rem; text-align:center;">
-        Ingresa tus credenciales registradas en la base de datos de COLLECT X.
+        ${tr('Ingresa tus credenciales registradas en la base de datos de COLLECT X.', 'Enter your registered credentials in the COLLECT X database.')}
       </p>
 
       <div style="display:flex; flex-direction:column; gap:1.2rem;">
         <div class="checkout-input-wrapper">
-          <label for="login-email">Correo Electrónico</label>
+          <label for="login-email">${tr('Correo Electrónico', 'Email Address')}</label>
           <input type="email" id="login-email" placeholder="admin@mail.com" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
         </div>
         <div class="checkout-input-wrapper">
-          <label for="login-password">Contraseña</label>
+          <label for="login-password">${tr('Contraseña', 'Password')}</label>
           <input type="password" id="login-password" placeholder="••••••••" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
         </div>
         
         <button class="btn-large primary-btn" style="margin-top:0.5rem; padding:0.9rem;" onclick="handleUserLoginSubmit()">
           <i data-lucide="log-in" style="width:1.1rem;height:1.1rem;display:inline-block;vertical-align:middle;margin-right:0.4rem;"></i>
-          Iniciar Sesión
+          ${tr('Iniciar Sesión', 'Login')}
         </button>
       </div>
 
       <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:1.5rem; text-align:center;">
-        ¿No tienes cuenta? <a onclick="renderRegisterFormModal()" style="color:var(--gold-light); font-weight:700; cursor:pointer; text-decoration:underline;">Regístrate aquí</a>
+        ${tr('¿No tienes cuenta?', "Don't have an account?")} <a onclick="renderRegisterFormModal()" style="color:var(--gold-light); font-weight:700; cursor:pointer; text-decoration:underline;">${tr('Regístrate aquí', 'Register here')}</a>
       </p>
     </div>
   `;
-  toggleGlobalModal(true, "Iniciar Sesión en COLLECT X", formHtml);
+  toggleGlobalModal(true, tr("Iniciar Sesión en COLLECT X", "Login to COLLECT X"), formHtml);
   lucide.createIcons();
 }
 
@@ -991,15 +991,15 @@ function renderRegisterFormModal() {
 
       <div style="display:flex; flex-direction:column; gap:1rem;">
         <div class="checkout-input-wrapper">
-          <label for="reg-name">Nombre Completo</label>
+          <label for="reg-name">${tr('Nombre Completo', 'Full Name')}</label>
           <input type="text" id="reg-name" placeholder="Ej: John Doe" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
         </div>
         <div class="checkout-input-wrapper">
-          <label for="reg-email">Correo Electrónico</label>
+          <label for="reg-email">${tr('Correo Electrónico', 'Email Address')}</label>
           <input type="email" id="reg-email" placeholder="ejemplo@mail.com" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
         </div>
         <div class="checkout-input-wrapper">
-          <label for="reg-password">Contraseña</label>
+          <label for="reg-password">${tr('Contraseña', 'Password')}</label>
           <input type="password" id="reg-password" placeholder="••••••••" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
         </div>
         <div class="checkout-input-wrapper">
@@ -1013,26 +1013,26 @@ function renderRegisterFormModal() {
         <!-- Extra fields for Seller -->
         <div id="reg-seller-fields" style="display:none; flex-direction:column; gap:1rem; border-top:1px dashed var(--border-color); padding-top:1rem; margin-top:0.5rem;">
           <div class="checkout-input-wrapper">
-            <label for="reg-store-name">Nombre de tu Tienda</label>
+            <label for="reg-store-name">${tr('Nombre de tu Tienda', 'Your Store Name')}</label>
             <input type="text" id="reg-store-name" placeholder="Ej: Geek Empire" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
           </div>
           <div class="checkout-input-wrapper">
-            <label for="reg-store-desc">Descripción corta</label>
-            <textarea id="reg-store-desc" placeholder="¿Qué tipo de coleccionables vendes?" style="height:60px; padding:0.5rem; border-radius:6px; border:1px solid var(--border-color); width:100%; outline:none; background:white; color:var(--text-primary);"></textarea>
+            <label for="reg-store-desc">${tr('Descripción corta', 'Short description')}</label>
+            <textarea id="reg-store-desc" placeholder="${tr('¿Qué tipo de coleccionables vendes?', 'What kind of collectibles do you sell?')}" style="height:60px; padding:0.5rem; border-radius:6px; border:1px solid var(--border-color); width:100%; outline:none; background:white; color:var(--text-primary);"></textarea>
           </div>
         </div>
 
         <button class="btn-large primary-btn" style="margin-top:1rem; padding:0.9rem;" onclick="handleUserRegisterSubmit()">
-          Crear Cuenta
+          ${tr('Crear Cuenta', 'Create Account')}
         </button>
       </div>
 
       <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:1.5rem; text-align:center;">
-        ¿Ya tienes cuenta? <a onclick="renderLoginFormModal()" style="color:var(--gold-light); font-weight:700; cursor:pointer; text-decoration:underline;">Inicia sesión aquí</a>
+        ${tr('¿Ya tienes cuenta?', 'Already have an account?')} <a onclick="renderLoginFormModal()" style="color:var(--gold-light); font-weight:700; cursor:pointer; text-decoration:underline;">${tr('Inicia sesión aquí', 'Login here')}</a>
       </p>
     </div>
   `;
-  toggleGlobalModal(true, "Registrarse en COLLECT X", formHtml);
+  toggleGlobalModal(true, tr("Registrarse en COLLECT X", "Sign Up at COLLECT X"), formHtml);
   lucide.createIcons();
 }
 

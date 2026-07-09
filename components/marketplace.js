@@ -105,8 +105,16 @@ function renderMarketplace() {
             <div class="hero-overlay"></div>
             <div class="hero-content">
               <span class="hero-badge">${tr('Destacado', 'Featured')}</span>
-              <h2 class="hero-title">${banner.title === 'Tienda Oficial COLLECT X' ? tr('Tienda Oficial COLLECT X', 'Official Store COLLECT X') : banner.title}</h2>
-              <p class="hero-subtitle">${banner.subtitle === 'Consigue figuras certificadas y ediciones especiales con envío garantizado.' ? tr('Consigue figuras certificadas y ediciones especiales con envío garantizado.', 'Get certified figures and special editions with guaranteed shipping.') : banner.subtitle}</p>
+              <h2 class="hero-title">
+                ${banner.title === 'Tienda Oficial COLLECT X' ? tr('Tienda Oficial COLLECT X', 'Official Store COLLECT X') : 
+                  banner.title === 'Bienvenidos a COLLECT X' ? tr('Bienvenidos a COLLECT X', 'Welcome to COLLECT X') : 
+                  banner.title}
+              </h2>
+              <p class="hero-subtitle">
+                ${banner.subtitle === 'Consigue figuras certificadas y ediciones especiales con envío garantizado.' ? tr('Consigue figuras certificadas y ediciones especiales con envío garantizado.', 'Get certified figures and special editions with guaranteed shipping.') : 
+                  banner.subtitle === 'El marketplace oficial para coleccionistas de figuras de acción, Funko Pop y cómics.' ? tr('El marketplace oficial para coleccionistas de figuras de acción, Funko Pop y cómics.', 'The official marketplace for action figure, Funko Pop and comic collectors.') : 
+                  banner.subtitle}
+              </p>
               <button class="hero-btn" onclick="router.navigate('${banner.link.replace('#', '')}')">${tr('Ver Colección', 'View Collection')}</button>
             </div>
           </div>
@@ -161,10 +169,16 @@ function renderMarketplace() {
             <div class="filter-options">
               ${conditions.map(cond => {
                 const checked = window.activeFilters.conditions.includes(cond) ? 'checked' : '';
+                const condLabel = cond === 'Sellado' ? tr('Sellado', 'Sealed') : 
+                                  cond === 'Nuevo' ? tr('Nuevo', 'New') : 
+                                  cond === 'Usado' ? tr('Usado', 'Used') : 
+                                  cond === 'Caja dañada' ? tr('Caja dañada', 'Damaged Box') : 
+                                  cond === 'Sin caja' ? tr('Sin caja', 'Loose / No Box') : 
+                                  cond;
                 return `
                   <label class="filter-checkbox">
                     <input type="checkbox" value="${cond}" onchange="toggleFilterCondition('${cond}')" ${checked}>
-                    <span>${cond}</span>
+                    <span>${condLabel}</span>
                   </label>
                 `;
               }).join('')}
