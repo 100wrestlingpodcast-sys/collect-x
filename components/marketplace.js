@@ -106,8 +106,8 @@ function renderMarketplace() {
             <div class="hero-content">
               <span class="hero-badge">${tr('Destacado', 'Featured')}</span>
               <h2 class="hero-title">
-                ${banner.title === 'Tienda Oficial COLLECT X' ? tr('Tienda Oficial COLLECT X', 'Official Store COLLECT X') : 
-                  banner.title === 'Bienvenidos a COLLECT X' ? tr('Bienvenidos a COLLECT X', 'Welcome to COLLECT X') : 
+                ${banner.title === 'Tienda Oficial Geek Collector PR' ? tr('Tienda Oficial Geek Collector PR', 'Official Store Geek Collector PR') : 
+                  banner.title === 'Bienvenidos a Geek Collector PR' ? tr('Bienvenidos a Geek Collector PR', 'Welcome to Geek Collector PR') : 
                   banner.title}
               </h2>
               <p class="hero-subtitle">
@@ -199,7 +199,7 @@ function renderMarketplace() {
             <span class="filter-label">${tr('Vendedor', 'Seller')}</span>
             <select id="filter-seller-select" onchange="updateFilterSeller()" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); width:100%; border-radius:6px; padding:0.4rem; font-family:var(--font-body); outline:none;">
               <option value="all" ${window.activeFilters.sellerId === 'all' ? 'selected' : ''}>${tr('Todos los vendedores', 'All Sellers')}</option>
-              <option value="usr_admin_1" ${window.activeFilters.sellerId === 'usr_admin_1' ? 'selected' : ''}>COLLECT X (${tr('Oficial', 'Official')})</option>
+              <option value="usr_admin_1" ${window.activeFilters.sellerId === 'usr_admin_1' ? 'selected' : ''}>Geek Collector PR (${tr('Oficial', 'Official')})</option>
               ${approvedSellers.map(sel => `
                 <option value="${sel.user_id}" ${window.activeFilters.sellerId === sel.user_id ? 'selected' : ''}>${sel.store_name}</option>
               `).join('')}

@@ -629,8 +629,8 @@ function renderCheckoutView() {
                   <span>-$${stripeProcessingFeeTotal.toFixed(2)}</span>
                 </div>
                 <div class="stripe-flow-step">
-                  <span>Comisión COLLECT X (Plataforma)</span>
-                  <span>+$${platformCommissionTotal.toFixed(2)}</span>
+                   <span>Comisión Geek Collector PR (Plataforma)</span>
+                   <span>+$${platformCommissionTotal.toFixed(2)}</span>
                 </div>
                 
                 <div style="margin-top:0.5rem; border-top:1.5px solid rgba(99,102,241,0.3); padding-top:0.5rem;">
@@ -910,7 +910,7 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
     amount: grandTotal,
     applicationFeeAmount: platformFeeTotal,
     sellerStripeAccountId: sellerStripeAccountId,
-    description: `Compra en COLLECT X: ${firstProduct ? firstProduct.title : 'Artículos Coleccionables'}`
+    description: `Compra en Geek Collector PR: ${firstProduct ? firstProduct.title : 'Artículos Coleccionables'}`
   };
 
   fetch(url, {

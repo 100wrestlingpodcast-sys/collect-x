@@ -526,7 +526,7 @@ function renderSellerSubTab(tab, data) {
       <div style="margin-bottom:1.5rem;">
         <h3>${tr('Administración de Suscripción', 'Subscription Management')}</h3>
         <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">
-          Tu plan de suscripción actual determina tu límite de publicaciones y la tasa de comisión retenida por COLLECT X.
+          ${tr('Tu plan de suscripción actual determina tu límite de publicaciones y la tasa de comisión retenida por Geek Collector PR.', 'Your current subscription plan determines your listing limit and the commission rate retained by Geek Collector PR.')}
         </p>
       </div>
 

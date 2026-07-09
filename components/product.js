@@ -218,7 +218,7 @@ function renderProductDetail(productId) {
               <div style="font-size:0.8rem; color:var(--text-secondary);">${reviews.length} valoraciones</div>
             </div>
             <div style="font-size:0.9rem; color:var(--text-secondary);">
-              <strong>Garantía COLLECT X:</strong> Solo compradores verificados que han recibido físicamente la figura pueden dejar reseñas aquí. Esto asegura un feedback libre de bots y especuladores.
+              <strong>${tr('Garantía Geek Collector PR:', 'Geek Collector PR Warranty:')}</strong> ${tr('Solo compradores verificados que han recibido físicamente la figura pueden dejar reseñas aquí. Esto asegura un feedback libre de bots y especuladores.', 'Only verified buyers who have physically received the figure can leave reviews here. This ensures feedback free of bots and scalpers.')}
             </div>
           </div>
 
