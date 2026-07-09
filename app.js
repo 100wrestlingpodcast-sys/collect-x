@@ -875,7 +875,7 @@ function renderLoginFormModal() {
   const formHtml = `
     <div style="padding: 0.5rem 0;">
       <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.5rem; text-align:center;">
-        ${tr('Ingresa tus credenciales registradas en la base de datos de COLLECT X.', 'Enter your registered credentials in the COLLECT X database.')}
+        ${tr('Ingresa tus credenciales registradas en la base de datos de Geek Collector PR.', 'Enter your registered credentials in the Geek Collector PR database.')}
       </p>
 
       <div style="display:flex; flex-direction:column; gap:1.2rem;">
@@ -899,7 +899,7 @@ function renderLoginFormModal() {
       </p>
     </div>
   `;
-  toggleGlobalModal(true, tr("Iniciar Sesión en COLLECT X", "Login to COLLECT X"), formHtml);
+  toggleGlobalModal(true, tr("Iniciar Sesión en Geek Collector PR", "Login to Geek Collector PR"), formHtml);
   lucide.createIcons();
 }
 
@@ -986,7 +986,7 @@ function renderRegisterFormModal() {
   const formHtml = `
     <div style="padding: 0.5rem 0;">
       <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.5rem; text-align:center;">
-        ${tr('Crea tu cuenta de Comprador o Vendedor en COLLECT X.', 'Create your Buyer or Seller account at COLLECT X.')}
+        ${tr('Crea tu cuenta de Comprador o Vendedor en Geek Collector PR.', 'Create your Buyer or Seller account at Geek Collector PR.')}
       </p>
 
       <div style="display:flex; flex-direction:column; gap:1rem;">
@@ -1032,7 +1032,7 @@ function renderRegisterFormModal() {
       </p>
     </div>
   `;
-  toggleGlobalModal(true, tr("Registrarse en COLLECT X", "Sign Up at COLLECT X"), formHtml);
+  toggleGlobalModal(true, tr("Registrarse en Geek Collector PR", "Sign Up at Geek Collector PR"), formHtml);
   lucide.createIcons();
 }
 
@@ -1194,7 +1194,7 @@ function handleUserRegisterSubmit() {
       is_default: true
     });
     db.set('shipping_addresses', addresses);
-    showToast(tr(`¡Cuenta creada con éxito! Bienvenido a COLLECT X, ${name}.`, `Account successfully created! Welcome to COLLECT X, ${name}.`), 'success');
+    showToast(tr(`¡Cuenta creada con éxito! Bienvenido a Geek Collector PR, ${name}.`, `Account successfully created! Welcome to Geek Collector PR, ${name}.`), 'success');
   }
 
   // Auto login
@@ -1320,7 +1320,7 @@ function getFollowedSellersHtml() {
       const p = profiles.find(prof => prof.user_id === f.seller_id);
       if (p) sName = p.store_name;
     } else {
-      sName = 'COLLECT X Tienda Oficial';
+      sName = 'Geek Collector PR Tienda Oficial';
     }
     
     html += `
@@ -1339,7 +1339,7 @@ function notifyFollowers(sellerId, product) {
   const profiles = db.get('seller_profiles');
   const notifications = db.get('notifications') || [];
   
-  let storeName = 'COLLECT X Tienda Oficial';
+  let storeName = 'Geek Collector PR Tienda Oficial';
   if (sellerId !== 'usr_admin_1') {
     const prof = profiles.find(p => p.user_id === sellerId);
     if (prof) storeName = prof.store_name;
@@ -1353,7 +1353,7 @@ function notifyFollowers(sellerId, product) {
 
     // Check if buyer has email alerts enabled (default is true)
     if (buyer.email_notifications !== false) {
-      const emailMsg = `¡Nueva figura de ${storeName} en COLLECT X! Hola ${buyer.name}, tu vendedor favorito ${storeName} acaba de publicar "${product.title}" por $${product.price.toFixed(2)}. ¡Entra ya para verla!`;
+      const emailMsg = `¡Nueva figura de ${storeName} en Geek Collector PR! Hola ${buyer.name}, tu vendedor favorito ${storeName} acaba de publicar "${product.title}" por $${product.price.toFixed(2)}. ¡Entra ya para verla!`;
       notifications.push({
         id: "notif_email_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
         user_id: buyer.id,
@@ -1368,7 +1368,7 @@ function notifyFollowers(sellerId, product) {
 
     // Check if buyer has SMS alerts enabled (default is false)
     if (buyer.sms_notifications === true) {
-      const smsMsg = `COLLECT X ALERTA: ¡${storeName} publicó "${product.title}" por $${product.price.toFixed(2)}! Ver en: #product/${product.id}`;
+      const smsMsg = `Geek Collector PR ALERTA: ¡${storeName} publicó "${product.title}" por $${product.price.toFixed(2)}! Ver en: #product/${product.id}`;
       notifications.push({
         id: "notif_sms_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
         user_id: buyer.id,

@@ -5,7 +5,7 @@ window.GUEST_AVATAR = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy5
 const INITIAL_USERS = [
   {
     id: "usr_admin_1",
-    name: "Administrador COLLECT X",
+    name: "Administrador Geek Collector PR",
     email: "100wrestlingpodcast@gmail.com",
     password_hash: "admin123@",
     role: "admin",
@@ -19,7 +19,7 @@ const INITIAL_SELLER_PROFILES = [
   {
     id: "sel_prof_admin",
     user_id: "usr_admin_1",
-    store_name: "COLLECT X Tienda Oficial",
+    store_name: "Geek Collector PR Tienda Oficial",
     description: "Tienda oficial de la plataforma. Artículos exclusivos y garantizados.",
     stripe_connect_id: "acct_admin_mock_123",
     subscription_plan: "Elite",
@@ -53,7 +53,7 @@ const INITIAL_SELLER_SUBSCRIPTIONS = [];
 const INITIAL_BANNERS = [
   {
     id: "ban_1",
-    title: "Bienvenidos a COLLECT X",
+    title: "Bienvenidos a Geek Collector PR",
     subtitle: "El marketplace oficial para coleccionistas de figuras de acción, Funko Pop y cómics.",
     image: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=1200&auto=format&fit=crop&q=80",
     link: "#",
@@ -68,7 +68,7 @@ const INITIAL_SHIPPING_ADDRESSES = [
   {
     id: "addr_admin_1",
     user_id: "usr_admin_1",
-    name: "COLLECT X Main Office",
+    name: "Geek Collector PR Main Office",
     street: "500 Commerce Rd, Floor 2",
     city: "New York",
     state: "NY",
