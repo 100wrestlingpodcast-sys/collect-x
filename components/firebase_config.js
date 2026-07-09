@@ -3,7 +3,7 @@
 // TODO: Reemplaza estos valores con las credenciales de tu proyecto de Firebase
 // Puedes obtenerlas en la consola de Firebase: https://console.firebase.google.com/
 const firebaseConfig = {
-  apiKey: atob("QUl6YVN5QnFhckhWT3hLeVpnNzRrTkJPRDdsWk5sdGR0d0ZEMS1r"),
+  apiKey: atob("QUl6YVN5QnFhckhWT3hLeVpnNzRrTkJPRDdsWk5MdGR0d0ZEMS1r"),
   authDomain: "collect-x-marketplace.firebaseapp.com",
   projectId: "collect-x-marketplace",
   storageBucket: "collect-x-marketplace.firebasestorage.app",

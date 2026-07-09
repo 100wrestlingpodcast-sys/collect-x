@@ -7,12 +7,19 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isUser(userId) {
+      return userId == request.auth.uid || userId == "usr_" + request.auth.uid;
+    }
+
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return isAuthenticated() && isUser(userId);
     }
 
     function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      // Intenta obtener los datos usando el ID con prefijo o directo
+      let userDocPath = /databases/$(database)/documents/users/$(request.auth.uid);
+      let prefixedDocPath = /databases/$(database)/documents/users/$("usr_" + request.auth.uid);
+      return exists(userDocPath) ? get(userDocPath).data : get(prefixedDocPath).data;
     }
 
     function isAdmin() {
@@ -31,33 +38,33 @@ service cloud.firestore {
     // --- PERFILES DE VENDEDOR ---
     match /seller_profiles/{profileId} {
       allow read: if true; // Público
-      allow create, update: if isAuthenticated() && (request.resource.data.user_id == request.auth.uid || isAdmin());
+      allow create, update: if isAuthenticated() && (isUser(request.resource.data.user_id) || isAdmin());
       allow delete: if isAdmin();
     }
 
     // --- PRODUCTOS Y MULTIMEDIA ---
     match /products/{productId} {
       allow read: if true; // Público
-      allow create, update: if isAuthenticated() && (request.resource.data.seller_id == request.auth.uid || isAdmin());
-      allow delete: if isAuthenticated() && (resource.data.seller_id == request.auth.uid || isAdmin());
+      allow create, update: if isAuthenticated() && (isUser(request.resource.data.seller_id) || isAdmin());
+      allow delete: if isAuthenticated() && (isUser(resource.data.seller_id) || isAdmin());
     }
 
     match /product_media/{mediaId} {
       allow read: if true; // Público
-      allow create, update: if isAuthenticated() && (request.resource.data.seller_id == request.auth.uid || isAdmin());
-      allow delete: if isAuthenticated() && (resource.data.seller_id == request.auth.uid || isAdmin());
+      allow create, update: if isAuthenticated() && (isUser(request.resource.data.seller_id) || isAdmin());
+      allow delete: if isAuthenticated() && (isUser(resource.data.seller_id) || isAdmin());
     }
 
     // --- DIRECCIONES DE ENVÍO ---
     match /shipping_addresses/{addressId} {
-      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid || request.resource.data.user_id == request.auth.uid || isAdmin());
+      allow read, write: if isAuthenticated() && (resource == null || isUser(resource.data.user_id) || isUser(request.resource.data.user_id) || isAdmin());
     }
 
     // --- PEDIDOS Y DETALLES DE PEDIDO ---
     match /orders/{orderId} {
-      allow read: if isAuthenticated() && (resource.data.buyer_id == request.auth.uid || resource.data.seller_id == request.auth.uid || isAdmin());
-      allow create: if isAuthenticated() && request.resource.data.buyer_id == request.auth.uid;
-      allow update: if isAuthenticated() && (resource.data.seller_id == request.auth.uid || isAdmin()); // El vendedor actualiza estado de envío
+      allow read: if isAuthenticated() && (isUser(resource.data.buyer_id) || isUser(resource.data.seller_id) || isAdmin());
+      allow create: if isAuthenticated() && isUser(request.resource.data.buyer_id);
+      allow update: if isAuthenticated() && (isUser(resource.data.seller_id) || isAdmin()); // El vendedor actualiza estado de envío
       allow delete: if isAdmin();
     }
 
@@ -69,34 +76,41 @@ service cloud.firestore {
 
     // --- TRANSACCIONES Y ENVÍOS (SHIPMENTS) ---
     match /transactions/{trxId} {
-      allow read: if isAuthenticated() && (resource.data.buyer_id == request.auth.uid || resource.data.seller_id == request.auth.uid || isAdmin());
+      allow read: if isAuthenticated() && (isUser(resource.data.buyer_id) || isUser(resource.data.seller_id) || isAdmin());
       allow create: if isAuthenticated();
       allow update, delete: if isAdmin();
     }
 
-    match /shipments/{shipmentId} {
-      allow read: if isAuthenticated() && (resource.data.buyer_id == request.auth.uid || resource.data.seller_id == request.auth.uid || isAdmin());
+    match /focus_shipment/{shipmentId} {
+      allow read: if isAuthenticated() && (isUser(resource.data.buyer_id) || isUser(resource.data.seller_id) || isAdmin());
       allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (resource.data.seller_id == request.auth.uid || isAdmin());
+      allow update: if isAuthenticated() && (isUser(resource.data.seller_id) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /shipments/{shipmentId} {
+      allow read: if isAuthenticated() && (isUser(resource.data.buyer_id) || isUser(resource.data.seller_id) || isAdmin());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (isUser(resource.data.seller_id) || isAdmin());
       allow delete: if isAdmin();
     }
 
     // --- FAVORITOS, CARRITO Y VENDEDORES SEGUIDOS ---
     match /favorites/{favId} {
-      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid || request.resource.data.user_id == request.auth.uid);
+      allow read, write: if isAuthenticated() && (resource == null || isUser(resource.data.user_id) || isUser(request.resource.data.user_id));
     }
 
     match /cart/{cartId} {
-      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid || request.resource.data.user_id == request.auth.uid);
+      allow read, write: if isAuthenticated() && (resource == null || isUser(resource.data.user_id) || isUser(request.resource.data.user_id));
     }
 
     match /favorite_sellers/{favSelId} {
-      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid || request.resource.data.user_id == request.auth.uid);
+      allow read, write: if isAuthenticated() && (resource == null || isUser(resource.data.user_id) || isUser(request.resource.data.user_id));
     }
 
     // --- NOTIFICACIONES ---
     match /notifications/{notifId} {
-      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid || request.resource.data.user_id == request.auth.uid || isAdmin());
+      allow read, write: if isAuthenticated() && (resource == null || isUser(resource.data.user_id) || isUser(request.resource.data.user_id) || isAdmin());
     }
 
     // --- AUDITORÍA DE CUMPLIMIENTO, STRIKES Y CUPONES ---
@@ -105,7 +119,7 @@ service cloud.firestore {
     }
 
     match /strikes/{strikeId} {
-      allow read: if isAuthenticated() && (resource.data.seller_id == request.auth.uid || isAdmin());
+      allow read: if isAuthenticated() && (isUser(resource.data.seller_id) || isAdmin());
       allow write: if isAdmin();
     }
 
