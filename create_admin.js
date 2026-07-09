@@ -1,6 +1,6 @@
 const https = require('https');
 
-const apiKey = "AIzaSyBqarHVOxKyZg74kNBOD7lZNLtdtwFD1-k";
+const apiKey = "AIzaSyBqarHVOxKyZg74kNBOD7lZNlTdtwFD1-k";
 const projectId = "collect-x-marketplace";
 const email = "100wrestlingpodcast@gmail.com";
 const password = "admin123@";
@@ -36,18 +36,22 @@ function post(url, data) {
   });
 }
 
-function put(url, data) {
+function put(url, data, idToken) {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
     const body = JSON.stringify(data);
+    const headers = {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(body)
+    };
+    if (idToken) {
+      headers['Authorization'] = `Bearer ${idToken}`;
+    }
     const options = {
       hostname: urlObj.hostname,
       path: urlObj.pathname + urlObj.search,
       method: 'PATCH', // Firestore REST API uses PATCH to create/update document
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body)
-      }
+      headers: headers
     };
     const req = https.request(options, (res) => {
       let responseBody = '';
@@ -68,7 +72,7 @@ function put(url, data) {
 }
 
 async function run() {
-  console.log("Creando usuario en Firebase Auth...");
+  console.log("Creando/Obteniendo usuario en Firebase Auth...");
   const authUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`;
   const authRes = await post(authUrl, {
     email,
@@ -77,11 +81,14 @@ async function run() {
   });
   
   let uid = '';
+  let idToken = '';
+  
   if (authRes.status === 200) {
     uid = authRes.body.localId;
+    idToken = authRes.body.idToken;
     console.log("Usuario creado en Auth con UID:", uid);
   } else if (authRes.body && authRes.body.error && authRes.body.error.message === 'EMAIL_EXISTS') {
-    console.log("El email ya está registrado. Obteniendo UID mediante login...");
+    console.log("El email ya está registrado en Auth. Obteniendo token mediante login...");
     const loginUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`;
     const loginRes = await post(loginUrl, {
       email,
@@ -90,13 +97,14 @@ async function run() {
     });
     if (loginRes.status === 200) {
       uid = loginRes.body.localId;
+      idToken = loginRes.body.idToken;
       console.log("UID recuperado:", uid);
     } else {
       console.error("Error al iniciar sesión:", loginRes.body);
       process.exit(1);
     }
   } else {
-    console.error("Error al crear usuario en Auth:", authRes.body || authRes.error);
+    console.error("Error en Auth:", authRes.body || authRes.error);
     process.exit(1);
   }
 
@@ -118,11 +126,15 @@ async function run() {
   };
 
   const firestoreUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${newUserId}`;
-  const firestoreRes = await put(firestoreUrl, docData);
+  const firestoreRes = await put(firestoreUrl, docData, idToken);
   
   if (firestoreRes.status === 200) {
     console.log("¡Documento en Firestore guardado con éxito!");
-    console.log("Usuario de Administrador creado y configurado correctamente.");
+    console.log("==================================================");
+    console.log(" Cuentas configuradas con éxito:");
+    console.log(` Email: ${email}`);
+    console.log(` Pass:  ${password}`);
+    console.log("==================================================");
   } else {
     console.error("Error al escribir en Firestore:", firestoreRes.body || firestoreRes.error);
   }
