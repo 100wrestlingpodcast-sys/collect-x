@@ -45,6 +45,10 @@ function renderAdminDashboard() {
             <i data-lucide="bar-chart-3" style="width:1.05rem;height:1.05rem;"></i>
             ${tr('Resumen General', 'General Overview')}
           </a>
+          <a class="db-menu-item ${window.activeAdminTab === 'users' ? 'active' : ''}" onclick="setAdminTab('users')">
+            <i data-lucide="users" style="width:1.05rem;height:1.05rem;"></i>
+            ${tr('Usuarios y Tiendas', 'Users & Stores')}
+          </a>
           <a class="db-menu-item ${window.activeAdminTab === 'approvals' ? 'active' : ''}" onclick="setAdminTab('approvals')">
             <i data-lucide="user-check" style="width:1.05rem;height:1.05rem;"></i>
             ${tr('Aprobaciones', 'Approvals')} (${pendingProducts.length + pendingSellers.length})
@@ -159,6 +163,126 @@ function renderAdminSubTab(tab, data) {
             <div class="chart-bar-value" style="height: 200px;" data-val="$2,850.00"></div>
             <div class="chart-bar-label">Jun</div>
           </div>
+        </div>
+      </div>
+    `;
+  } 
+  
+  else if (tab === 'users') {
+    const usersList = db.get('users') || [];
+    const profiles = db.get('seller_profiles') || [];
+    
+    container.innerHTML = `
+      <div style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h3>${tr('Gestión de Usuarios y Tiendas', 'Users & Stores Management')}</h3>
+          <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">
+            ${tr('Administra las cuentas de compradores, administradores y los perfiles de tiendas de los vendedores.', 'Manage accounts of buyers, admins, and seller store profiles.')}
+          </p>
+        </div>
+      </div>
+
+      <!-- Users Table Card -->
+      <div class="db-table-card" style="margin-bottom:2rem;">
+        <div class="db-table-header">
+          <h4 style="margin:0; color:var(--text-primary);">${tr('Usuarios Registrados', 'Registered Users')}</h4>
+        </div>
+        <div class="db-table-wrapper">
+          <table class="db-table">
+            <thead>
+              <tr>
+                <th>${tr('Nombre', 'Name')}</th>
+                <th>${tr('Email', 'Email')}</th>
+                <th>${tr('Rol', 'Role')}</th>
+                <th>${tr('Estado', 'Status')}</th>
+                <th>${tr('Registro', 'Registered')}</th>
+                <th style="text-align:right;">${tr('Acciones', 'Actions')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${usersList.map(u => {
+                const statusTag = u.status === 'suspended' ? 
+                  `<span class="status-tag rejected">${tr('Suspendido', 'Suspended')}</span>` : 
+                  `<span class="status-tag approved">${tr('Activo', 'Active')}</span>`;
+                
+                const roleTag = u.role === 'admin' ? 
+                  `<span style="color:var(--gold-light); font-weight:700;">Admin</span>` : 
+                  `<span>${tr('Comprador', 'Buyer')}</span>`;
+                  
+                return `
+                  <tr>
+                    <td><strong>${u.name}</strong></td>
+                    <td>${u.email}</td>
+                    <td>${roleTag}</td>
+                    <td>${statusTag}</td>
+                    <td>${u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}</td>
+                    <td style="text-align:right;">
+                      ${u.role !== 'admin' ? `
+                        <button class="action-btn-small ${u.status === 'suspended' ? 'approve' : 'suspend'}" 
+                          onclick="adminToggleUserStatus('${u.id}')">
+                          ${u.status === 'suspended' ? tr('Reactivar', 'Reactivate') : tr('Suspender', 'Suspend')}
+                        </button>
+                      ` : tr('Sin acciones', 'No actions')}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Stores Table Card -->
+      <div class="db-table-card">
+        <div class="db-table-header">
+          <h4 style="margin:0; color:var(--text-primary);">${tr('Perfiles de Vendedores y Tiendas', 'Seller Profiles & Stores')}</h4>
+        </div>
+        <div class="db-table-wrapper">
+          <table class="db-table">
+            <thead>
+              <tr>
+                <th>${tr('Tienda', 'Store')}</th>
+                <th>${tr('Dueño', 'Owner')}</th>
+                <th>${tr('Plan', 'Plan')}</th>
+                <th>${tr('Comisión', 'Commission')}</th>
+                <th>${tr('Stripe Connect', 'Stripe Connect')}</th>
+                <th style="text-align:right;">${tr('Acciones', 'Actions')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${profiles.map(p => {
+                const owner = usersList.find(u => u.id === p.user_id);
+                const commissionPercent = p.commission_rate !== undefined ? `${(p.commission_rate * 100).toFixed(0)}%` : 'N/A';
+                
+                const stripeStatus = p.stripe_connect_id ? 
+                  `<span class="status-tag approved" title="${p.stripe_connect_id}">Conectado</span>` : 
+                  `<span class="status-tag pending">Desconectado</span>`;
+                  
+                const planTag = p.subscription_plan === 'Elite' ? 
+                  `<span style="color:var(--gold-light); font-weight:700;">★ Elite</span>` : 
+                  `<span>Free</span>`;
+                
+                return `
+                  <tr>
+                    <td><strong>${p.store_name}</strong></td>
+                    <td>${owner ? owner.email : tr('Desconocido', 'Unknown')}</td>
+                    <td>${planTag}</td>
+                    <td>${commissionPercent}</td>
+                    <td>${stripeStatus}</td>
+                    <td style="text-align:right; display:flex; gap:0.4rem; justify-content:flex-end;">
+                      <button class="action-btn-small" style="background:var(--border-metallic-yellow); color:#000000;" 
+                        onclick="adminEditStorePlan('${p.id}')">
+                        ${tr('Cambiar Plan', 'Change Plan')}
+                      </button>
+                      <button class="action-btn-small approve" onclick="adminEditStoreCommission('${p.id}')">
+                        % ${tr('Comisión', 'Commission')}
+                      </button>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
         </div>
       </div>
     `;
@@ -1166,5 +1290,49 @@ function submitAdminEditProduct(productId) {
     toggleGlobalModal(false);
     showToast(tr("¡Cambios aplicados exitosamente en el catálogo!", "Changes successfully applied to the catalog!"), 'success');
     renderAdminDashboard();
+  }
+}
+
+function adminToggleUserStatus(userId) {
+  const users = db.get('users');
+  const user = users.find(u => u.id === userId);
+  if (user) {
+    user.status = user.status === 'suspended' ? 'active' : 'suspended';
+    db.set('users', users);
+    showToast(tr(`Estado de usuario cambiado con éxito.`, `User status updated successfully.`), 'success');
+    renderAdminDashboard();
+  }
+}
+
+function adminEditStorePlan(profileId) {
+  const profiles = db.get('seller_profiles');
+  const prof = profiles.find(p => p.id === profileId);
+  if (prof) {
+    prof.subscription_plan = prof.subscription_plan === 'Elite' ? 'Free' : 'Elite';
+    db.set('seller_profiles', profiles);
+    showToast(tr(`Plan de tienda actualizado con éxito.`, `Store plan updated successfully.`), 'success');
+    renderAdminDashboard();
+  }
+}
+
+function adminEditStoreCommission(profileId) {
+  const profiles = db.get('seller_profiles');
+  const prof = profiles.find(p => p.id === profileId);
+  if (prof) {
+    const rateStr = prompt(
+      tr("Ingresa la nueva tasa de comisión para esta tienda (ej. 0.05 para 5%):", "Enter the new commission rate for this store (e.g. 0.05 for 5%):"),
+      prof.commission_rate !== undefined ? prof.commission_rate : "0.05"
+    );
+    if (rateStr !== null) {
+      const rate = parseFloat(rateStr);
+      if (!isNaN(rate) && rate >= 0 && rate <= 1) {
+        prof.commission_rate = rate;
+        db.set('seller_profiles', profiles);
+        showToast(tr(`Tasa de comisión actualizada con éxito.`, `Commission rate updated successfully.`), 'success');
+        renderAdminDashboard();
+      } else {
+        showToast(tr(`Tasa de comisión inválida. Debe ser un número entre 0 y 1.`, `Invalid commission rate. Must be a number between 0 and 1.`), 'error');
+      }
+    }
   }
 }
