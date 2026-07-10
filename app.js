@@ -4,12 +4,21 @@ window.translations = {};
 
 window.loadTranslations = async function() {
   const lang = localStorage.getItem('cm_language') || 'es';
-  try {
-    const res = await fetch(`/locales/${lang}/common.json`);
-    window.translations = await res.json();
-  } catch (err) {
-    console.error("Failed to load translations for lang: " + lang, err);
-    window.translations = {};
+  // Use pre-bundled locales (no HTTP fetch needed - works offline and in all hosting environments)
+  if (lang === 'en' && window.LOCALE_EN) {
+    window.translations = window.LOCALE_EN;
+  } else if (window.LOCALE_ES) {
+    window.translations = window.LOCALE_ES;
+  } else {
+    // Fallback: try HTTP fetch if bundle not available
+    try {
+      const res = await fetch(`/locales/${lang}/common.json`);
+      if (res.ok) window.translations = await res.json();
+      else window.translations = {};
+    } catch (err) {
+      console.error("Failed to load translations for lang: " + lang, err);
+      window.translations = {};
+    }
   }
 };
 
