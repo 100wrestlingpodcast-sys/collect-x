@@ -122,28 +122,28 @@ function renderProductDetail(productId) {
           <div class="product-meta-header">
             <span class="product-condition-tag condition-badge ${condClass}">${product.condition}</span>
             <span style="color:var(--gold-light); font-weight:600; font-size:0.9rem; margin-left:0.5rem; display:inline-flex; align-items:center; gap:0.25rem;">
-              <i data-lucide="star" style="width:0.9rem; height:0.9rem; fill:var(--gold-light);"></i> ${avgRating} (${reviews.length} reviews)
+              <i data-lucide="star" style="width:0.9rem; height:0.9rem; fill:var(--gold-light);"></i> ${avgRating} (${tr('product.reviews_count', { count: reviews.length })})
             </span>
             <h1 class="product-title-detail" style="margin-top:0.5rem;">${product.title}</h1>
-            <p class="product-brand-category">${tr('Marca:', 'Brand:')} <strong>${product.brand}</strong> | ${tr('Categoría:', 'Category:')} <strong>${product.category}</strong></p>
+            <p class="product-brand-category">${tr('product.brand')} <strong>${product.brand}</strong> | ${tr('product.category')} <strong>${product.category}</strong></p>
           </div>
 
           <div class="product-price-section">
             <span class="product-price-detail">$${product.price.toFixed(2)}</span>
             ${product.is_external_ebay ? `
-              <span class="stock-indicator in-stock">${tr('Disponible en eBay', 'Available on eBay')}</span>
+              <span class="stock-indicator in-stock">${tr('product.available_ebay')}</span>
             ` : product.stock > 3 ? `
-              <span class="stock-indicator in-stock">${tr(`En Stock (${product.stock} disp.)`, `In Stock (${product.stock} avail.)`)}</span>
+              <span class="stock-indicator in-stock">${tr('product.in_stock', { count: product.stock })}</span>
             ` : product.stock > 0 ? `
-              <span class="stock-indicator low-stock">${tr(`¡Pocas unidades! (Solo ${product.stock})`, `Few units left! (Only ${product.stock})`)}</span>
+              <span class="stock-indicator low-stock">${tr('product.low_stock', { count: product.stock })}</span>
             ` : `
-              <span class="stock-indicator out-of-stock">${tr('Agotado', 'Sold Out')}</span>
+              <span class="stock-indicator out-of-stock">${tr('product.out_of_stock')}</span>
             `}
           </div>
 
           <!-- Description -->
           <div style="margin: 1rem 0; line-height: 1.6; color: var(--text-secondary);">
-            <h4 style="color:var(--text-primary); margin-bottom:0.5rem;">${tr('Descripción del artículo', 'Item description')}</h4>
+            <h4 style="color:var(--text-primary); margin-bottom:0.5rem;">${tr('product.description')}</h4>
             <p>${product.description}</p>
           </div>
 
@@ -169,7 +169,7 @@ function renderProductDetail(productId) {
                       style="width:auto; padding:0.4rem 0.8rem; font-size:0.75rem; display:flex; align-items:center; gap:0.25rem;" 
                       onclick="toggleFollowSeller('${sellerUserId}', '${sellerName.replace(/'/g, "\\'")}')">
                 <i data-lucide="heart" style="width:0.85rem; height:0.85rem; fill:${state.currentUser && isFollowingSeller(sellerUserId) ? 'var(--text-primary)' : 'none'};"></i>
-                <span>${state.currentUser && isFollowingSeller(sellerUserId) ? tr('Siguiendo', 'Following') : tr('Seguir Tienda', 'Follow Store')}</span>
+                <span>${state.currentUser && isFollowingSeller(sellerUserId) ? tr('product.following_store') : tr('product.follow_store')}</span>
               </button>
             ` : ''}
           </div>
@@ -178,24 +178,24 @@ function renderProductDetail(productId) {
           <div class="action-buttons-group">
             ${product.is_external_ebay ? `
               <button class="btn-large ebay-action-btn" onclick="openEbayLink('${product.id}', '${product.ebay_url}')">
-                <i data-lucide="external-link"></i> ${tr('Comprar en eBay (Link Externo)', 'Buy on eBay (External Link)')}
+                <i data-lucide="external-link"></i> ${tr('product.buy_ebay')}
               </button>
             ` : product.stock === 0 ? `
               <button class="btn-large secondary-btn" style="grid-column: span 2; opacity:0.5; cursor:not-allowed;" disabled>
-                ${tr('Agotado Temporalmente', 'Temporarily Out of Stock')}
+                ${tr('product.out_of_stock')}
               </button>
             ` : `
               <button class="btn-large secondary-btn" onclick="addToCart('${product.id}')">
-                <i data-lucide="shopping-cart"></i> ${tr('Añadir al Carrito', 'Add to Cart')}
+                <i data-lucide="shopping-cart"></i> ${tr('product.add_to_cart')}
               </button>
               <button class="btn-large primary-btn" onclick="buyNow('${product.id}')">
-                ${tr('Comprar Ahora', 'Buy Now')}
+                ${tr('product.buy_now')}
               </button>
             `}
             
             <button class="btn-large favorite-action-btn ${isFav ? 'active' : ''}" onclick="toggleProductFavorite('${product.id}')">
               <i data-lucide="heart" style="fill:${isFav ? 'white' : 'none'};"></i> 
-              <span>${isFav ? tr('Guardado en Favoritos', 'Saved in Favorites') : tr('Guardar en Favoritos', 'Save to Favorites')}</span>
+              <span>${isFav ? tr('product.saved_favorites') : tr('product.save_favorites')}</span>
             </button>
           </div>
         </div>
@@ -204,7 +204,7 @@ function renderProductDetail(productId) {
       <!-- Tab sections for reviews -->
       <div class="product-tabs">
         <div class="tabs-headers">
-          <div class="tab-header active" id="tab-btn-reviews">Opiniones de compradores (${reviews.length})</div>
+          <div class="tab-header active" id="tab-btn-reviews">${tr('product.reviews_title')} (${reviews.length})</div>
         </div>
         
         <div class="tab-content">
@@ -215,10 +215,10 @@ function renderProductDetail(productId) {
               <div class="review-stars" style="margin: 0.25rem 0;">
                 ${drawStarRatingHtml(reviews.length > 0 ? parseFloat(avgRating) : 0)}
               </div>
-              <div style="font-size:0.8rem; color:var(--text-secondary);">${reviews.length} valoraciones</div>
+              <div style="font-size:0.8rem; color:var(--text-secondary);">${tr('product.reviews_count', { count: reviews.length })}</div>
             </div>
             <div style="font-size:0.9rem; color:var(--text-secondary);">
-              <strong>${tr('Garantía Geek Collector PR:', 'Geek Collector PR Warranty:')}</strong> ${tr('Solo compradores verificados que han recibido físicamente la figura pueden dejar reseñas aquí. Esto asegura un feedback libre de bots y especuladores.', 'Only verified buyers who have physically received the figure can leave reviews here. This ensures feedback free of bots and scalpers.')}
+              <strong>${tr('product.warranty_title')}</strong> ${tr('product.warranty_text')}
             </div>
           </div>
 
@@ -226,9 +226,9 @@ function renderProductDetail(productId) {
           ${hasPurchased ? `
             <div class="review-form-card" id="product-review-form-section">
               <h3 style="color:var(--text-primary); margin-bottom:0.5rem; display:flex;align-items:center;gap:0.5rem;">
-                <i data-lucide="edit-3" style="color:var(--gold-light);"></i> Escribir Reseña de Comprador Verificado
+                <i data-lucide="edit-3" style="color:var(--gold-light);"></i> ${tr('product.write_review')}
               </h3>
-              <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1rem;">Cuéntale a la comunidad sobre la condición, empaque y rapidez de envío de esta figura.</p>
+              <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1rem;">${tr('product.write_review_desc')}</p>
               
               <div class="review-form-stars" id="review-stars-selector">
                 <i data-lucide="star" class="star-select" onclick="setReviewFormRating(1)" id="frm-star-1"></i>
@@ -239,35 +239,35 @@ function renderProductDetail(productId) {
               </div>
               <input type="hidden" id="review-form-rating-val" value="0">
               
-              <textarea class="form-textarea" id="review-form-comment" placeholder="¿Qué te pareció el empaque? ¿La figura está en perfecto estado?"></textarea>
+              <textarea class="form-textarea" id="review-form-comment" placeholder="${tr('product.review_comment_placeholder')}"></textarea>
               
               <div class="form-file-input-wrapper">
                 <label class="custom-file-upload">
                   <input type="file" id="review-form-file" accept="image/*" onchange="simulateReviewMediaUpload(event)" style="display:none;">
                   <i data-lucide="image" style="width:0.9rem;height:0.9rem;display:inline-block;vertical-align:middle;margin-right:4px;"></i>
-                  Subir Foto de la Figura
+                  ${tr('product.upload_photo')}
                 </label>
-                <span id="review-upload-feedback" style="font-size:0.8rem; color:var(--text-secondary);">Sin archivos adjuntos</span>
+                <span id="review-upload-feedback" style="font-size:0.8rem; color:var(--text-secondary);">${tr('product.no_attachments')}</span>
               </div>
               <input type="hidden" id="review-form-media-url" value="">
               
               <button class="btn-large primary-btn" style="width:auto; margin-top:1.25rem; padding: 0.6rem 1.5rem;" onclick="submitProductReview('${product.id}')">
-                Publicar Reseña
+                ${tr('product.submit_review')}
               </button>
             </div>
           ` : `
             <div style="background:rgba(255,255,255,0.02); border:1px dashed var(--border-color); padding:1.25rem; border-radius:8px; text-align:center; color:var(--text-secondary); margin-bottom:2rem; font-size:0.9rem;">
               <i data-lucide="info" style="width:1.2rem; height:1.2rem; vertical-align:middle; margin-right:4px; color:var(--gold-light);"></i>
-              Debes comprar esta figura y tener la orden en estado <strong>Entregada</strong> para poder publicar una reseña calificada.
+              ${tr('product.must_buy_to_review')}
             </div>
           `}
 
           <!-- Reviews Listings -->
           <div class="reviews-list">
             ${reviews.length === 0 ? `
-              <p style="text-align:center; padding: 2rem; color:var(--text-muted); font-style:italic;">No hay reseñas para esta figura aún.</p>
+              <p style="text-align:center; padding: 2rem; color:var(--text-muted); font-style:italic;">${tr('product.no_reviews')}</p>
             ` : reviews.map(r => {
-              const reviewer = users.find(u => u.id === r.buyer_id) || { name: 'Comprador Anónimo', avatar: '' };
+              const reviewer = users.find(u => u.id === r.buyer_id) || { name: tr('product.anonymous_buyer'), avatar: '' };
               const rMedia = reviewMedia.filter(m => m.review_id === r.id);
               
               return `
@@ -276,9 +276,9 @@ function renderProductDetail(productId) {
                     <div class="review-user-info">
                       <img src="${reviewer.avatar || window.GUEST_AVATAR}" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">
                       <span style="font-weight:600; color:var(--text-primary);">${reviewer.name}</span>
-                      <span class="status-tag approved" style="font-size:0.6rem; padding: 0.05rem 0.3rem;">Compra Verificada</span>
+                      <span class="status-tag approved" style="font-size:0.6rem; padding: 0.05rem 0.3rem;">${tr('product.verified_purchase')}</span>
                     </div>
-                    <span style="color:var(--text-muted); font-size:0.8rem;">${new Date(r.created_at).toLocaleDateString()}</span>
+                    <span style="color:var(--text-muted); font-size:0.8rem;">${window.formatDate(r.created_at)}</span>
                   </div>
                   
                   <div class="review-stars" style="margin-bottom:0.5rem;">
@@ -304,7 +304,7 @@ function renderProductDetail(productId) {
       <!-- Related products -->
       ${related.length > 0 ? `
         <div style="margin-top: 5rem;">
-          <h3 class="section-title" style="margin-bottom:1.5rem;">Productos Relacionados</h3>
+          <h3 class="section-title" style="margin-bottom:1.5rem;">${tr('product.related_products')}</h3>
           <div class="products-grid">
             ${related.map(p => {
               const pMedia = media.find(m => m.product_id === p.id);
@@ -328,7 +328,7 @@ function renderProductDetail(productId) {
                     <a onclick="router.navigate('product/${p.id}')" class="card-title">${p.title}</a>
                     <div class="card-footer">
                       <span class="card-price">$${p.price.toFixed(2)}</span>
-                      <button class="card-btn" onclick="addToCart('${p.id}')">Añadir</button>
+                      <button class="card-btn" onclick="addToCart('${p.id}')">${tr('product.add_btn')}</button>
                     </div>
                   </div>
                 </article>
@@ -372,7 +372,7 @@ function simulateReviewMediaUpload(event) {
   if (!file) return;
 
   if (file.size > 5 * 1024 * 1024) { // 5MB limit check
-    alert("El archivo es demasiado grande. El límite para subir es 5MB.");
+    alert(tr('product.file_too_large'));
     return;
   }
 
@@ -380,7 +380,7 @@ function simulateReviewMediaUpload(event) {
   const reader = new FileReader();
   reader.onload = function(e) {
     document.getElementById('review-form-media-url').value = e.target.result;
-    document.getElementById('review-upload-feedback').textContent = file.name + " (Listo para publicar)";
+    document.getElementById('review-upload-feedback').textContent = file.name + ` (${tr('product.ready_to_publish')})`;
   };
   reader.readAsDataURL(file);
 }
@@ -392,11 +392,11 @@ function submitProductReview(productId) {
   const mediaUrl = document.getElementById('review-form-media-url').value;
 
   if (rating === 0) {
-    alert("Por favor, selecciona una calificación de 1 a 5 estrellas.");
+    alert(tr('product.select_rating'));
     return;
   }
   if (!comment) {
-    alert("Por favor, escribe un comentario descriptivo.");
+    alert(tr('product.write_comment'));
     return;
   }
 
@@ -449,7 +449,7 @@ function submitProductReview(productId) {
     }
   }
 
-  alert("¡Reseña calificada publicada con éxito!");
+  showToast(tr('product.review_published'), 'success');
   
   // Refresh page
   renderProductDetail(productId);
@@ -476,7 +476,7 @@ function drawStarRatingHtml(ratingVal) {
 // Buy Now shortcut
 function buyNow(productId) {
   if (!state.currentUser) {
-    alert("Por favor inicia sesión o crea una cuenta para comprar este artículo.");
+    alert(tr('product.login_to_buy'));
     renderLoginFormModal();
     return;
   }
@@ -487,7 +487,7 @@ function buyNow(productId) {
 // Toggle favorites inside product details
 function toggleProductFavorite(productId) {
   if (!state.currentUser) {
-    alert("Por favor inicia sesión para guardar productos en tus favoritos.");
+    alert(tr('product.login_to_favorite'));
     renderLoginFormModal();
     return;
   }

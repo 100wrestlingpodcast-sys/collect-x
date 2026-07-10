@@ -104,18 +104,18 @@ function renderMarketplace() {
           <div class="hero-slide ${index === 0 ? 'active' : ''}" style="background-image: url('${banner.image}');" id="hero-slide-${index}">
             <div class="hero-overlay"></div>
             <div class="hero-content">
-              <span class="hero-badge">${tr('Destacado', 'Featured')}</span>
+              <span class="hero-badge">${tr('nav.featured')}</span>
               <h2 class="hero-title">
-                ${banner.title === 'Tienda Oficial Geek Collector PR' ? tr('Tienda Oficial Geek Collector PR', 'Official Store Geek Collector PR') : 
-                  banner.title === 'Bienvenidos a Geek Collector PR' ? tr('Bienvenidos a Geek Collector PR', 'Welcome to Geek Collector PR') : 
+                ${banner.title === 'Tienda Oficial Geek Collector PR' ? tr('nav.official_store') : 
+                  banner.title === 'Bienvenidos a Geek Collector PR' ? tr('nav.welcome') : 
                   banner.title}
               </h2>
               <p class="hero-subtitle">
-                ${banner.subtitle === 'Consigue figuras certificadas y ediciones especiales con envío garantizado.' ? tr('Consigue figuras certificadas y ediciones especiales con envío garantizado.', 'Get certified figures and special editions with guaranteed shipping.') : 
-                  banner.subtitle === 'El marketplace oficial para coleccionistas de figuras de acción, Funko Pop y cómics.' ? tr('El marketplace oficial para coleccionistas de figuras de acción, Funko Pop y cómics.', 'The official marketplace for action figure, Funko Pop and comic collectors.') : 
+                ${banner.subtitle === 'Consigue figuras certificadas y ediciones especiales con envío garantizado.' ? tr('nav.official_store_subtitle') : 
+                  banner.subtitle === 'El marketplace oficial para coleccionistas de figuras de acción, Funko Pop y cómics.' ? tr('nav.welcome_subtitle') : 
                   banner.subtitle}
               </p>
-              <button class="hero-btn" onclick="router.navigate('${banner.link.replace('#', '')}')">${tr('Ver Colección', 'View Collection')}</button>
+              <button class="hero-btn" onclick="router.navigate('${banner.link.replace('#', '')}')">${tr('nav.view_collection')}</button>
             </div>
           </div>
         `).join('')}
@@ -131,10 +131,10 @@ function renderMarketplace() {
       <div class="section-header">
         <div>
           <h2 class="section-title">
-            ${searchQuery ? `${tr('Resultados para', 'Results for')} "${searchQuery}"` : activeCategory === 'Todos' ? tr('Descubre Figuras Exclusivas', 'Discover Exclusive Figures') : activeCategory}
+            ${searchQuery ? `${tr('search.results_for', { query: searchQuery })}` : activeCategory === 'Todos' ? tr('search.discover_figures') : tr('categories.' + activeCategory, {}, activeCategory)}
           </h2>
           <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.25rem;">
-            ${tr(`Mostrando ${filteredProducts.length} coleccionables`, `Showing ${filteredProducts.length} collectibles`)}
+            ${tr('search.showing_collectibles', { count: filteredProducts.length })}
           </p>
         </div>
       </div>
@@ -144,12 +144,12 @@ function renderMarketplace() {
         <aside class="filter-sidebar">
           <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
             <i data-lucide="sliders-horizontal" style="width:1.1rem; height:1.1rem; color:var(--gold-light);"></i>
-            ${tr('Filtros', 'Filters')}
+            ${tr('filters.title')}
           </h3>
           
           <!-- Brand filters -->
           <div class="filter-group">
-            <span class="filter-label">${tr('Marcas', 'Brands')}</span>
+            <span class="filter-label">${tr('filters.brands')}</span>
             <div class="filter-options">
               ${brands.map(brand => {
                 const checked = window.activeFilters.brands.includes(brand) ? 'checked' : '';
@@ -165,15 +165,15 @@ function renderMarketplace() {
 
           <!-- Condition filters -->
           <div class="filter-group">
-            <span class="filter-label">${tr('Condición', 'Condition')}</span>
+            <span class="filter-label">${tr('filters.condition')}</span>
             <div class="filter-options">
               ${conditions.map(cond => {
                 const checked = window.activeFilters.conditions.includes(cond) ? 'checked' : '';
-                const condLabel = cond === 'Sellado' ? tr('Sellado', 'Sealed') : 
-                                  cond === 'Nuevo' ? tr('Nuevo', 'New') : 
-                                  cond === 'Usado' ? tr('Usado', 'Used') : 
-                                  cond === 'Caja dañada' ? tr('Caja dañada', 'Damaged Box') : 
-                                  cond === 'Sin caja' ? tr('Sin caja', 'Loose / No Box') : 
+                const condLabel = cond === 'Sellado' ? tr('seller.cond_sealed_desc') :
+                                  cond === 'Nuevo' ? tr('seller.cond_new_desc') : 
+                                  cond === 'Usado' ? tr('seller.cond_used_desc') : 
+                                  cond === 'Caja dañada' ? tr('seller.cond_damaged') : 
+                                  cond === 'Sin caja' ? tr('seller.cond_loose_desc') : 
                                   cond;
                 return `
                   <label class="filter-checkbox">
@@ -187,7 +187,7 @@ function renderMarketplace() {
 
           <!-- Price filter -->
           <div class="filter-group">
-            <span class="filter-label">${tr('Rango de Precio', 'Price Range')}</span>
+            <span class="filter-label">${tr('filters.price_range')}</span>
             <div class="price-inputs">
               <input type="number" id="filter-min-price" placeholder="Min" value="${window.activeFilters.minPrice}" onchange="updateFilterPrice()">
               <input type="number" id="filter-max-price" placeholder="Max" value="${window.activeFilters.maxPrice}" onchange="updateFilterPrice()">
@@ -196,10 +196,10 @@ function renderMarketplace() {
 
           <!-- Seller filter -->
           <div class="filter-group">
-            <span class="filter-label">${tr('Vendedor', 'Seller')}</span>
+            <span class="filter-label">${tr('filters.seller')}</span>
             <select id="filter-seller-select" onchange="updateFilterSeller()" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); width:100%; border-radius:6px; padding:0.4rem; font-family:var(--font-body); outline:none;">
-              <option value="all" ${window.activeFilters.sellerId === 'all' ? 'selected' : ''}>${tr('Todos los vendedores', 'All Sellers')}</option>
-              <option value="usr_admin_1" ${window.activeFilters.sellerId === 'usr_admin_1' ? 'selected' : ''}>Geek Collector PR (${tr('Oficial', 'Official')})</option>
+              <option value="all" ${window.activeFilters.sellerId === 'all' ? 'selected' : ''}>${tr('filters.all_sellers')}</option>
+              <option value="usr_admin_1" ${window.activeFilters.sellerId === 'usr_admin_1' ? 'selected' : ''}>Geek Collector PR (${tr('filters.official')})</option>
               ${approvedSellers.map(sel => `
                 <option value="${sel.user_id}" ${window.activeFilters.sellerId === sel.user_id ? 'selected' : ''}>${sel.store_name}</option>
               `).join('')}
@@ -208,16 +208,16 @@ function renderMarketplace() {
 
           <!-- Availability filter -->
           <div class="filter-group">
-            <span class="filter-label">${tr('Disponibilidad', 'Availability')}</span>
+            <span class="filter-label">${tr('filters.availability')}</span>
             <label class="filter-checkbox">
               <input type="checkbox" onchange="toggleFilterStock()" ${window.activeFilters.onlyInStock ? 'checked' : ''}>
-              <span>${tr('Solo en Stock', 'Only In Stock')}</span>
+              <span>${tr('filters.only_stock')}</span>
             </label>
           </div>
 
           <!-- Rating filter -->
           <div class="filter-group">
-            <span class="filter-label">${tr('Rating Vendedor', 'Seller Rating')}</span>
+            <span class="filter-label">${tr('filters.seller_rating')}</span>
             <div class="filter-options">
               ${[4, 3, 2].map(stars => `
                 <label class="filter-checkbox" style="display:flex; align-items:center;">
@@ -229,13 +229,13 @@ function renderMarketplace() {
               `).join('')}
               <label class="filter-checkbox">
                 <input type="radio" name="filter-rating" onchange="updateFilterRating(0)" ${window.activeFilters.minRating === 0 ? 'checked' : ''}>
-                <span>${tr('Cualquier Rating', 'Any Rating')}</span>
+                <span>${tr('filters.any_rating')}</span>
               </label>
             </div>
           </div>
 
           <button class="clear-filters-btn" onclick="clearAllFilters()">
-            ${tr('Limpiar Filtros', 'Clear Filters')}
+            ${tr('filters.clear')}
           </button>
         </aside>
 
@@ -244,8 +244,8 @@ function renderMarketplace() {
           ${filteredProducts.length === 0 ? `
             <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 0; color: var(--text-secondary);">
               <i data-lucide="shopping-bag" style="width: 3rem; height: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-              <h3>${tr('No se encontraron productos', 'No products found')}</h3>
-              <p style="margin-top: 0.5rem; font-size: 0.9rem;">${tr('Prueba modificando tus filtros o cambiando la búsqueda.', 'Try modifying your filters or changing your search.')}</p>
+              <h3>${tr('search.no_products')}</h3>
+              <p style="margin-top: 0.5rem; font-size: 0.9rem;">${tr('search.try_modifying')}</p>
             </div>
           ` : filteredProducts.map(p => {
             // Find product image
@@ -293,10 +293,10 @@ function renderMarketplace() {
                         eBay
                       </button>
                     ` : p.stock === 0 ? `
-                      <span class="status-tag rejected" style="font-size:0.75rem;">${tr('Agotado', 'Sold Out')}</span>
+                      <span class="status-tag rejected" style="font-size:0.75rem;">${tr('product.out_of_stock')}</span>
                     ` : `
                       <button class="card-btn" onclick="addToCart('${p.id}')">
-                        ${tr('Añadir', 'Add')}
+                        ${tr('product.add_to_cart')}
                       </button>
                     `}
                   </div>
@@ -399,7 +399,7 @@ function clearAllFilters() {
 // --- Cart and Favorite actions ---
 function addToCart(productId) {
   if (!state.currentUser) {
-    alert("Por favor inicia sesión para añadir artículos al carrito.");
+    alert(tr('marketplace.login_to_cart'));
     renderLoginFormModal();
     return;
   }
@@ -411,7 +411,7 @@ function addToCart(productId) {
   const itemIndex = state.cart.findIndex(i => i.product_id === productId);
   if (itemIndex > -1) {
     if (state.cart[itemIndex].quantity >= product.stock) {
-      alert(`Lo sentimos, no hay suficiente stock disponible de esta figura (${product.stock} unidades).`);
+      alert(tr('marketplace.no_stock', { count: product.stock }));
       return;
     }
     state.cart[itemIndex].quantity++;
@@ -431,7 +431,7 @@ function addToCart(productId) {
 
 function toggleFavorite(productId) {
   if (!state.currentUser) {
-    alert("Por favor inicia sesión para guardar productos en tus favoritos.");
+    alert(tr('marketplace.login_to_favorite'));
     renderLoginFormModal();
     return;
   }
@@ -489,16 +489,16 @@ function renderFavoritesView() {
   viewport.innerHTML = `
     <div class="section-container">
       <div style="margin-bottom: 2rem;">
-        <h2 class="section-title">${tr('Tus Favoritos', 'Your Favorites')}</h2>
-        <p style="color:var(--text-secondary); margin-top:0.25rem;">${tr('Figuras guardadas para comprar después', 'Saved figures to buy later')}</p>
+        <h2 class="section-title">${tr('nav.favorites')}</h2>
+        <p style="color:var(--text-secondary); margin-top:0.25rem;">${tr('nav.favorites_desc')}</p>
       </div>
 
       ${favProducts.length === 0 ? `
         <div style="text-align: center; padding: 5rem 0; color: var(--text-secondary); background:var(--bg-card); border-radius:12px; border:1px solid var(--border-color);">
           <i data-lucide="heart" style="width: 4rem; height: 4rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
-          <h3>${tr('No tienes favoritos aún', 'No favorites yet')}</h3>
-          <p style="margin-top:0.5rem; font-size:0.95rem;">${tr('Explora el catálogo y presiona el corazón para guardar figuras.', 'Explore the catalog and tap the heart icon to save figures.')}</p>
-          <button class="btn-large primary-btn" style="width:auto; margin: 1.5rem auto 0;" onclick="router.navigate('')">${tr('Explorar Catálogo', 'Explore Catalog')}</button>
+          <h3>${tr('nav.no_favorites')}</h3>
+          <p style="margin-top:0.5rem; font-size:0.95rem;">${tr('nav.explore_catalog_desc')}</p>
+          <button class="btn-large primary-btn" style="width:auto; margin: 1.5rem auto 0;" onclick="router.navigate('')">${tr('nav.explore_catalog_btn')}</button>
         </div>
       ` : `
         <section class="products-grid">
@@ -538,9 +538,9 @@ function renderFavoritesView() {
                     ${p.is_external_ebay ? `
                       <button class="card-btn ebay-btn" onclick="openEbayLink('${p.id}', '${p.ebay_url}')">eBay</button>
                     ` : p.stock === 0 ? `
-                      <span class="status-tag rejected" style="font-size:0.75rem;">${tr('Agotado', 'Sold Out')}</span>
+                      <span class="status-tag rejected" style="font-size:0.75rem;">${tr('product.out_of_stock')}</span>
                     ` : `
-                      <button class="card-btn" onclick="addToCart('${p.id}')">${tr('Añadir', 'Add')}</button>
+                      <button class="card-btn" onclick="addToCart('${p.id}')">${tr('product.add_to_cart')}</button>
                     `}
                   </div>
                 </div>

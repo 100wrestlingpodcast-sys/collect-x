@@ -15,7 +15,7 @@ async function initStripeElements() {
       const { publishableKey } = await res.json();
       if (!publishableKey || publishableKey.includes("PLACEHOLDER") || publishableKey === "") {
         console.warn("Stripe public key not configured in environment variables.");
-        container.innerHTML = `<div style="color:var(--danger-color, #ef4444); padding:8px; border:1px solid #fecaca; border-radius:6px; background:#fef2f2; font-size:0.85rem;">Stripe no está configurado en el servidor.</div>`;
+        container.innerHTML = `<div style="color:var(--danger-color, #ef4444); padding:8px; border:1px solid #fecaca; border-radius:6px; background:#fef2f2; font-size:0.85rem;">${tr('checkout.stripe_not_configured')}</div>`;
         return;
       }
       stripeInstance = Stripe(publishableKey);
@@ -67,8 +67,8 @@ function renderCartDrawer() {
     container.innerHTML = `
       <div style="text-align:center; padding:3rem 1rem; color:var(--text-secondary);">
         <i data-lucide="shopping-cart" style="width:3rem; height:3rem; color:var(--border-metallic-yellow); margin-bottom:1rem; opacity:0.6;"></i>
-        <p>${tr('Tu carrito está vacío', 'Your cart is empty')}</p>
-        <button class="btn-large primary-btn" style="margin-top:1.5rem; font-size:0.85rem;" onclick="toggleCartDrawer(false)">${tr('Continuar Comprando', 'Continue Shopping')}</button>
+        <p>${tr('cart.empty')}</p>
+        <button class="btn-large primary-btn" style="margin-top:1.5rem; font-size:0.85rem;" onclick="toggleCartDrawer(false)">${tr('cart.continue_shopping')}</button>
       </div>
     `;
     lucide.createIcons();
@@ -98,7 +98,7 @@ function renderCartDrawer() {
             </div>
             <div style="font-weight:700; color:var(--gold-light); font-size:0.95rem;">$${p.price.toFixed(2)}</div>
           </div>
-          <button class="cart-item-remove" onclick="removeFromCart('${p.id}')" title="${tr('Eliminar de carrito', 'Remove from cart')}">
+          <button class="cart-item-remove" onclick="removeFromCart('${p.id}')" title="${tr('cart.remove_item')}">
             <i data-lucide="trash-2" style="width:0.95rem; height:0.95rem;"></i>
           </button>
         </div>
@@ -111,16 +111,16 @@ function renderCartDrawer() {
     
     <div style="margin-top:auto; padding-top:1.5rem; border-top:1px solid var(--border-color);">
       <div style="display:flex; justify-content:space-between; font-weight:700; font-size:1.1rem; margin-bottom:1.5rem; color:var(--text-primary);">
-        <span>${tr('Subtotal', 'Subtotal')}</span>
+        <span>${tr('cart.subtotal')}</span>
         <span>$${subtotal.toFixed(2)}</span>
       </div>
       
       <div style="display:flex; flex-direction:column; gap:0.75rem;">
         <button class="btn-large primary-btn" onclick="router.navigate('checkout')">
-          ${tr('Proceder al Checkout', 'Proceed to Checkout')}
+          ${tr('cart.proceed_checkout')}
         </button>
         <button class="btn-large secondary-btn" onclick="toggleCartDrawer(false)">
-          ${tr('Seguir Comprando', 'Continue Shopping')}
+          ${tr('cart.continue_shopping')}
         </button>
       </div>
     </div>
@@ -135,14 +135,14 @@ function addToCart(productId) {
   if (!p) return;
 
   if (p.stock <= 0) {
-    showToast(tr("Lo sentimos, este artículo se encuentra agotado.", "Sorry, this item is out of stock."), 'error');
+    showToast(tr("cart.item_out_of_stock"), 'error');
     return;
   }
 
   const existing = state.cart.find(item => item.product_id === productId);
   if (existing) {
     if (existing.quantity >= p.stock) {
-      showToast(tr(`No puedes añadir más piezas. Stock disponible: ${p.stock}`, `You cannot add more items. Stock available: ${p.stock}`), 'error');
+      showToast(tr("cart.item_stock_limit", { stock: p.stock }), 'error');
       return;
     }
     existing.quantity += 1;
@@ -151,7 +151,7 @@ function addToCart(productId) {
   }
 
   state.saveCart();
-  showToast(tr(`¡${p.title} añadida al carrito!`, `¡${p.title} added to cart!`), 'success');
+  showToast(tr("cart.item_added", { title: p.title }), 'success');
   renderCartDrawer();
   toggleCartDrawer(true);
 }
@@ -211,7 +211,7 @@ function fetchRealShippoRates(parcel, fromAddress, toAddress) {
   .catch(err => {
     console.error("Shippo fetch error:", err);
     window.shippoRatesLoading = false;
-    showToast(tr("Error al cotizar envío con Shippo. Usando simulación local.", "Error quoting shipping with Shippo. Using local simulation."), "error");
+    showToast(tr("checkout.shippo_quote_error"), "error");
     // Fallback to simulator
     const data = shippoAPI.calculateRates(parcel, fromAddress, toAddress);
     window.currentShippoRates = data.rates;
@@ -232,7 +232,7 @@ function renderCheckoutView() {
   const profiles = db.get('seller_profiles');
 
   if (!state.currentUser) {
-    showToast(tr("Inicia sesión para proceder al checkout de tu compra.", "Log in to proceed to checkout."), 'error');
+    showToast(tr("checkout.login_to_checkout"), 'error');
     renderLoginFormModal();
     router.navigate('');
     return;
@@ -241,9 +241,9 @@ function renderCheckoutView() {
   if (state.cart.length === 0) {
     viewport.innerHTML = `
       <div class="section-container" style="text-align:center; padding:5rem 0;">
-        <h2>${tr('Tu Carrito está vacío', 'Your Cart is empty')}</h2>
-        <p style="color:var(--text-secondary); margin-top:1rem;">${tr('No tienes artículos para comprar en este momento.', 'You have no items to buy at this time.')}</p>
-        <button class="btn-large primary-btn" style="width:auto; margin: 1.5rem auto 0;" onclick="router.navigate('')">${tr('Explorar Marketplace', 'Explore Marketplace')}</button>
+        <h2>${tr('cart.empty')}</h2>
+        <p style="color:var(--text-secondary); margin-top:1rem;">${tr('checkout.empty_cart_error')}</p>
+        <button class="btn-large primary-btn" style="width:auto; margin: 1.5rem auto 0;" onclick="router.navigate('')">${tr('nav.explore_catalog_btn')}</button>
       </div>
     `;
     return;
@@ -414,8 +414,8 @@ function renderCheckoutView() {
   });
 
   const couponText = activeCoupon 
-    ? `<span style="color:#10b981;">${tr('Cupón:', 'Coupon:')} ${activeCoupon.code} (-$${discount.toFixed(2)})</span>`
-    : `<span style="color:var(--text-muted);">${tr('Ninguno', 'None')}</span>`;
+    ? `<span style="color:#10b981;">${tr('checkout.coupon_code')}: ${activeCoupon.code} (-$${discount.toFixed(2)})</span>`
+    : `<span style="color:var(--text-muted);">${tr('checkout.coupon_none')}</span>`;
 
   // Address Options selector HTML
   const addressOptionsHtml = addresses.map(addr => `
@@ -428,7 +428,7 @@ function renderCheckoutView() {
   let ratesSelectionHtml = `
     <div style="padding: 1.5rem; text-align:center; border: 1.5px dashed var(--border-color); border-radius:8px; color:var(--text-secondary);">
       <i data-lucide="truck" style="width:2rem; height:2rem; margin-bottom:0.5rem; opacity:0.5;"></i>
-      <p style="font-size:0.9rem;">${tr('Por favor selecciona o añade una dirección de envío para cotizar tarifas.', 'Please select or add a shipping address to quote rates.')}</p>
+      <p style="font-size:0.9rem;">${tr('checkout.select_address_rate')}</p>
     </div>
   `;
 
@@ -436,7 +436,7 @@ function renderCheckoutView() {
     ratesSelectionHtml = `
       <div style="padding: 2rem; text-align:center; border: 1px solid var(--border-color); border-radius:8px;">
         <div class="spinner" style="margin: 0 auto 1rem;"></div>
-        <p style="font-size:0.85rem; color:var(--text-secondary);">${tr('Cotizando tarifas reales con Shippo...', 'Quoting real rates with Shippo...')}</p>
+        <p style="font-size:0.85rem; color:var(--text-secondary);">${tr('checkout.quoting_rates')}</p>
       </div>
     `;
   } else if (window.currentShippoRates) {
@@ -451,16 +451,16 @@ function renderCheckoutView() {
             <div>
               <div style="font-weight:700; display:flex; align-items:center; gap:0.4rem; color:var(--text-primary);">
                 <span>${rate.carrier} ${rate.service}</span>
-                ${isRecommended ? `<span class="status-tag approved" style="font-size:0.6rem; padding: 0.1rem 0.4rem; border-color:#d97706; color:#d97706;">${tr('Recomendado', 'Recommended')}</span>` : ''}
+                ${isRecommended ? `<span class="status-tag approved" style="font-size:0.6rem; padding: 0.1rem 0.4rem; border-color:#d97706; color:#d97706;">${tr('checkout.recommended')}</span>` : ''}
               </div>
               <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.15rem;">
-                ${tr('Tiempo de tránsito:', 'Transit time:')} ${rate.days} ${rate.days === 1 ? tr('día', 'day') : tr('días', 'days')} | ${tr('Nivel:', 'Tier:')} ${rate.tier}
+                ${tr('checkout.transit_time')} ${rate.days} ${rate.days === 1 ? tr('checkout.day_one') : tr('checkout.day_other')} | ${tr('checkout.tier')} ${rate.tier}
               </div>
               ${rate.notes ? `<div style="font-size:0.75rem; color:#f59e0b; margin-top:0.25rem;">⚠️ ${rate.notes}</div>` : ''}
             </div>
             <div style="text-align:right;">
               <div style="font-weight:700; color:var(--gold-light); font-size:1.1rem;">$${rate.shipping_cost.toFixed(2)}</div>
-              ${rate.insurance_cost > 0 ? `<div style="font-size:0.7rem; color:var(--text-muted);">${tr('Seguro:', 'Insurance:')} +$${rate.insurance_cost.toFixed(2)}</div>` : ''}
+              ${rate.insurance_cost > 0 ? `<div style="font-size:0.7rem; color:var(--text-muted);">${tr('checkout.insurance_cost')} +$${rate.insurance_cost.toFixed(2)}</div>` : ''}
             </div>
           </div>
         </label>
@@ -473,9 +473,9 @@ function renderCheckoutView() {
   if (activeAddress) {
     activeAddressBlock = `
       <div style="background:#fafafa; border:1px solid var(--border-color); border-radius:6px; padding:0.8rem; margin-top:1rem; font-size:0.85rem; line-height:1.5;">
-        <strong>${tr('Destinatario:', 'Recipient:')}</strong> ${activeAddress.name}<br>
-        <strong>${tr('Dirección:', 'Address:')}</strong> ${activeAddress.street}, ${activeAddress.city}, ${activeAddress.state} ${activeAddress.zip}, ${activeAddress.country}<br>
-        <strong>${tr('Teléfono:', 'Phone:')}</strong> ${activeAddress.phone}
+        <strong>${tr('checkout.recipient')}</strong> ${activeAddress.name}<br>
+        <strong>${tr('checkout.address')}</strong> ${activeAddress.street}, ${activeAddress.city}, ${activeAddress.state} ${activeAddress.zip}, ${activeAddress.country}<br>
+        <strong>${tr('checkout.phone')}</strong> ${activeAddress.phone}
       </div>
     `;
   }
@@ -489,8 +489,8 @@ function renderCheckoutView() {
   viewport.innerHTML = `
     <div class="section-container">
       <div style="margin-bottom: 2rem;">
-        <h2>${tr('Pasarela de Pago Segura', 'Secure Checkout Gateway')}</h2>
-        <p style="color:var(--text-secondary); margin-top:0.25rem;">${tr('Completa tu orden utilizando Stripe & Shippo Integrations', 'Complete your order using Stripe & Shippo Integrations')}</p>
+        <h2>${tr('checkout.title')}</h2>
+        <p style="color:var(--text-secondary); margin-top:0.25rem;">${tr('checkout.subtitle_desc')}</p>
       </div>
 
       <div class="checkout-grid">
@@ -501,17 +501,17 @@ function renderCheckoutView() {
             <h3 class="checkout-subtitle" style="display:flex; justify-content:space-between; align-items:center;">
               <span style="display:flex; align-items:center; gap:0.5rem;">
                 <i data-lucide="map-pin" style="color:var(--primary-light);"></i>
-                ${tr('Dirección de Envío', 'Shipping Address')}
+                ${tr('checkout.shipping_address')}
               </span>
               <button class="action-btn-small approve" style="font-size:0.75rem; padding:0.3rem 0.6rem;" onclick="openNewAddressModal()">
-                ${tr('+ Agregar Nueva', '+ Add New')}
+                ${tr('checkout.add_new')}
               </button>
             </h3>
             
             <div class="checkout-input-wrapper" style="margin-top:1rem;">
-              <label for="checkout-address-select">${tr('Selecciona una dirección guardada', 'Select a saved address')}</label>
+              <label for="checkout-address-select">${tr('checkout.select_saved_address')}</label>
               <select id="checkout-address-select" onchange="changeCheckoutAddress(this.value)" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); width:100%; border-radius:6px; padding:0.5rem; outline:none;">
-                ${addresses.length === 0 ? `<option value="">${tr('No tienes direcciones guardadas', 'You have no saved addresses')}</option>` : addressOptionsHtml}
+                ${addresses.length === 0 ? `<option value="">${tr('checkout.no_saved_addresses')}</option>` : addressOptionsHtml}
               </select>
             </div>
             
@@ -522,14 +522,14 @@ function renderCheckoutView() {
           <div class="checkout-card">
             <h3 class="checkout-subtitle">
               <i data-lucide="truck" style="color:#f59e0b;"></i>
-              ${tr('Comparador de Envíos Shippo', 'Shippo Shipping Comparer')}
+              ${tr('checkout.shippo_comparer')}
             </h3>
             
             ${window.shippoInsuranceSuggested ? `
               <div class="alert-info-box" style="background:#fef3c7; border: 1px solid #fcd34d; border-radius:6px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:#b45309; display:flex; align-items:center; gap:0.5rem;">
                 <i data-lucide="shield" style="width:1.2rem; height:1.2rem; flex-shrink:0;"></i>
                 <div>
-                  <strong>${tr('Seguro Shippo Recomendado:', 'Shippo Insurance Recommended:')}</strong> ${tr('Este paquete incluye artículos especiales o de alto valor (> $100). El costo del seguro se agregará automáticamente al transportista seleccionado para cubrir posibles daños o pérdida en el correo.', 'This package includes special or high-value items (> $100). The insurance cost will be added automatically to the selected carrier to cover potential damage or loss in transit.')}
+                  <strong>${tr('checkout.insurance_recommended_title')}</strong> ${tr('checkout.insurance_recommended_text')}
                 </div>
               </div>
             ` : ''}
@@ -538,7 +538,7 @@ function renderCheckoutView() {
               <div class="alert-info-box" style="background:#fee2e2; border: 1px solid #fecaca; border-radius:6px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:#b91c1c; display:flex; align-items:center; gap:0.5rem;">
                 <i data-lucide="alert-triangle" style="width:1.2rem; height:1.2rem; flex-shrink:0;"></i>
                 <div>
-                  <strong>${tr('Artículo Frágil:', 'Fragile Item:')}</strong> ${tr('Se ha añadido un recargo de protección física y se aconseja seleccionar opciones de transporte prioritario.', 'A physical protection surcharge has been added and priority transport options are advised.')}
+                  <strong>${tr('checkout.fragile_item_title')}</strong> ${tr('checkout.fragile_item_text')}
                 </div>
               </div>
             ` : ''}
@@ -553,29 +553,29 @@ function renderCheckoutView() {
             <h3 class="checkout-subtitle" style="display:flex; justify-content:space-between; align-items:center;">
               <span style="display:flex; align-items:center; gap:0.5rem;">
                 <i data-lucide="credit-card" style="color:#6366f1;"></i>
-                ${tr('Pago con Stripe', 'Pay with Stripe')}
+                ${tr('checkout.pay_with_stripe')}
               </span>
-              <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">${tr('Modo Prueba Activo', 'Test Mode Active')}</span>
+              <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">${tr('checkout.test_mode')}</span>
             </h3>
             
             ${!window.firebaseActive ? `
             <!-- Quick Apple / Google Pay mock buttons if compatible -->
             <div style="display:flex; gap:1rem; margin-bottom:1.5rem;">
               <button class="btn-large" style="background:#000; color:white; font-size:0.9rem; padding: 0.6rem; border:1px solid rgba(255,255,255,0.15);" onclick="simulateExpressPay('Apple Pay')">
-                <i data-lucide="smartphone" style="width:1rem;height:1rem;"></i> ${tr('Pagar con Apple Pay', 'Pay with Apple Pay')}
+                <i data-lucide="smartphone" style="width:1rem;height:1rem;"></i> ${tr('checkout.pay_apple')}
               </button>
               <button class="btn-large" style="background:#fff; color:#000; font-size:0.9rem; padding: 0.6rem; border:1px solid #ddd;" onclick="simulateExpressPay('Google Pay')">
-                <i data-lucide="smartphone" style="width:1rem;height:1rem;"></i> ${tr('Pagar con Google Pay', 'Pay with Google Pay')}
+                <i data-lucide="smartphone" style="width:1rem;height:1rem;"></i> ${tr('checkout.pay_google')}
               </button>
             </div>
 
             <div style="margin-bottom:1rem; text-align:center; color:var(--text-muted); font-size:0.8rem; border-bottom:1px solid var(--border-color); padding-bottom:1rem;">
-              ${tr('o paga con tarjeta de crédito/débito', 'or pay with credit/debit card')}
+              ${tr('checkout.or_credit_card')}
             </div>
             ` : ''}
 
             <div class="checkout-input-wrapper" style="margin-bottom:1rem;">
-              <label>${tr('Tarjeta de Crédito o Débito', 'Credit or Debit Card')}</label>
+              <label>${tr('checkout.credit_card')}</label>
               <div id="stripe-card-element" style="padding: 12px; border: 1px solid var(--border-color, #d1d5db); border-radius: 8px; background: white; min-height: 20px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);">
                 <!-- Stripe Element will be mounted here -->
               </div>
@@ -585,70 +585,69 @@ function renderCheckoutView() {
         </div>
 
         <!-- Order Summary & Stripe Connect Split visualizer -->
-        <div>
-          <div class="checkout-card" style="position:sticky; top:90px;">
-            <h3 class="checkout-subtitle">${tr('Resumen del Pedido', 'Order Summary')}</h3>
+                <div class="checkout-card" style="position:sticky; top:90px;">
+            <h3 class="checkout-subtitle">${tr('checkout.order_summary')}</h3>
             
             <div style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:1.5rem;">
               <div style="display:flex; justify-content:space-between; font-size:0.95rem;">
-                <span>${tr('Subtotal Figuras', 'Figures Subtotal')}</span>
+                <span>${tr('checkout.figures_subtotal')}</span>
                 <span>$${subtotal.toFixed(2)}</span>
               </div>
               <div style="display:flex; justify-content:space-between; font-size:0.95rem;">
-                <span>${tr('Descuento', 'Discount')}</span>
+                <span>${tr('checkout.discount')}</span>
                 <span>${discount > 0 ? `-$${discount.toFixed(2)}` : '$0.00'}</span>
               </div>
               <div style="display:flex; justify-content:space-between; font-size:0.95rem;">
-                <span>${tr('Envío Shippo', 'Shippo Shipping')} (${activeRate ? activeRate.carrier : 'Carrier'})</span>
+                <span>${tr('checkout.shippo_shipping')} (${activeRate ? activeRate.carrier : 'Carrier'})</span>
                 <span>$${shippingCost.toFixed(2)}</span>
               </div>
               ${insuranceCost > 0 ? `
                 <div style="display:flex; justify-content:space-between; font-size:0.95rem; color:#b45309;">
-                  <span>${tr('Seguro de Coleccionable', 'Collectible Insurance')}</span>
+                  <span>${tr('checkout.collectible_insurance')}</span>
                   <span>+$${insuranceCost.toFixed(2)}</span>
                 </div>
               ` : ''}
               <div style="display:flex; justify-content:space-between; font-size:0.95rem;">
-                <span>${tr('Impuestos (IVA 8%)', 'Taxes (8% VAT)')}</span>
+                <span>${tr('checkout.taxes')}</span>
                 <span>$${taxesCost.toFixed(2)}</span>
               </div>
               <div style="display:flex; justify-content:space-between; font-size:1.15rem; font-weight:700; border-top:1px dashed var(--border-color); padding-top:0.75rem; color:var(--text-primary);">
-                <span>${tr('Total a Pagar', 'Total to Pay')}</span>
+                <span>${tr('checkout.total_to_pay')}</span>
                 <span style="color:var(--gold-light);">$${grandTotal.toFixed(2)}</span>
               </div>
             </div>
 
             <!-- Coupon Input -->
             <div style="margin-bottom:1.5rem; display:flex; gap:0.5rem;">
-              <input type="text" id="checkout-coupon-code" placeholder="${tr('Código de Cupón', 'Coupon Code')}" style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.5rem; color:var(--text-primary); flex-grow:1; text-transform:uppercase; outline:none;" value="${activeCoupon ? activeCoupon.code : ''}">
-              <button class="btn-large primary-btn" style="width:auto; padding: 0.5rem 1rem; font-size:0.85rem;" onclick="applyCouponCode()">${tr('Aplicar', 'Apply')}</button>
+              <input type="text" id="checkout-coupon-code" placeholder="${tr('checkout.coupon_code_placeholder')}" style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.5rem; color:var(--text-primary); flex-grow:1; text-transform:uppercase; outline:none;" value="${activeCoupon ? activeCoupon.code : ''}">
+              <button class="btn-large primary-btn" style="width:auto; padding: 0.5rem 1rem; font-size:0.85rem;" onclick="applyCouponCode()">${tr('checkout.apply')}</button>
             </div>
             <div style="margin-top:-1rem; margin-bottom:1.5rem; font-size:0.8rem;">
-              ${tr('Estado del Cupón:', 'Coupon Status:')} ${couponText}
+              ${tr('checkout.coupon_status')} ${couponText}
             </div>
 
             <!-- Payout Split Card -->
             <div class="stripe-payout-visualizer" style="display:none;">
               <div style="font-family:var(--font-heading); font-size:0.85rem; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:0.4rem;">
                 <i data-lucide="git-fork" style="width:0.9rem;height:0.9rem;color:#6366f1;"></i>
-                Transferencia Automática de Fondos
+                ${tr('checkout.auto_transfer_funds')}
               </div>
               <div class="stripe-flow-steps">
                 <div class="stripe-flow-step">
-                  <span>Monto Total Cobrado</span>
+                  <span>${tr('checkout.total_collected')}</span>
                   <span style="color:var(--text-primary); font-weight:700;">$${grandTotal.toFixed(2)}</span>
                 </div>
                 <div class="stripe-flow-step">
-                  <span>Comisión Procesador (Stripe 2.9% + 30¢)</span>
+                  <span>${tr('checkout.stripe_processing')}</span>
                   <span>-$${stripeProcessingFeeTotal.toFixed(2)}</span>
                 </div>
                 <div class="stripe-flow-step">
-                   <span>Comisión Geek Collector PR (Plataforma)</span>
+                   <span>${tr('checkout.geek_platform_fee')}</span>
                    <span>+$${platformCommissionTotal.toFixed(2)}</span>
                 </div>
                 
                 <div style="margin-top:0.5rem; border-top:1.5px solid rgba(99,102,241,0.3); padding-top:0.5rem;">
-                  <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#818cf8; display:block; margin-bottom:0.4rem;">Destino de Payouts (Stripe Connect Split):</span>
+                  <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#818cf8; display:block; margin-bottom:0.4rem;">${tr('checkout.payouts_destination')}</span>
                   ${splitPayoutsHtml}
                 </div>
               </div>
@@ -657,7 +656,7 @@ function renderCheckoutView() {
             <!-- Complete Order Button -->
             <button class="btn-large primary-btn" style="margin-top:1.5rem; padding: 1rem;" onclick="processPaymentSubmit(${grandTotal}, ${platformCommissionTotal}, ${stripeProcessingFeeTotal}, ${shippingCost})">
               <i data-lucide="shield-check"></i>
-              ${tr('Confirmar y Pagar', 'Confirm and Pay')}
+              ${tr('checkout.confirm_and_pay')}
             </button>
           </div>
         </div>
@@ -687,37 +686,37 @@ function openNewAddressModal() {
   const bodyHtml = `
     <div style="display:flex; flex-direction:column; gap:1rem;">
       <div class="checkout-input-wrapper">
-        <label for="new-addr-name">Nombre Destinatario</label>
+        <label for="new-addr-name">${tr('checkout.recipient_name')}</label>
         <input type="text" id="new-addr-name" placeholder="Carlos Mendoza">
       </div>
       <div class="checkout-input-wrapper">
-        <label for="new-addr-street">Dirección (Calle y Número)</label>
+        <label for="new-addr-street">${tr('checkout.street_address')}</label>
         <input type="text" id="new-addr-street" placeholder="123 Collector Lane, Apt 4B">
       </div>
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
-          <label for="new-addr-city">Ciudad</label>
+          <label for="new-addr-city">${tr('checkout.city')}</label>
           <input type="text" id="new-addr-city" placeholder="Miami">
         </div>
         <div class="checkout-input-wrapper">
-          <label for="new-addr-state">Estado</label>
+          <label for="new-addr-state">${tr('checkout.state')}</label>
           <input type="text" id="new-addr-state" placeholder="FL">
         </div>
       </div>
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
-          <label for="new-addr-zip">Código Postal</label>
+          <label for="new-addr-zip">${tr('checkout.zip_code')}</label>
           <input type="text" id="new-addr-zip" placeholder="33101">
         </div>
         <div class="checkout-input-wrapper">
-          <label for="new-addr-phone">Teléfono de contacto</label>
+          <label for="new-addr-phone">${tr('checkout.phone_number')}</label>
           <input type="text" id="new-addr-phone" placeholder="305-555-0199">
         </div>
       </div>
-      <button class="btn-large primary-btn" style="margin-top:1rem;" onclick="saveNewAddress()">Guardar Dirección</button>
+      <button class="btn-large primary-btn" style="margin-top:1rem;" onclick="saveNewAddress()">${tr('checkout.save_address')}</button>
     </div>
   `;
-  toggleGlobalModal(true, "Agregar Nueva Dirección de Envío", bodyHtml);
+  toggleGlobalModal(true, tr('checkout.add_address_title'), bodyHtml);
 }
 
 function saveNewAddress() {
@@ -729,14 +728,14 @@ function saveNewAddress() {
   const phone = document.getElementById('new-addr-phone').value.trim();
 
   if (!name || !street || !city || !stateVal || !zip || !phone) {
-    showToast(tr("Por favor completa todos los campos.", "Please fill in all fields."), 'error');
+    showToast(tr("validation.fill_all_fields"), 'error');
     return;
   }
 
   // Address verification
   const verification = shippoAPI.verifyAddress({ street, zip });
   if (!verification.isValid) {
-    showToast(tr(`Error de Verificación Shippo: ${verification.error}`, `Shippo Verification Error: ${verification.error}`), 'error');
+    showToast(tr("checkout.shippo_verify_error", { error: verification.error }), 'error');
     return;
   }
 
@@ -769,7 +768,7 @@ function saveNewAddress() {
 
   toggleGlobalModal(false);
   renderCheckoutView();
-  showToast(tr("¡Dirección agregada y verificada exitosamente con Shippo!", "Address added and verified successfully with Shippo!"), 'success');
+  showToast(tr("checkout.address_added_success"), 'success');
 }
 
 // Format Input fields
@@ -801,18 +800,18 @@ function formatExpiry(input) {
 
 function simulateExpressPay(providerName) {
   if (window.firebaseActive) {
-    showToast(tr("Pago rápido no disponible en entorno real de Stripe.", "Express checkout not available in real Stripe environment."), 'error');
+    showToast(tr("checkout.express_not_real"), 'error');
     return;
   }
 
   const addresses = db.get('shipping_addresses').filter(a => a.user_id === state.currentUser.id);
   if (addresses.length === 0) {
-    showToast(tr("Por favor agrega una dirección de envío antes de usar pago rápido.", "Please add a shipping address before using express checkout."), 'error');
+    showToast(tr("checkout.express_add_address_first"), 'error');
     openNewAddressModal();
     return;
   }
 
-  showToast(tr(`Ventana de ${providerName} emergente. Autenticando biométricos...`, `${providerName} popup. Authenticating biometrics...`), 'info');
+  showToast(tr("checkout.express_popup", { provider: providerName }), 'info');
   
   const defAddr = addresses.find(a => a.is_default) || addresses[0];
   window.selectedAddressId = defAddr.id;
@@ -829,7 +828,7 @@ function simulateExpressPay(providerName) {
   if (expInput) expInput.value = "09/29";
   if (cvcInput) cvcInput.value = "422";
   
-  showToast(tr(`¡Autenticación con ${providerName} Exitosa! Procesando pago...`, `Authentication with ${providerName} Successful! Processing payment...`), 'success');
+  showToast(tr("checkout.express_success", { provider: providerName }), 'success');
 
   // Auto-submit checkout after a brief delay
   setTimeout(() => {
@@ -858,10 +857,10 @@ function applyCouponCode() {
 
   if (match) {
     window.appliedCoupon = match;
-    showToast(tr(`¡Cupón ${code} aplicado correctamente!`, `Coupon ${code} applied successfully!`), 'success');
+    showToast(tr("checkout.coupon_applied", { code: code }), 'success');
   } else {
     window.appliedCoupon = null;
-    showToast(tr("Código de cupón inválido o expirado.", "Invalid or expired coupon code."), 'error');
+    showToast(tr("checkout.coupon_invalid"), 'error');
   }
   renderCheckoutView();
 }
@@ -869,7 +868,7 @@ function applyCouponCode() {
 // Complete payment submit
 function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, shippingCost) {
   if (!window.selectedAddressId) {
-    showToast(tr("Por favor selecciona o agrega una dirección de envío.", "Please select or add a shipping address."), 'error');
+    showToast(tr("checkout.select_address_toast"), 'error');
     return;
   }
 
@@ -879,7 +878,7 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
   const activeRate = window.currentShippoRates.find(r => r.id === window.selectedRateId);
 
   if (!activeAddress || !activeRate) {
-    showToast(tr("Error de configuración de envío.", "Shipping configuration error."), 'error');
+    showToast(tr("checkout.shipping_config_error"), 'error');
     return;
   }
 
@@ -917,11 +916,11 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
     const cvc = document.getElementById('stripe-card-cvc') ? document.getElementById('stripe-card-cvc').value.trim() : "";
 
     if (!cardNum || !expiry || !cvc) {
-      showToast(tr("Por favor completa la información de pago de tu tarjeta.", "Please complete your card payment information."), 'error');
+      showToast(tr("checkout.complete_card_info"), 'error');
       return;
     }
 
-    showToast(tr("Procesando cobro simulado...", "Processing simulated payment..."), 'info');
+    showToast(tr("checkout.processing_simulated"), 'info');
     setTimeout(() => {
       completeCheckoutLocal(grandTotal, platformFeeTotal, processingFeeTotal, shippingCost, activeAddress, activeRate);
     }, 1500);
@@ -930,18 +929,18 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
 
   // Real secure Stripe Elements payment confirmation
   if (!stripeInstance || !cardElementInstance) {
-    showToast(tr("El procesador de pagos Stripe no se ha inicializado.", "The Stripe payment processor has not been initialized."), 'error');
+    showToast(tr("checkout.stripe_not_initialized"), 'error');
     return;
   }
 
-  showToast(tr("Iniciando cobro seguro con Stripe...", "Starting secure payment with Stripe..."), 'info');
+  showToast(tr("checkout.starting_secure_stripe"), 'info');
 
   const paymentData = {
     amount: grandTotal,
     applicationFeeAmount: platformFeeTotal,
     sellerStripeAccountId: sellerStripeAccountId,
     itemsSubtotal: itemsSubtotal,
-    description: `Compra en Geek Collector PR: ${firstProduct ? firstProduct.title : 'Artículos Coleccionables'}`
+    description: tr('checkout.payment_description', { title: firstProduct ? firstProduct.title : tr('checkout.collectible_items') })
   };
 
   fetch(url, {
@@ -952,9 +951,9 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
   .then(res => res.json())
   .then(data => {
     if (data.error) throw new Error(data.error);
-    if (!data.clientSecret) throw new Error("No se recibió el token de confirmación (clientSecret) del servidor.");
+    if (!data.clientSecret) throw new Error(tr('checkout.no_client_secret'));
 
-    showToast(tr("Verificando tarjeta con Stripe...", "Verifying card with Stripe..."), 'info');
+    showToast(tr("checkout.verifying_card"), 'info');
 
     return stripeInstance.confirmCardPayment(data.clientSecret, {
       payment_method: {
@@ -976,13 +975,13 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
       } else if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
         completeCheckoutLocal(grandTotal, platformFeeTotal, processingFeeTotal, shippingCost, activeAddress, activeRate, data.paymentIntentId);
       } else {
-        throw new Error("El pago no pudo completarse con éxito.");
+        throw new Error(tr('checkout.payment_failed'));
       }
     });
   })
   .catch(err => {
     console.error("Stripe payment error:", err);
-    showToast(tr(`Error en la pasarela de pago real: ${err.message}`, `Error in real payment gateway: ${err.message}`), 'error');
+    showToast(tr("checkout.stripe_error", { message: err.message }), 'error');
   });
 }
 
@@ -1184,7 +1183,7 @@ function completeCheckoutLocal(grandTotal, platformFeeTotal, processingFeeTotal,
   window.selectedRateId = null;
 
   const activeProvider = window.selectedPaymentMethod || "Stripe";
-  showToast(tr(`¡Compra procesada con éxito! Se ha cargado el pago con ${activeProvider}, transferido el split en custodia Connect y generado el Shipping Label automático en Shippo.`, `Purchase processed successfully! Payment charged with ${activeProvider}, split transferred in Connect custody, and automatic Shipping Label generated in Shippo.`), 'success');
+  showToast(tr("checkout.purchase_processed_success", { provider: activeProvider }), 'success');
   
   // Navigate to marketplace
   router.navigate('');

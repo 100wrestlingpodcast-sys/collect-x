@@ -1,36 +1,134 @@
 // collectors-market/app.js
 
-window.sellerGuidelinesTranslations = {
-  es: {
-    "sellerGuidelines.title": "Reglas para vendedores",
-    "sellerGuidelines.checkbox": "He leído y acepto las Reglas para Vendedores, la comisión vigente de Geek Collector, las tarifas de procesamiento de pagos, las políticas de envío, reembolsos, disputas y pagos. Entiendo que no podré publicar ni vender artículos sin aceptar estas condiciones.",
-    "sellerGuidelines.acceptButton": "Aceptar reglas para vendedores",
-    "sellerGuidelines.requiredMessage": "Debes leer y aceptar las reglas para vendedores antes de publicar un artículo.",
-    "sellerGuidelines.currentVersion": "Versión Vigente",
-    "sellerGuidelines.acceptedDate": "Fecha de Aceptación",
-    "sellerGuidelines.viewFullPolicy": "Ver documento aceptado",
-    "sellerGuidelines.newVersionNotice": "Hemos actualizado las reglas para vendedores. Debes revisar y aceptar la nueva versión antes de publicar artículos adicionales."
-  },
-  en: {
-    "sellerGuidelines.title": "Seller Guidelines",
-    "sellerGuidelines.checkbox": "I have read and agree to the Seller Guidelines, Geek Collector’s current marketplace commission, payment processing fees, shipping policies, refunds, disputes, and payout policies. I understand that I cannot list or sell items without accepting these terms.",
-    "sellerGuidelines.acceptButton": "Accept Seller Guidelines",
-    "sellerGuidelines.requiredMessage": "You must read and accept the Seller Guidelines before listing an item.",
-    "sellerGuidelines.currentVersion": "Current Version",
-    "sellerGuidelines.acceptedDate": "Acceptance Date",
-    "sellerGuidelines.viewFullPolicy": "View accepted document",
-    "sellerGuidelines.newVersionNotice": "We updated the Seller Guidelines. You must review and accept the new version before listing additional items."
+window.translations = {};
+
+window.loadTranslations = async function() {
+  const lang = localStorage.getItem('cm_language') || 'es';
+  try {
+    const res = await fetch(`/locales/${lang}/common.json`);
+    window.translations = await res.json();
+  } catch (err) {
+    console.error("Failed to load translations for lang: " + lang, err);
+    window.translations = {};
   }
 };
 
-window.tr = function(es, en) {
-  const lang = localStorage.getItem('cm_language') || 'es';
-  if (typeof es === 'string' && es.startsWith('sellerGuidelines.')) {
-    const dict = window.sellerGuidelinesTranslations || {};
-    const langDict = dict[lang] || dict['es'] || {};
-    return langDict[es] || es;
+window.tr = function(key, params = {}, defaultValue = "") {
+  const translations = window.translations || {};
+  
+  let targetKey = key;
+  if (params && typeof params.count === 'number') {
+    const pluralSuffix = params.count === 1 ? '_one' : '_other';
+    targetKey = key + pluralSuffix;
   }
-  return lang === 'en' ? en : es;
+  
+  const keys = targetKey.split('.');
+  let value = translations;
+  for (const k of keys) {
+    if (value && typeof value === 'object' && k in value) {
+      value = value[k];
+    } else {
+      value = undefined;
+      break;
+    }
+  }
+  
+  // Try fallback to base key if plural key not found
+  if (value === undefined && targetKey !== key) {
+    const baseKeys = key.split('.');
+    value = translations;
+    for (const k of baseKeys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k];
+      } else {
+        value = undefined;
+        break;
+      }
+    }
+  }
+  
+  if (value !== undefined) {
+    if (typeof value === 'string' && params && typeof params === 'object') {
+      let result = value;
+      for (const [pKey, pVal] of Object.entries(params)) {
+        result = result.replace(new RegExp(`{{${pKey}}}`, 'g'), pVal);
+      }
+      return result;
+    }
+    return value;
+  }
+  
+  return defaultValue || key;
+};
+
+window.formatDate = function(dateStr, options = {}) {
+  const lang = localStorage.getItem('cm_language') || 'es';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  
+  const defaultOpts = { year: 'numeric', month: 'long', day: 'numeric' };
+  return new Intl.DateTimeFormat(lang === 'en' ? 'en-US' : 'es-ES', { ...defaultOpts, ...options }).format(date);
+};
+
+window.formatRelativeTime = function(dateStr) {
+  const lang = localStorage.getItem('cm_language') || 'es';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  
+  if (diffSecs < 60) {
+    return lang === 'en' ? 'just now' : 'hace un momento';
+  } else if (diffMins < 60) {
+    return lang === 'en' 
+      ? `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`
+      : `hace ${diffMins} minuto${diffMins === 1 ? '' : 's'}`;
+  } else if (diffHours < 24) {
+    return lang === 'en'
+      ? `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`
+      : `hace ${diffHours} hora${diffHours === 1 ? '' : 's'}`;
+  } else {
+    return window.formatDate(dateStr);
+  }
+};
+
+window.formatCurrency = function(amount) {
+  const lang = localStorage.getItem('cm_language') || 'es';
+  return new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'es-ES', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(amount);
+};
+
+window.changeLanguage = async function(lang) {
+  state.language = lang;
+  localStorage.setItem('cm_language', lang);
+  
+  await window.loadTranslations();
+  
+  if (state.currentUser) {
+    state.currentUser.preferredLanguage = lang;
+    const users = db.get('users') || [];
+    const uIndex = users.findIndex(u => u.id === state.currentUser.id);
+    if (uIndex !== -1) {
+      users[uIndex].preferredLanguage = lang;
+      db.set('users', users);
+    }
+  }
+  
+  state.refresh();
+  updateNavBar();
+  updateBadges();
+  
+  router.resolve();
+  renderCategoryTabs();
+  
+  if (window.lastModalRenderer && typeof window.lastModalRenderer === 'function') {
+    window.lastModalRenderer();
+  }
 };
 
 window.simulatedApiCall = async function(route, method, payload) {
@@ -42,7 +140,7 @@ window.simulatedApiCall = async function(route, method, payload) {
     return {
       status: 401,
       error: "UNAUTHORIZED",
-      message: tr("Debes iniciar sesión para realizar esta acción.", "You must log in to perform this action.")
+      message: tr("api_errors.UNAUTHORIZED")
     };
   }
 
@@ -57,7 +155,7 @@ window.simulatedApiCall = async function(route, method, payload) {
       return {
         status: 403,
         error: "FORBIDDEN",
-        message: tr("No tienes un perfil de vendedor activo.", "You do not have an active seller profile.")
+        message: tr("api_errors.FORBIDDEN")
       };
     }
     
@@ -68,7 +166,7 @@ window.simulatedApiCall = async function(route, method, payload) {
       return {
         status: 400,
         error: "INVALID_VERSION",
-        message: tr("La versión de política que intentas aceptar no es la versión vigente.", "The policy version you are trying to accept is not the current version.")
+        message: tr("api_errors.INVALID_VERSION")
       };
     }
 
@@ -136,7 +234,7 @@ window.simulatedApiCall = async function(route, method, payload) {
       return {
         status: 403,
         error: "FORBIDDEN",
-        message: tr("No tienes un perfil de vendedor activo.", "You do not have an active seller profile.")
+        message: tr("api_errors.FORBIDDEN")
       };
     }
 
@@ -144,7 +242,7 @@ window.simulatedApiCall = async function(route, method, payload) {
       return {
         status: 403,
         error: "SELLER_SUSPENDED",
-        message: tr("Tu cuenta o capacidad de publicación está suspendida por el administrador.", "Your seller account or publishing privileges are suspended by the administrator.")
+        message: tr("api_errors.SELLER_SUSPENDED")
       };
     }
 
@@ -160,13 +258,10 @@ window.simulatedApiCall = async function(route, method, payload) {
     );
 
     if (!hasAcceptedActive || sellerProf.requiresGuidelinesReacceptance) {
-      const isEn = (localStorage.getItem('cm_language') || 'es') === 'en';
       return {
         status: 403,
         error: "SELLER_GUIDELINES_ACCEPTANCE_REQUIRED",
-        message: isEn 
-          ? "You must accept the current Seller Guidelines before listing items." 
-          : "Debes aceptar la versión vigente de las reglas para vendedores antes de publicar artículos."
+        message: tr("api_errors.SELLER_GUIDELINES_ACCEPTANCE_REQUIRED")
       };
     }
 
@@ -283,7 +378,7 @@ window.simulatedApiCall = async function(route, method, payload) {
   return {
     status: 404,
     error: "NOT_FOUND",
-    message: tr("Endpoint no encontrado.", "Endpoint not found.")
+    message: tr("api_errors.NOT_FOUND")
   };
 };
 
@@ -560,10 +655,10 @@ const shippoAPI = {
   verifyAddress(address) {
     // Basic verification simulation
     if (!address.zip || address.zip.length < 5) {
-      return { isValid: false, error: "Código postal inválido." };
+      return { isValid: false, error: tr('checkout.invalid_zip') };
     }
     if (!address.street || address.street.length < 5) {
-      return { isValid: false, error: "Dirección de calle incompleta." };
+      return { isValid: false, error: tr('checkout.incomplete_street') };
     }
     return { isValid: true, error: null };
   },
@@ -596,7 +691,7 @@ const shippoAPI = {
         service: "Ground Advantage",
         cost: 4.50 + weightFactor,
         days: 4,
-        tier: "Económico"
+        tier: tr('checkout.tier_economy')
       },
       {
         id: "rate_usps_priority",
@@ -604,7 +699,7 @@ const shippoAPI = {
         service: "Priority Mail",
         cost: 7.99 + weightFactor,
         days: 2,
-        tier: "Estándar"
+        tier: tr('checkout.tier_standard')
       },
       {
         id: "rate_fedex_home",
@@ -612,7 +707,7 @@ const shippoAPI = {
         service: "Home Delivery",
         cost: 10.50 + weightFactor,
         days: 3,
-        tier: "Estándar"
+        tier: tr('checkout.tier_standard')
       },
       {
         id: "rate_dhl_express",
@@ -620,7 +715,7 @@ const shippoAPI = {
         service: "Express Worldwide",
         cost: 32.00 + weightFactor,
         days: 1,
-        tier: "Rápido"
+        tier: tr('checkout.tier_express')
       }
     ];
 
@@ -632,7 +727,7 @@ const shippoAPI = {
       // Fragile items get protective packaging surcharge
       if (isFragile) {
         finalCost += 2.00;
-        notes = "Incluye empaque especial de protección";
+        notes = tr('checkout.fragile_packaging_note');
       }
 
       return {
@@ -656,7 +751,7 @@ const shippoAPI = {
       insurance_suggested: insuranceSuggested,
       insurance_fee: parseFloat(insuranceFee.toFixed(2)),
       recommended_rate_id: recommendedRateId,
-      fragile_warning: isFragile ? "Advertencia: El artículo es frágil. Se recomienda seleccionar envíos rápidos con seguro activo." : null
+      fragile_warning: isFragile ? tr('checkout.fragile_warning') : null
     };
   },
 
@@ -842,7 +937,7 @@ const router = {
       renderCheckoutView();
     } else if (route === 'admin') {
       if (!state.currentUser || state.currentUser.role !== 'admin') {
-        showToast(tr("Acceso denegado. Se requieren privilegios de Administrador.", "Access denied. Administrator privileges required."), 'error');
+        showToast(tr("validation.admin_access_required"), 'error');
         this.navigate('');
         return;
       }
@@ -850,7 +945,7 @@ const router = {
       renderAdminDashboard();
     } else if (route === 'seller') {
       if (!state.currentUser || (state.currentUser.role !== 'seller' && state.currentUser.role !== 'admin')) {
-        showToast(tr("Acceso denegado. Se requiere cuenta de Vendedor.", "Access denied. Seller account required."), 'error');
+        showToast(tr("validation.seller_access_required"), 'error');
         this.navigate('');
         return;
       }
@@ -977,34 +1072,34 @@ function updateNavBar() {
   
   // Dynamic translations for navbar and mobile bottom nav
   const favoritesText = document.querySelector('#nav-btn-favorites .nav-text-desktop');
-  if (favoritesText) favoritesText.textContent = tr('Favoritos', 'Favorites');
+  if (favoritesText) favoritesText.textContent = tr('nav.favorites');
   
   const cartText = document.querySelector('#nav-btn-cart .nav-text-desktop');
-  if (cartText) cartText.textContent = tr('Carrito', 'Cart');
+  if (cartText) cartText.textContent = tr('nav.cart');
   
   const sellerText = document.querySelector('#nav-btn-seller .nav-text-desktop');
-  if (sellerText) sellerText.textContent = tr('Panel Vendedor', 'Seller Dashboard');
+  if (sellerText) sellerText.textContent = tr('nav.seller_dashboard');
   
   const adminText = document.querySelector('#nav-btn-admin .nav-text-desktop');
-  if (adminText) adminText.textContent = tr('Admin Dashboard', 'Admin Dashboard');
+  if (adminText) adminText.textContent = tr('nav.admin_dashboard');
 
   const mobileNavItems = document.querySelectorAll('.mobile-bottom-nav .mobile-nav-item');
   if (mobileNavItems.length >= 4) {
     const storeLabel = mobileNavItems[0].querySelector('.nav-text-mobile');
-    if (storeLabel) storeLabel.textContent = tr('Tienda', 'Shop');
+    if (storeLabel) storeLabel.textContent = tr('nav.home');
     
     const favLabel = mobileNavItems[1].querySelector('.nav-text-mobile');
-    if (favLabel) favLabel.textContent = tr('Favoritos', 'Favorites');
+    if (favLabel) favLabel.textContent = tr('nav.favorites');
     
     const cartLabel = mobileNavItems[2].querySelector('.nav-text-mobile');
-    if (cartLabel) cartLabel.textContent = tr('Carrito', 'Cart');
+    if (cartLabel) cartLabel.textContent = tr('nav.cart');
     
     const dashLabel = mobileNavItems[3].querySelector('.nav-text-mobile');
     if (dashLabel) {
       if (user && user.role !== 'buyer') {
-        dashLabel.textContent = tr('Panel', 'Dashboard');
+        dashLabel.textContent = tr('nav.seller_dashboard');
       } else {
-        dashLabel.textContent = tr('Perfil', 'Profile');
+        dashLabel.textContent = tr('nav.profile');
       }
     }
   }
@@ -1019,7 +1114,7 @@ function updateNavBar() {
     if (navName) navName.textContent = user.name;
     if (navRoleBadge) {
       navRoleBadge.className = `user-role-badge ${user.role}`;
-      navRoleBadge.textContent = user.role === 'buyer' ? tr('comprador', 'buyer') : user.role === 'seller' ? tr('vendedor', 'seller') : 'admin';
+      navRoleBadge.textContent = user.role === 'buyer' ? tr('nav.buyer') : user.role === 'seller' ? tr('nav.seller') : tr('nav.admin');
     }
 
     // Mobile Bottom Nav Profile Avatar Update
@@ -1047,10 +1142,10 @@ function updateNavBar() {
   } else {
     // Guest State
     if (navAvatar) navAvatar.src = window.GUEST_AVATAR;
-    if (navName) navName.textContent = tr('Iniciar Sesión', 'Login');
+    if (navName) navName.textContent = tr('nav.login');
     if (navRoleBadge) {
       navRoleBadge.className = 'user-role-badge guest';
-      navRoleBadge.textContent = tr('visitante', 'guest');
+      navRoleBadge.textContent = tr('nav.guest');
     }
 
     // Mobile Bottom Nav Profile Avatar Update
@@ -1081,7 +1176,7 @@ function updateNavBar() {
   // Translate search placeholder
   const searchInput = document.getElementById('search-input');
   if (searchInput) {
-    searchInput.placeholder = tr("Buscar figuras de acción, Funko, cómics...", "Search action figures, Funkos, comics...");
+    searchInput.placeholder = tr("search.placeholder");
   }
 
   // Update lang switcher style in navbar
@@ -1110,21 +1205,21 @@ function updateNavBar() {
   // Translate desktop links text content
   const desktopNavLabels = document.querySelectorAll('.nav-text-desktop');
   if (desktopNavLabels.length >= 5) {
-    desktopNavLabels[0].textContent = tr("Marketplace", "Marketplace");
-    desktopNavLabels[1].textContent = tr("Favoritos", "Favorites");
-    desktopNavLabels[2].textContent = tr("Carrito", "Cart");
-    desktopNavLabels[3].textContent = tr("Panel Vendedor", "Seller Panel");
-    desktopNavLabels[4].textContent = tr("Admin Dashboard", "Admin Panel");
+    desktopNavLabels[0].textContent = tr("nav.home");
+    desktopNavLabels[1].textContent = tr("nav.favorites");
+    desktopNavLabels[2].textContent = tr("nav.cart");
+    desktopNavLabels[3].textContent = tr("nav.seller_dashboard");
+    desktopNavLabels[4].textContent = tr("nav.admin_dashboard");
   }
 
   // Translate mobile links text content
   const mobileNavLabels = document.querySelectorAll('.nav-text-mobile');
   if (mobileNavLabels.length >= 5) {
-    mobileNavLabels[0].textContent = tr("Tienda", "Store");
-    mobileNavLabels[1].textContent = tr("Favoritos", "Favs");
-    mobileNavLabels[2].textContent = tr("Carrito", "Cart");
-    mobileNavLabels[3].textContent = tr("Panel", "Panel");
-    mobileNavLabels[4].textContent = tr("Perfil", "Profile");
+    mobileNavLabels[0].textContent = tr("nav.home");
+    mobileNavLabels[1].textContent = tr("nav.favorites");
+    mobileNavLabels[2].textContent = tr("nav.cart");
+    mobileNavLabels[3].textContent = tr("nav.seller_dashboard");
+    mobileNavLabels[4].textContent = tr("nav.profile");
   }
 
   // Translate cart drawer static headers
@@ -1132,7 +1227,7 @@ function updateNavBar() {
   if (drawerHeaderTitle) {
     const countSpan = document.getElementById('cart-drawer-count');
     const countVal = countSpan ? countSpan.textContent : '0';
-    drawerHeaderTitle.innerHTML = `<i data-lucide="shopping-cart" style="color:var(--gold-light);"></i> ${tr('Tu Carrito', 'Your Cart')} (<span id="cart-drawer-count">${countVal}</span>)`;
+    drawerHeaderTitle.innerHTML = `<i data-lucide="shopping-cart" style="color:var(--gold-light);"></i> ${tr('cart.title')} (<span id="cart-drawer-count">${countVal}</span>)`;
   }
 }
 
@@ -1195,6 +1290,10 @@ function closeGlobalModal(event) {
 
 // Profile Dropdown & Login Modal
 function toggleProfileDropdown() {
+  renderProfileModal();
+}
+
+function renderProfileModal() {
   const user = state.currentUser;
   
   if (!user || window.showLoginFormOnly) {
@@ -1202,7 +1301,13 @@ function toggleProfileDropdown() {
     return;
   }
   
-  const createdDate = new Date(user.created_at).toLocaleDateString();
+  window.lastModalRenderer = renderProfileModal;
+  const createdDate = window.formatDate(user.created_at);
+  
+  const buyerRoleText = tr('nav.buyer');
+  const sellerRoleText = tr('nav.seller');
+  const adminRoleText = tr('nav.admin');
+  const roleName = user.role === 'buyer' ? buyerRoleText : user.role === 'seller' ? sellerRoleText : adminRoleText;
   
   let detailsHtml = `
     <div style="text-align:center; padding: 1rem 0;">
@@ -1216,33 +1321,33 @@ function toggleProfileDropdown() {
       <h3 style="color:var(--text-primary); margin-bottom:0.25rem;">${user.name}</h3>
       <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.2rem;">${user.email}</p>
       <div style="display:flex; justify-content:center; gap:0.5rem; margin-bottom:1.5rem;">
-        <span class="user-role-badge ${user.role}">${user.role === 'buyer' ? tr('Comprador', 'Buyer') : user.role === 'seller' ? tr('Vendedor', 'Seller') : 'Admin'}</span>
+        <span class="user-role-badge ${user.role}">${roleName}</span>
         <span class="status-tag approved">${user.status}</span>
       </div>
       
       <div style="border-top:1px solid var(--border-color); padding:1rem 0; text-align:left; font-size:0.85rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:0.4rem;">
-        <p><strong>ID Usuario:</strong> <code>${user.id}</code></p>
-        <p><strong>Miembro desde:</strong> ${createdDate}</p>
+        <p><strong>ID ${tr('admin.table_seller')}:</strong> <code>${user.id}</code></p>
+        <p><strong>${tr('seller.table_date')}:</strong> ${createdDate}</p>
       </div>
 
       <!-- Notification Preferences -->
       <div style="border-top:1px solid var(--border-color); padding:0.85rem 0; text-align:left;">
-        <h4 style="font-size:0.8rem; margin-bottom:0.6rem; color:var(--text-primary); font-family:var(--font-heading);">Alertas de Vendedores:</h4>
+        <h4 style="font-size:0.8rem; margin-bottom:0.6rem; color:var(--text-primary); font-family:var(--font-heading);">${tr('seller.dashboard_title')}:</h4>
         <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.75rem; color:var(--text-secondary);">
           <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
             <input type="checkbox" id="pref-email-notif" ${user.email_notifications !== false ? 'checked' : ''} onchange="updateNotifPref('email', this.checked)">
-            Recibir alertas por Correo Electrónico
+            ${tr('auth.email_label')}
           </label>
           <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
             <input type="checkbox" id="pref-sms-notif" ${user.sms_notifications === true ? 'checked' : ''} onchange="updateNotifPref('sms', this.checked)">
-            Recibir alertas por Mensaje de Texto (SMS)
+            ${tr('checkout.phone')}
           </label>
         </div>
       </div>
 
       <!-- Favorite Sellers List -->
       <div style="border-top:1px solid var(--border-color); padding:0.85rem 0; text-align:left;">
-        <h4 style="font-size:0.8rem; margin-bottom:0.5rem; color:var(--text-primary); font-family:var(--font-heading);">Vendedores Favoritos:</h4>
+        <h4 style="font-size:0.8rem; margin-bottom:0.5rem; color:var(--text-primary); font-family:var(--font-heading);">${tr('nav.favorites')}:</h4>
         <div style="display:flex; flex-direction:column; gap:0.35rem; max-height:100px; overflow-y:auto; padding-right:0.25rem;">
           ${getFollowedSellersHtml()}
         </div>
@@ -1251,48 +1356,50 @@ function toggleProfileDropdown() {
       <div style="display:flex; gap:0.75rem; margin-top:1.2rem; border-top:1px solid var(--border-color); padding-top:1rem;">
         <button class="btn-large secondary-btn" style="flex:1;" onclick="handleUserLogout()">
           <i data-lucide="log-out" style="width:0.95rem;height:0.95rem;display:inline-block;vertical-align:middle;margin-right:0.3rem;"></i>
-          Cerrar Sesión
+          ${tr('nav.logout')}
         </button>
         <button class="btn-large primary-btn" style="flex:1;" onclick="toggleGlobalModal(false)">
-          Cerrar
+          ${tr('seller.close')}
         </button>
       </div>
     </div>
   `;
   
-  toggleGlobalModal(true, "Tu Perfil de Usuario", detailsHtml);
+  toggleGlobalModal(true, tr('nav.profile'), detailsHtml);
   lucide.createIcons();
 }
 
 function renderLoginFormModal() {
+  window.lastModalRenderer = renderLoginFormModal;
+  
   const formHtml = `
     <div style="padding: 0.5rem 0;">
       <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.5rem; text-align:center;">
-        ${tr('Ingresa tus credenciales registradas en la base de datos de Geek Collector PR.', 'Enter your registered credentials in the Geek Collector PR database.')}
+        ${tr('auth.login_desc')}
       </p>
 
       <div style="display:flex; flex-direction:column; gap:1.2rem;">
         <div class="checkout-input-wrapper">
-          <label for="login-email">${tr('Correo Electrónico', 'Email Address')}</label>
+          <label for="login-email">${tr('auth.email_label')}</label>
           <input type="email" id="login-email" placeholder="admin@mail.com" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
         </div>
         <div class="checkout-input-wrapper">
-          <label for="login-password">${tr('Contraseña', 'Password')}</label>
+          <label for="login-password">${tr('auth.password_label')}</label>
           <input type="password" id="login-password" placeholder="••••••••" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
         </div>
         
         <button class="btn-large primary-btn" style="margin-top:0.5rem; padding:0.9rem;" onclick="handleUserLoginSubmit()">
           <i data-lucide="log-in" style="width:1.1rem;height:1.1rem;display:inline-block;vertical-align:middle;margin-right:0.4rem;"></i>
-          ${tr('Iniciar Sesión', 'Login')}
+          ${tr('auth.login_btn')}
         </button>
       </div>
 
       <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:1.5rem; text-align:center;">
-        ${tr('¿No tienes cuenta?', "Don't have an account?")} <a onclick="renderRegisterFormModal()" style="color:var(--gold-light); font-weight:700; cursor:pointer; text-decoration:underline;">${tr('Regístrate aquí', 'Register here')}</a>
+        ${tr('auth.no_account')} <a onclick="renderRegisterFormModal()" style="color:var(--gold-light); font-weight:700; cursor:pointer; text-decoration:underline;">${tr('auth.register_here')}</a>
       </p>
     </div>
   `;
-  toggleGlobalModal(true, tr("Iniciar Sesión en Geek Collector PR", "Login to Geek Collector PR"), formHtml);
+  toggleGlobalModal(true, tr("auth.login_title"), formHtml);
   lucide.createIcons();
 }
 
@@ -1301,18 +1408,27 @@ function handleUserLoginSubmit() {
   const password = document.getElementById('login-password').value.trim();
 
   if (!email || !password) {
-    showToast(tr("Por favor completa el correo y la contraseña.", "Please fill in email and password."), 'error');
+    showToast(tr("validation.fill_email_password"), 'error');
     return;
   }
 
   // Firebase Auth integration
   if (window.firebaseActive) {
     window.auth.signInWithEmailAndPassword(email, password)
-      .then(userCredential => {
+      .then(async userCredential => {
         const users = db.get('users');
         const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
         if (user) {
           db.setCurrentUserId(user.id);
+          
+          if (user.preferredLanguage) {
+            localStorage.setItem('cm_language', user.preferredLanguage);
+            await window.loadTranslations();
+          } else {
+            user.preferredLanguage = localStorage.getItem('cm_language') || 'es';
+            db.set('users', users);
+          }
+          
           state.refresh();
           updateNavBar();
           updateBadges();
@@ -1324,14 +1440,14 @@ function handleUserLoginSubmit() {
           else if (user.role === 'seller') router.navigate('seller');
           else router.navigate('');
           
-          showToast(tr(`¡Sesión iniciada con éxito! Bienvenido, ${user.name}.`, `Login successful! Welcome, ${user.name}.`), 'success');
+          showToast(tr('auth.login_success', { name: user.name }), 'success');
         } else {
-          showToast(tr("Perfil de usuario no sincronizado. Refresca la página.", "User profile not synced yet. Refresh the page."), 'error');
+          showToast(tr("auth.profile_not_synced"), 'error');
         }
       })
       .catch(err => {
         console.error("Firebase Login Error:", err);
-        showToast(tr("Credenciales incorrectas o error de autenticación.", "Incorrect credentials or authentication error."), 'error');
+        showToast(tr("auth.auth_error"), 'error');
       });
     return;
   }
@@ -1341,26 +1457,33 @@ function handleUserLoginSubmit() {
 
   if (user && user.password_hash === password) {
     db.setCurrentUserId(user.id);
-    state.refresh();
-    updateNavBar();
-    updateBadges();
     
-    window.showLoginFormOnly = false;
-    toggleGlobalModal(false);
+    const uLang = user.preferredLanguage || localStorage.getItem('cm_language') || 'es';
+    user.preferredLanguage = uLang;
+    localStorage.setItem('cm_language', uLang);
+    db.set('users', users);
     
-    // Redirect based on role
-    if (user.role === 'admin') {
-      router.navigate('admin');
-    } else if (user.role === 'seller') {
-      router.navigate('seller');
-    } else {
-      router.navigate('');
-    }
-    
-    showToast(tr(`¡Sesión iniciada con éxito! Bienvenido, ${user.name}.`, `Login successful! Welcome, ${user.name}.`), 'success');
-    toggleGlobalModal(false);
+    window.loadTranslations().then(() => {
+      state.refresh();
+      updateNavBar();
+      updateBadges();
+      
+      window.showLoginFormOnly = false;
+      toggleGlobalModal(false);
+      
+      // Redirect based on role
+      if (user.role === 'admin') {
+        router.navigate('admin');
+      } else if (user.role === 'seller') {
+        router.navigate('seller');
+      } else {
+        router.navigate('');
+      }
+      
+      showToast(tr('auth.login_success', { name: user.name }), 'success');
+    });
   } else {
-    showToast(tr("Credenciales incorrectas. Por favor verifica los datos ingresados.", "Incorrect credentials. Please verify your data."), 'error');
+    showToast(tr("auth.incorrect_credentials"), 'error');
   }
 }
 
@@ -1376,65 +1499,68 @@ function handleUserLogout() {
 }
 
 function renderRegisterFormModal() {
+  window.lastModalRenderer = renderRegisterFormModal;
   const versions = db.get('seller_guidelines_versions') || [];
   const activeVer = versions.find(v => v.status === 'active') || { version: 'seller-policy-v1.0' };
   
   const formHtml = `
     <div style="padding: 0.5rem 0;">
       <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.5rem; text-align:center;">
-        ${tr('Crea tu cuenta de Comprador o Vendedor en Geek Collector PR.', 'Create your Buyer or Seller account at Geek Collector PR.')}
+        ${tr('auth.register_desc')}
       </p>
 
       <div style="display:flex; flex-direction:column; gap:1rem;">
         <div class="checkout-input-wrapper">
-          <label for="reg-name">${tr('Nombre Completo', 'Full Name')}</label>
+          <label for="reg-name">${tr('auth.full_name')}</label>
           <input type="text" id="reg-name" placeholder="Ej: John Doe" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
         </div>
         <div class="checkout-input-wrapper">
-          <label for="reg-email">${tr('Correo Electrónico', 'Email Address')}</label>
+          <label for="reg-email">${tr('auth.email_label')}</label>
           <input type="email" id="reg-email" placeholder="ejemplo@mail.com" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
         </div>
         <div class="checkout-input-wrapper">
-          <label for="reg-password">${tr('Contraseña', 'Password')}</label>
+          <label for="reg-password">${tr('auth.password_label')}</label>
           <input type="password" id="reg-password" placeholder="••••••••" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
         </div>
         <div class="checkout-input-wrapper">
-          <label for="reg-role">${tr('¿Qué deseas hacer?', 'What do you want to do?')}</label>
+          <label for="reg-role">${tr('auth.action_question')}</label>
           <select id="reg-role" onchange="toggleRegisterSellerFields(this.value)" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
-            <option value="buyer">${tr('Comprar Figuras (Comprador)', 'Buy Figures (Buyer)')}</option>
-            <option value="seller">${tr('Vender Figuras (Vendedor)', 'Sell Figures (Seller)')}</option>
+            <option value="buyer">${tr('auth.option_buy')}</option>
+            <option value="seller">${tr('auth.option_sell')}</option>
           </select>
         </div>
 
         <!-- Extra fields for Seller -->
         <div id="reg-seller-fields" style="display:none; flex-direction:column; gap:1rem; border-top:1px dashed var(--border-color); padding-top:1rem; margin-top:0.5rem;">
           <div class="checkout-input-wrapper">
-            <label for="reg-store-name">${tr('Nombre de tu Tienda', 'Your Store Name')}</label>
+            <label for="reg-store-name">${tr('auth.store_name')}</label>
             <input type="text" id="reg-store-name" placeholder="Ej: Geek Empire" style="background:#ffffff; border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; border-radius:6px; outline:none; width:100%;">
           </div>
           <div class="checkout-input-wrapper">
-            <label for="reg-store-desc">${tr('Descripción corta', 'Short description')}</label>
-            <textarea id="reg-store-desc" placeholder="${tr('¿Qué tipo de coleccionables vendes?', 'What kind of collectibles do you sell?')}" style="height:60px; padding:0.5rem; border-radius:6px; border:1px solid var(--border-color); width:100%; outline:none; background:white; color:var(--text-primary);"></textarea>
+            <label for="reg-store-desc">${tr('auth.store_desc')}</label>
+            <textarea id="reg-store-desc" placeholder="${tr('auth.store_desc_placeholder')}" style="height:60px; padding:0.5rem; border-radius:6px; border:1px solid var(--border-color); width:100%; outline:none; background:white; color:var(--text-primary);"></textarea>
           </div>
           <div style="display:flex; align-items:flex-start; gap:0.5rem; margin-top:0.25rem;">
             <input type="checkbox" id="reg-accept-fees" style="width:1.15rem; height:1.15rem; margin-top:0.15rem; cursor:pointer;">
             <label for="reg-accept-fees" style="font-size:0.75rem; color:var(--text-secondary); cursor:pointer; line-height:1.4;">
-              ${tr('sellerGuidelines.checkbox').replace('Reglas para Vendedores', `<a onclick="viewFullGuidelinesText('${activeVer.version}')" style="color:var(--gold-light); cursor:pointer; text-decoration:underline; font-weight:700;">Reglas para Vendedores</a>`).replace('Seller Guidelines', `<a onclick="viewFullGuidelinesText('${activeVer.version}')" style="color:var(--gold-light); cursor:pointer; text-decoration:underline; font-weight:700;">Seller Guidelines</a>`)}
+              ${tr('seller.agreement_alert_desc').replace('Reglas para Vendedores', `<a onclick="viewFullGuidelinesText('${activeVer.version}')" style="color:var(--gold-light); cursor:pointer; text-decoration:underline; font-weight:700;">Reglas para Vendedores</a>`).replace('Seller Guidelines', `<a onclick="viewFullGuidelinesText('${activeVer.version}')" style="color:var(--gold-light); cursor:pointer; text-decoration:underline; font-weight:700;">Seller Guidelines</a>`)}
             </label>
           </div>
         </div>
 
         <button class="btn-large primary-btn" style="margin-top:1rem; padding:0.9rem;" onclick="handleUserRegisterSubmit()">
-          ${tr('Crear Cuenta', 'Create Account')}
+          ${tr('auth.register_btn')}
         </button>
       </div>
 
       <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:1.5rem; text-align:center;">
-        ${tr('¿Ya tienes cuenta?', 'Already have an account?')} <a onclick="renderLoginFormModal()" style="color:var(--gold-light); font-weight:700; cursor:pointer; text-decoration:underline;">${tr('Inicia sesión aquí', 'Login here')}</a>
+        ${tr('auth.has_account')} <a onclick="renderLoginFormModal()" style="color:var(--gold-light); font-weight:700; cursor:pointer; text-decoration:underline;">${tr('auth.login_here')}</a>
       </p>
     </div>
   `;
-  toggleGlobalModal(true, tr("Registrarse en Geek Collector PR", "Sign Up at Geek Collector PR"), formHtml);
+  toggleGlobalModal(true, tr("auth.register_title"), formHtml);
+  lucide.createIcons();
+}
   lucide.createIcons();
 }
 
@@ -1452,14 +1578,14 @@ function handleUserRegisterSubmit() {
   const role = document.getElementById('reg-role').value;
 
   if (!name || !email || !password) {
-    showToast(tr("Por favor completa todos los campos principales (Nombre, Email y Contraseña).", "Please fill in all main fields (Name, Email, and Password)."), 'error');
+    showToast(tr("validation.main_fields_required"), 'error');
     return;
   }
 
   if (role === 'seller') {
     const acceptCheckbox = document.getElementById('reg-accept-fees');
     if (!acceptCheckbox || !acceptCheckbox.checked) {
-      showToast(tr("Debes aceptar la estructura de comisiones y políticas de pagos para registrarte como vendedor.", "You must accept the commissions structure and payment policies to register as a seller."), 'error');
+      showToast(tr("auth.accept_fees_required"), 'error');
       return;
     }
   }
@@ -1574,15 +1700,15 @@ function handleUserRegisterSubmit() {
         
         if (role === 'seller') {
           router.navigate('seller');
-          showToast(tr("¡Cuenta registrada! Tu perfil de vendedor está pendiente de aprobación por el Administrador.", "Account registered! Your seller profile is pending approval by the Administrator."), 'success');
+          showToast(tr("auth.seller_pending_toast"), 'success');
         } else {
           router.navigate('');
-          showToast(tr(`¡Cuenta creada y sesión iniciada con éxito! Bienvenido, ${name}.`, `Account created and logged in! Welcome, ${name}.`), 'success');
+          showToast(tr('auth.account_created_welcome', { name: name }), 'success');
         }
       })
       .catch(err => {
         console.error("Firebase Registration Error:", err);
-        showToast(tr(`Error de registro: ${err.message}`, `Registration error: ${err.message}`), 'error');
+        showToast(tr("auth.registration_error", { message: err.message }), 'error');
       });
     return;
   }
@@ -1591,7 +1717,7 @@ function handleUserRegisterSubmit() {
   const exists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
 
   if (exists) {
-    showToast(tr("Este correo electrónico ya está registrado.", "This email is already registered."), 'error');
+    showToast(tr("auth.email_already_registered"), 'error');
     return;
   }
 
@@ -1671,7 +1797,7 @@ function handleUserRegisterSubmit() {
     });
     db.set('seller_guidelines_acceptances', guidelinesAcceptances);
     
-    showToast(tr("¡Registro de vendedor exitoso! Tu perfil está pendiente de aprobación por el Administrador.", "Seller registration successful! Your profile is pending Administrator approval."), 'success');
+    showToast(tr("auth.seller_pending_toast"), 'success');
   } else {
     // Create default empty shipping address for buyer
     const addresses = db.get('shipping_addresses');
@@ -1688,7 +1814,7 @@ function handleUserRegisterSubmit() {
       is_default: true
     });
     db.set('shipping_addresses', addresses);
-    showToast(tr(`¡Cuenta creada con éxito! Bienvenido a Geek Collector PR, ${name}.`, `Account successfully created! Welcome to Geek Collector PR, ${name}.`), 'success');
+    showToast(tr('auth.account_created_welcome', { name: name }), 'success');
   }
 
   // Auto login
@@ -1727,7 +1853,39 @@ window.addEventListener('hashchange', () => {
 });
 
 // --- App Booting Initialization ---
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  db.init();
+  
+  // Resolve language selection based on priority
+  let lang = localStorage.getItem('cm_language');
+  
+  if (!lang) {
+    const currUserId = db.getCurrentUserId();
+    if (currUserId) {
+      const users = db.get('users') || [];
+      const user = users.find(u => u.id === currUserId);
+      if (user && user.preferredLanguage) {
+        lang = user.preferredLanguage;
+      }
+    }
+  }
+  
+  if (!lang) {
+    const navLang = navigator.language || navigator.userLanguage;
+    if (navLang) {
+      lang = navLang.toLowerCase().startsWith('en') ? 'en' : 'es';
+    }
+  }
+  
+  if (!lang) {
+    lang = 'es';
+  }
+  
+  localStorage.setItem('cm_language', lang);
+  
+  // Fetch translations
+  await window.loadTranslations();
+  
   state.refresh();
   updateNavBar();
   updateBadges();
@@ -1747,7 +1905,7 @@ function isFollowingSeller(sellerId) {
 
 function toggleFollowSeller(sellerId, storeName) {
   if (!state.currentUser) {
-    showToast(tr("Inicia sesión para agregar este vendedor a tus favoritos.", "Log in to add this seller to your favorites."), 'error');
+    showToast(tr("marketplace.login_to_follow"), 'error');
     renderLoginFormModal();
     return;
   }
@@ -1758,7 +1916,7 @@ function toggleFollowSeller(sellerId, storeName) {
   if (idx !== -1) {
     follows.splice(idx, 1);
     db.set('favorite_sellers', follows);
-    showToast(tr(`Has dejado de seguir a ${storeName}.`, `You have unfollowed ${storeName}.`), 'info');
+    showToast(tr("marketplace.unfollowed_seller", { name: storeName }), 'info');
   } else {
     follows.push({
       id: "fav_sel_" + Date.now(),
@@ -1767,7 +1925,7 @@ function toggleFollowSeller(sellerId, storeName) {
       created_at: new Date().toISOString()
     });
     db.set('favorite_sellers', follows);
-    showToast(tr(`¡Ahora sigues a ${storeName}! Recibirás notificaciones cuando suba nuevos artículos.`, `You are now following ${storeName}! You will receive notifications when they post new items.`), 'success');
+    showToast(tr("marketplace.followed_seller", { name: storeName }), 'success');
   }
 
   // Refresh current view
@@ -1804,7 +1962,7 @@ function getFollowedSellersHtml() {
   const profiles = db.get('seller_profiles');
   
   if (follows.length === 0) {
-    return `<p style="font-size:0.75rem; color:var(--text-muted); font-style:italic; text-align:center; padding: 0.5rem 0;">No sigues a ningún vendedor todavía.</p>`;
+    return `<p style="font-size:0.75rem; color:var(--text-muted); font-style:italic; text-align:center; padding: 0.5rem 0;">${tr('nav.no_following')}</p>`;
   }
 
   let html = '';
@@ -1814,13 +1972,13 @@ function getFollowedSellersHtml() {
       const p = profiles.find(prof => prof.user_id === f.seller_id);
       if (p) sName = p.store_name;
     } else {
-      sName = 'Geek Collector PR Tienda Oficial';
+      sName = tr('nav.official_store');
     }
     
     html += `
       <div style="display:flex; justify-content:space-between; align-items:center; background:#fafafa; border:1px solid var(--border-color); padding:0.4rem 0.6rem; border-radius:6px; font-size:0.75rem; color:var(--text-primary); margin-bottom:0.25rem;">
-        <span>🏪 ${sName}</span>
-        <a onclick="toggleFollowSeller('${f.seller_id}', '${sName.replace(/'/g, "\\'")}')" style="color:var(--gold-light); cursor:pointer; font-weight:700; text-decoration:underline;">Quitar</a>
+        <span>🏣 ${sName}</span>
+        <a onclick="toggleFollowSeller('${f.seller_id}', '${sName.replace(/'/g, "\\'")}')" style="color:var(--gold-light); cursor:pointer; font-weight:700; text-decoration:underline;">${tr('marketplace.unfollow_btn')}</a>
       </div>
     `;
   });
@@ -1833,7 +1991,7 @@ function notifyFollowers(sellerId, product) {
   const profiles = db.get('seller_profiles');
   const notifications = db.get('notifications') || [];
   
-  let storeName = 'Geek Collector PR Tienda Oficial';
+  let storeName = tr('nav.official_store');
   if (sellerId !== 'usr_admin_1') {
     const prof = profiles.find(p => p.user_id === sellerId);
     if (prof) storeName = prof.store_name;
@@ -1847,7 +2005,7 @@ function notifyFollowers(sellerId, product) {
 
     // Check if buyer has email alerts enabled (default is true)
     if (buyer.email_notifications !== false) {
-      const emailMsg = `¡Nueva figura de ${storeName} en Geek Collector PR! Hola ${buyer.name}, tu vendedor favorito ${storeName} acaba de publicar "${product.title}" por $${product.price.toFixed(2)}. ¡Entra ya para verla!`;
+      const emailMsg = tr('marketplace.email_notification_msg', { store: storeName, name: buyer.name, title: product.title, price: product.price.toFixed(2) });
       notifications.push({
         id: "notif_email_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
         user_id: buyer.id,
@@ -1862,7 +2020,7 @@ function notifyFollowers(sellerId, product) {
 
     // Check if buyer has SMS alerts enabled (default is false)
     if (buyer.sms_notifications === true) {
-      const smsMsg = `Geek Collector PR ALERTA: ¡${storeName} publicó "${product.title}" por $${product.price.toFixed(2)}! Ver en: #product/${product.id}`;
+      const smsMsg = tr('marketplace.sms_notification_msg', { store: storeName, title: product.title, price: product.price.toFixed(2), id: product.id });
       notifications.push({
         id: "notif_sms_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
         user_id: buyer.id,
@@ -1898,9 +2056,9 @@ function showNotificationToast(storeName, productTitle, count) {
   toast.innerHTML = `
     <div style="font-weight:700; color:var(--gold-light); display:flex; align-items:center; gap:0.3rem;">
       <i data-lucide="bell" style="width:0.9rem;height:0.9rem;color:var(--gold-light);"></i>
-      <span>¡Notificaciones Despachadas!</span>
+      <span>${tr('marketplace.notifications_dispatched')}</span>
     </div>
-    <div style="color:white; line-height:1.3;">Se enviaron ${count} alerta(s) de email/SMS a los seguidores de <strong>${storeName}</strong> por su nuevo artículo: "${productTitle}".</div>
+    <div style="color:white; line-height:1.3;">${tr('marketplace.notifications_sent_msg', { count, store: storeName, title: productTitle })}</div>
   `;
 
   container.appendChild(toast);
@@ -1946,7 +2104,7 @@ function handleAvatarUpload(input) {
         const mobileAvatar = document.getElementById('mobile-nav-avatar');
         if (mobileAvatar) mobileAvatar.src = base64String;
         
-        showToast(tr("¡Foto de perfil actualizada con éxito!", "Profile photo successfully updated!"), 'success');
+        showToast(tr("auth.profile_photo_updated"), 'success');
       }
     }
   };

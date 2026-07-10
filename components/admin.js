@@ -29,12 +29,12 @@ function renderAdminDashboard() {
     <div class="section-container">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom: 1.5rem;">
         <div>
-          <h2 class="section-title">${tr('Panel de Administración', 'Admin Dashboard')}</h2>
-          <p style="color:var(--text-secondary); margin-top:0.25rem;">${tr('Control global del marketplace, comisiones, aprobaciones y catálogo.', 'Global control of marketplace, commissions, approvals and catalog.')}</p>
+          <h2 class="section-title">${tr('admin.dashboard_title')}</h2>
+          <p style="color:var(--text-secondary); margin-top:0.25rem;">${tr('admin.dashboard_desc')}</p>
         </div>
         <button class="btn-large secondary-btn" style="width:auto; padding:0.6rem 1.2rem; font-size:0.85rem;" onclick="router.navigate('seller')">
           <i data-lucide="store" style="width:1rem;height:1rem;display:inline-block;vertical-align:middle;margin-right:0.3rem;color:var(--gold-light);"></i>
-          ${tr('Ir a Mi Tienda Vendedor', 'Go to My Seller Store')}
+          ${tr('admin.go_to_seller_store_btn')}
         </button>
       </div>
 
@@ -43,51 +43,51 @@ function renderAdminDashboard() {
         <aside class="dashboard-sidebar">
           <a class="db-menu-item ${window.activeAdminTab === 'overview' ? 'active' : ''}" onclick="setAdminTab('overview')">
             <i data-lucide="bar-chart-3" style="width:1.05rem;height:1.05rem;"></i>
-            ${tr('Resumen General', 'General Overview')}
+            ${tr('admin.tab_overview')}
           </a>
           <a class="db-menu-item ${window.activeAdminTab === 'users' ? 'active' : ''}" onclick="setAdminTab('users')">
             <i data-lucide="users" style="width:1.05rem;height:1.05rem;"></i>
-            ${tr('Usuarios y Tiendas', 'Users & Stores')}
+            ${tr('admin.tab_users')}
           </a>
           <a class="db-menu-item ${window.activeAdminTab === 'approvals' ? 'active' : ''}" onclick="setAdminTab('approvals')">
             <i data-lucide="user-check" style="width:1.05rem;height:1.05rem;"></i>
-            ${tr('Aprobaciones', 'Approvals')} (${pendingProducts.length + pendingSellers.length})
+            ${tr('admin.tab_approvals')} (${pendingProducts.length + pendingSellers.length})
           </a>
           <a class="db-menu-item ${window.activeAdminTab === 'compliance' ? 'active' : ''}" onclick="setAdminTab('compliance')">
             <i data-lucide="shield-alert" style="width:1.05rem;height:1.05rem;"></i>
-            ${tr('Cumplimiento y Strikes', 'Compliance & Strikes')}
+            ${tr('admin.tab_compliance_strikes')}
           </a>
           <a class="db-menu-item ${window.activeAdminTab === 'shipping' ? 'active' : ''}" onclick="setAdminTab('shipping')">
             <i data-lucide="package" style="width:1.05rem;height:1.05rem;"></i>
-            ${tr('Gestión de Envíos', 'Shipping Management')} (${shipments.length})
+            ${tr('admin.tab_shipping_management')} (${shipments.length})
           </a>
           <a class="db-menu-item ${window.activeAdminTab === 'products' ? 'active' : ''}" onclick="setAdminTab('products')">
             <i data-lucide="tag" style="width:1.05rem;height:1.05rem;"></i>
-            ${tr('Catálogo / Inventario', 'Catalog / Inventory')}
+            ${tr('admin.tab_catalog_inventory')}
           </a>
           <a class="db-menu-item ${window.activeAdminTab === 'transactions' ? 'active' : ''}" onclick="setAdminTab('transactions')">
             <i data-lucide="dollar-sign" style="width:1.05rem;height:1.05rem;"></i>
-            ${tr('Ventas y Payouts', 'Sales & Payouts')}
+            ${tr('admin.tab_sales_payouts')}
           </a>
           <a class="db-menu-item ${window.activeAdminTab === 'commissions' ? 'active' : ''}" onclick="setAdminTab('commissions')">
             <i data-lucide="percent" style="width:1.05rem;height:1.05rem;"></i>
-            ${tr('Comisiones del Marketplace', 'Marketplace Commissions')}
+            ${tr('admin.tab_commissions')}
           </a>
           <a class="db-menu-item ${window.activeAdminTab === 'guidelines' ? 'active' : ''}" onclick="setAdminTab('guidelines')">
             <i data-lucide="shield-check" style="width:1.05rem;height:1.05rem;"></i>
-            ${tr('Reglas para Vendedores', 'Seller Guidelines')}
+            ${tr('admin.tab_guidelines')}
           </a>
           <a class="db-menu-item ${window.activeAdminTab === 'reviews' ? 'active' : ''}" onclick="setAdminTab('reviews')">
             <i data-lucide="message-square" style="width:1.05rem;height:1.05rem;"></i>
-            ${tr('Moderar Reseñas', 'Moderate Reviews')} (${reviews.length})
+            ${tr('admin.tab_moderate_reviews')} (${reviews.length})
           </a>
           <a class="db-menu-item ${window.activeAdminTab === 'marketing' ? 'active' : ''}" onclick="setAdminTab('marketing')">
             <i data-lucide="percent" style="width:1.05rem;height:1.05rem;"></i>
-            ${tr('Banners y Cupones', 'Banners & Coupons')}
+            ${tr('admin.tab_banners_coupons')}
           </a>
           <a class="db-menu-item ${window.activeAdminTab === 'notifications' ? 'active' : ''}" onclick="setAdminTab('notifications')">
             <i data-lucide="bell" style="width:1.05rem;height:1.05rem;"></i>
-            ${tr('Logs de Alertas', 'Alert Logs')}
+            ${tr('admin.tab_alert_logs')}
           </a>
         </aside>
 
@@ -122,54 +122,54 @@ function renderAdminSubTab(tab, data) {
       <!-- Stats Cards -->
       <div class="stat-cards-grid">
         <div class="stat-card">
-          <div class="stat-card-title">Ventas Brutas Totales</div>
+          <div class="stat-card-title">${tr('admin.stats_sales_gross')}</div>
           <div class="stat-card-value">$${data.totalSalesGross.toFixed(2)}</div>
-          <div class="stat-card-change up">+15.2% esta semana</div>
+          <div class="stat-card-change up">${tr('admin.stats_sales_gross_desc')}</div>
         </div>
         <div class="stat-card" style="border-color: var(--gold-light);">
-          <div class="stat-card-title" style="color:var(--gold-light);">Comisión de Plataforma</div>
+          <div class="stat-card-title" style="color:var(--gold-light);">${tr('admin.stats_platform_commission')}</div>
           <div class="stat-card-value">$${data.totalCommissions.toFixed(2)}</div>
-          <div class="stat-card-change" style="color:var(--text-secondary);">Comisiones de venta netas</div>
+          <div class="stat-card-change" style="color:var(--text-secondary);">${tr('admin.stats_platform_commission_desc')}</div>
         </div>
         <div class="stat-card">
-          <div class="stat-card-title">Aprobaciones Pendientes</div>
+          <div class="stat-card-title">${tr('admin.stats_pending_approvals')}</div>
           <div class="stat-card-value">${data.pendingProducts.length + data.pendingSellers.length}</div>
-          <div class="stat-card-change" style="color:#fbbf24;">Sellers: ${data.pendingSellers.length} | Items: ${data.pendingProducts.length}</div>
+          <div class="stat-card-change" style="color:#fbbf24;">${tr('admin.stats_pending_approvals_desc', { sellers: data.pendingSellers.length, items: data.pendingProducts.length })}</div>
         </div>
         <div class="stat-card">
-          <div class="stat-card-title">Pedidos Activos</div>
+          <div class="stat-card-title">${tr('admin.stats_active_orders')}</div>
           <div class="stat-card-value">${data.pendingOrders}</div>
-          <div class="stat-card-change" style="color:var(--text-secondary);">Órdenes pagadas o en camino</div>
+          <div class="stat-card-change" style="color:var(--text-secondary);">${tr('admin.stats_active_orders_desc')}</div>
         </div>
       </div>
 
       <!-- CSS Charts for Sales Analytics -->
       <div class="chart-container">
-        <div class="chart-title">Comisión Neta por Mes (USD)</div>
+        <div class="chart-title">${tr('admin.chart_title')}</div>
         <div class="chart-bars-wrapper">
           <div class="chart-bar-col">
             <div class="chart-bar-value" style="height: 40px;" data-val="$450.00"></div>
-            <div class="chart-bar-label">Ene</div>
+            <div class="chart-bar-label">${tr('months.jan')}</div>
           </div>
           <div class="chart-bar-col">
             <div class="chart-bar-value" style="height: 60px;" data-val="$680.00"></div>
-            <div class="chart-bar-label">Feb</div>
+            <div class="chart-bar-label">${tr('months.feb')}</div>
           </div>
           <div class="chart-bar-col">
             <div class="chart-bar-value" style="height: 90px;" data-val="$1,020.00"></div>
-            <div class="chart-bar-label">Mar</div>
+            <div class="chart-bar-label">${tr('months.mar')}</div>
           </div>
           <div class="chart-bar-col">
             <div class="chart-bar-value" style="height: 120px;" data-val="$1,450.00"></div>
-            <div class="chart-bar-label">Abr</div>
+            <div class="chart-bar-label">${tr('months.apr')}</div>
           </div>
           <div class="chart-bar-col">
             <div class="chart-bar-value" style="height: 160px;" data-val="$2,100.00"></div>
-            <div class="chart-bar-label">May</div>
+            <div class="chart-bar-label">${tr('months.may')}</div>
           </div>
           <div class="chart-bar-col">
             <div class="chart-bar-value" style="height: 200px;" data-val="$2,850.00"></div>
-            <div class="chart-bar-label">Jun</div>
+            <div class="chart-bar-label">${tr('months.jun')}</div>
           </div>
         </div>
       </div>
@@ -183,9 +183,9 @@ function renderAdminSubTab(tab, data) {
     container.innerHTML = `
       <div style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
         <div>
-          <h3>${tr('Gestión de Usuarios y Tiendas', 'Users & Stores Management')}</h3>
+          <h3>${tr('admin.users_stores_title')}</h3>
           <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">
-            ${tr('Administra las cuentas de compradores, administradores y los perfiles de tiendas de los vendedores.', 'Manage accounts of buyers, admins, and seller store profiles.')}
+            ${tr('admin.users_stores_subtitle')}
           </p>
         </div>
       </div>
@@ -193,29 +193,29 @@ function renderAdminSubTab(tab, data) {
       <!-- Users Table Card -->
       <div class="db-table-card" style="margin-bottom:2rem;">
         <div class="db-table-header">
-          <h4 style="margin:0; color:var(--text-primary);">${tr('Usuarios Registrados', 'Registered Users')}</h4>
+          <h4 style="margin:0; color:var(--text-primary);">${tr('admin.stats_active_users')}</h4>
         </div>
         <div class="db-table-wrapper">
           <table class="db-table">
             <thead>
               <tr>
-                <th>${tr('Nombre', 'Name')}</th>
-                <th>${tr('Email', 'Email')}</th>
-                <th>${tr('Rol', 'Role')}</th>
-                <th>${tr('Estado', 'Status')}</th>
-                <th>${tr('Registro', 'Registered')}</th>
-                <th style="text-align:right;">${tr('Acciones', 'Actions')}</th>
+                <th>${tr('admin.col_user_name')}</th>
+                <th>${tr('admin.col_email')}</th>
+                <th>${tr('admin.col_role')}</th>
+                <th>${tr('admin.col_status')}</th>
+                <th>${tr('admin.audit_col_date')}</th>
+                <th style="text-align:right;">${tr('admin.col_actions')}</th>
               </tr>
             </thead>
             <tbody>
               ${usersList.map(u => {
                 const statusTag = u.status === 'suspended' ? 
-                  `<span class="status-tag rejected">${tr('Suspendido', 'Suspended')}</span>` : 
-                  `<span class="status-tag approved">${tr('Activo', 'Active')}</span>`;
+                  `<span class="status-tag rejected">${tr('admin.status_suspended')}</span>` : 
+                  `<span class="status-tag approved">${tr('admin.status_active')}</span>`;
                 
                 const roleTag = u.role === 'admin' ? 
                   `<span style="color:var(--gold-light); font-weight:700;">Admin</span>` : 
-                  `<span>${tr('Comprador', 'Buyer')}</span>`;
+                  `<span>${tr('nav.buyer')}</span>`;
                   
                 return `
                   <tr>
@@ -228,9 +228,9 @@ function renderAdminSubTab(tab, data) {
                       ${u.role !== 'admin' ? `
                         <button class="action-btn-small ${u.status === 'suspended' ? 'approve' : 'suspend'}" 
                           onclick="adminToggleUserStatus('${u.id}')">
-                          ${u.status === 'suspended' ? tr('Reactivar', 'Reactivate') : tr('Suspender', 'Suspend')}
+                          ${u.status === 'suspended' ? tr('admin.btn_reactivate') : tr('admin.btn_suspend')}
                         </button>
-                      ` : tr('Sin acciones', 'No actions')}
+                      ` : tr('admin.no_actions')}
                     </td>
                   </tr>
                 `;
@@ -243,18 +243,18 @@ function renderAdminSubTab(tab, data) {
       <!-- Stores Table Card -->
       <div class="db-table-card">
         <div class="db-table-header">
-          <h4 style="margin:0; color:var(--text-primary);">${tr('Perfiles de Vendedores y Tiendas', 'Seller Profiles & Stores')}</h4>
+          <h4 style="margin:0; color:var(--text-primary);">${tr('admin.guidelines_history_title')}</h4>
         </div>
         <div class="db-table-wrapper">
           <table class="db-table">
             <thead>
               <tr>
-                <th>${tr('Tienda', 'Store')}</th>
-                <th>${tr('Dueño', 'Owner')}</th>
-                <th>${tr('Plan', 'Plan')}</th>
-                <th>${tr('Comisión', 'Commission')}</th>
-                <th>${tr('Stripe Connect', 'Stripe Connect')}</th>
-                <th style="text-align:right;">${tr('Acciones', 'Actions')}</th>
+                <th>${tr('admin.col_store')}</th>
+                <th>${tr('admin.table_seller')}</th>
+                <th>${tr('admin.col_plan')}</th>
+                <th>${tr('admin.col_plan_commission')}</th>
+                <th>${tr('admin.col_connect_id')}</th>
+                <th style="text-align:right;">${tr('admin.col_actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -263,8 +263,8 @@ function renderAdminSubTab(tab, data) {
                 const commissionPercent = p.commission_rate !== undefined ? `${(p.commission_rate * 100).toFixed(0)}%` : 'N/A';
                 
                 const stripeStatus = p.stripe_connect_id ? 
-                  `<span class="status-tag approved" title="${p.stripe_connect_id}">Conectado</span>` : 
-                  `<span class="status-tag pending">Desconectado</span>`;
+                  `<span class="status-tag approved" title="${p.stripe_connect_id}">${tr('admin.stripe_connected_status')}</span>` : 
+                  `<span class="status-tag pending">${tr('admin.stripe_disconnected_status')}</span>`;
                   
                 const planTag = p.subscription_plan === 'Elite' ? 
                   `<span style="color:var(--gold-light); font-weight:700;">★ Elite</span>` : 
@@ -273,17 +273,17 @@ function renderAdminSubTab(tab, data) {
                 return `
                   <tr>
                     <td><strong>${p.store_name}</strong></td>
-                    <td>${owner ? owner.email : tr('Desconocido', 'Unknown')}</td>
+                    <td>${owner ? owner.email : tr('admin.unknown')}</td>
                     <td>${planTag}</td>
                     <td>${commissionPercent}</td>
                     <td>${stripeStatus}</td>
                     <td style="text-align:right; display:flex; gap:0.4rem; justify-content:flex-end;">
                       <button class="action-btn-small" style="background:var(--border-metallic-yellow); color:#000000;" 
                         onclick="adminEditStorePlan('${p.id}')">
-                        ${tr('Cambiar Plan', 'Change Plan')}
+                        ${tr('admin.btn_change_plan')}
                       </button>
                       <button class="action-btn-small approve" onclick="adminEditStoreCommission('${p.id}')">
-                        % ${tr('Comisión', 'Commission')}
+                        % ${tr('admin.col_plan_commission')}
                       </button>
                     </td>
                   </tr>
@@ -300,37 +300,37 @@ function renderAdminSubTab(tab, data) {
     container.innerHTML = `
       <!-- Pending Sellers Section -->
       <div style="margin-bottom: 2rem;">
-        <h3>Solicitudes de Nuevos Vendedores (${data.pendingSellers.length})</h3>
+        <h3>${tr('admin.approvals_sellers_title', { count: data.pendingSellers.length })}</h3>
         <div class="db-table-card" style="margin-top:1rem;">
           <div class="db-table-wrapper">
             <table class="db-table">
               <thead>
                 <tr>
-                  <th>Nombre Vendedor</th>
-                  <th>Correo</th>
-                  <th>Tienda Propuesta</th>
-                  <th>Descripción</th>
-                  <th>Fecha Registro</th>
-                  <th>Gestión</th>
+                  <th>${tr('admin.col_seller_name')}</th>
+                  <th>${tr('admin.col_email')}</th>
+                  <th>${tr('admin.col_proposed_store')}</th>
+                  <th>${tr('admin.col_description')}</th>
+                  <th>${tr('admin.col_registration_date')}</th>
+                  <th>${tr('admin.col_management')}</th>
                 </tr>
               </thead>
               <tbody>
                 ${data.pendingSellers.length === 0 ? `
                   <tr>
-                    <td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">No hay registros de vendedores pendientes.</td>
+                    <td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">${tr('admin.no_pending_sellers')}</td>
                   </tr>
                 ` : data.pendingSellers.map(sel => {
                   const u = data.users.find(usr => usr.id === sel.user_id);
                   return `
                     <tr>
-                      <td><strong>${u ? u.name : 'Vendedor'}</strong></td>
+                      <td><strong>${u ? u.name : tr('admin.col_seller')}</strong></td>
                       <td>${u ? u.email : ''}</td>
                       <td>${sel.store_name}</td>
                       <td style="max-width:250px; font-size:0.85rem; color:var(--text-secondary);">${sel.description}</td>
                       <td>${new Date(u.created_at).toLocaleDateString()}</td>
                       <td style="display:flex; gap:0.5rem;">
-                        <button class="action-btn-small approve" onclick="approveSellerProfile('${sel.user_id}', true)">Aprobar</button>
-                        <button class="action-btn-small reject" onclick="approveSellerProfile('${sel.user_id}', false)">Rechazar</button>
+                        <button class="action-btn-small approve" onclick="approveSellerProfile('${sel.user_id}', true)">${tr('admin.btn_approve')}</button>
+                        <button class="action-btn-small reject" onclick="approveSellerProfile('${sel.user_id}', false)">${tr('admin.btn_reject')}</button>
                       </td>
                     </tr>
                   `;
@@ -343,27 +343,27 @@ function renderAdminSubTab(tab, data) {
 
       <!-- Pending Products Catalog Approval -->
       <div>
-        <h3>Figuras Pendientes de Aprobación en Catálogo (${data.pendingProducts.length})</h3>
+        <h3>${tr('admin.approvals_products_title', { count: data.pendingProducts.length })}</h3>
         <div class="db-table-card" style="margin-top:1rem;">
           <div class="db-table-wrapper">
             <table class="db-table">
               <thead>
                 <tr>
-                  <th>Nombre Artículo</th>
-                  <th>Marca / Categoría</th>
-                  <th>Condición</th>
-                  <th>Precio</th>
-                  <th>Vendedor</th>
-                  <th>Gestión</th>
+                  <th>${tr('admin.col_item_name')}</th>
+                  <th>${tr('admin.col_brand_category')}</th>
+                  <th>${tr('admin.col_condition')}</th>
+                  <th>${tr('admin.col_price')}</th>
+                  <th>${tr('admin.col_seller')}</th>
+                  <th>${tr('admin.col_management')}</th>
                 </tr>
               </thead>
               <tbody>
                 ${data.pendingProducts.length === 0 ? `
                   <tr>
-                    <td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">No hay figuras pendientes de aprobación.</td>
+                    <td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">${tr('admin.no_pending_products')}</td>
                   </tr>
                 ` : data.pendingProducts.map(p => {
-                  const sName = data.profiles.find(sp => sp.user_id === p.seller_id)?.store_name || 'Vendedor Externo';
+                  const sName = data.profiles.find(sp => sp.user_id === p.seller_id)?.store_name || tr('admin.col_seller');
                   return `
                     <tr>
                       <td><strong>${p.title}</strong></td>
@@ -372,8 +372,8 @@ function renderAdminSubTab(tab, data) {
                       <td style="font-weight:600; color:var(--text-primary);">$${p.price.toFixed(2)}</td>
                       <td>${sName}</td>
                       <td style="display:flex; gap:0.5rem;">
-                        <button class="action-btn-small approve" onclick="approveProduct('${p.id}', true)">Aprobar</button>
-                        <button class="action-btn-small reject" onclick="approveProduct('${p.id}', false)">Rechazar</button>
+                        <button class="action-btn-small approve" onclick="approveProduct('${p.id}', true)">${tr('admin.btn_approve')}</button>
+                        <button class="action-btn-small reject" onclick="approveProduct('${p.id}', false)">${tr('admin.btn_reject')}</button>
                       </td>
                     </tr>
                   `;
@@ -392,9 +392,9 @@ function renderAdminSubTab(tab, data) {
 
     container.innerHTML = `
       <div style="margin-bottom:1.5rem;">
-        <h3>Administrador de Envíos Shippo</h3>
+        <h3>${tr('admin.shipping_title')}</h3>
         <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">
-          Supervisa el estado de todas las guías del marketplace, valida la evidencia de empaque y gestiona disputas de payouts Connect.
+          ${tr('admin.shipping_subtitle')}
         </p>
       </div>
 
@@ -403,31 +403,31 @@ function renderAdminSubTab(tab, data) {
           <table class="db-table">
             <thead>
               <tr>
-                <th>Código Guía / Orden</th>
-                <th>Vendedor ➡️ Comprador</th>
-                <th>Carrier / Servicio</th>
-                <th>Costo Envío</th>
-                <th>Seguro Adicional</th>
-                <th>Evidencia Empaque</th>
-                <th>Estado Shippo</th>
-                <th>Acciones Control</th>
+                <th>${tr('admin.col_label_order')}</th>
+                <th>${tr('admin.col_seller_buyer')}</th>
+                <th>${tr('admin.col_carrier_service')}</th>
+                <th>${tr('admin.col_shipping_cost')}</th>
+                <th>${tr('admin.col_additional_insurance')}</th>
+                <th>${tr('admin.col_packing_evidence')}</th>
+                <th>${tr('admin.col_shippo_status')}</th>
+                <th>${tr('admin.col_control_actions')}</th>
               </tr>
             </thead>
             <tbody>
               ${data.shipments.length === 0 ? `
                 <tr>
-                  <td colspan="8" style="text-align:center; padding:3rem; color:var(--text-muted); font-style:italic;">No hay envíos registrados en el sistema.</td>
+                  <td colspan="8" style="text-align:center; padding:3rem; color:var(--text-muted); font-style:italic;">${tr('admin.no_shipments')}</td>
                 </tr>
               ` : data.shipments.map(s => {
                 const evidence = evidenceLogs.find(ev => ev.shipment_id === s.id);
-                const sellerName = data.profiles.find(p => p.user_id === s.seller_id)?.store_name || 'Vendedor';
-                const buyerName = data.users.find(u => u.id === s.buyer_id)?.name || 'Comprador';
+                const sellerName = data.profiles.find(p => p.user_id === s.seller_id)?.store_name || tr('admin.col_seller');
+                const buyerName = data.users.find(u => u.id === s.buyer_id)?.name || tr('admin.col_buyer');
 
                 return `
                   <tr>
                     <td>
                       <strong>${s.id}</strong>
-                      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.15rem;">Orden: <code>${s.order_id}</code></div>
+                      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.15rem;">${tr('seller.label_order_id')} <code>${s.order_id}</code></div>
                     </td>
                     <td>
                       <span style="font-weight:600;">${sellerName}</span><br>
@@ -443,7 +443,7 @@ function renderAdminSubTab(tab, data) {
                     </td>
                     <td style="font-weight:600; color:var(--text-primary);">$${s.shipping_cost.toFixed(2)}</td>
                     <td>
-                      ${s.insurance_amount > 0 ? `🛡️ Activo ($${s.insurance_amount.toFixed(2)})` : '❌ Sin seguro'}
+                      ${s.insurance_amount > 0 ? tr('admin.insurance_active', { amount: s.insurance_amount.toFixed(2) }) : tr('admin.insurance_none')}
                     </td>
                     <td>
                       ${evidence ? `
@@ -451,7 +451,7 @@ function renderAdminSubTab(tab, data) {
                           <img src="${evidence.image_url}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid var(--border-metallic-yellow);" onclick="viewEvidencePhoto('${evidence.image_url}')">
                           <span style="font-size:0.6rem; color:#10b981; font-weight:700;">OK</span>
                         </div>
-                      ` : '<span style="color:#ef4444; font-size:0.75rem; font-weight:700;">⚠️ SIN FOTO</span>'}
+                      ` : `<span style="color:#ef4444; font-size:0.75rem; font-weight:700;">⚠️ ${tr('admin.col_no_photo')}</span>`}
                     </td>
                     <td>
                       <span class="status-tag ${s.status === 'delivered' ? 'approved' : s.status === 'label_generado' ? 'pending' : 'disputed'}" style="font-size:0.7rem; text-transform:uppercase;">
@@ -461,24 +461,24 @@ function renderAdminSubTab(tab, data) {
                     <td style="display:flex; flex-direction:column; gap:0.4rem;">
                       ${s.status !== 'delivered' && s.status !== 'problema' ? `
                         <button class="action-btn-small reject" style="font-size:0.7rem; padding:0.25rem 0.5rem;" onclick="adminTriggerDisputedShipping('${s.id}')">
-                          🚨 Marcar Disputa
+                          ${tr('admin.btn_mark_disputed')}
                         </button>
                       ` : ''}
 
                       ${s.status === 'problema' ? `
                         <button class="action-btn-small approve" style="font-size:0.7rem; padding:0.25rem 0.5rem; background:#10b981; border-color:#10b981;" onclick="adminResolveDisputedShipping('${s.id}')">
-                          🔓 Liberar Custodia
+                          ${tr('admin.btn_release_escrow')}
                         </button>
                       ` : ''}
 
                       ${s.status !== 'devuelto' && s.status !== 'delivered' ? `
                         <button class="action-btn-small suspend" style="font-size:0.7rem; padding:0.25rem 0.5rem;" onclick="adminTriggerReturnedShipping('${s.id}')">
-                          🔄 Registrar Devolución
+                          ${tr('admin.btn_register_return')}
                         </button>
                       ` : ''}
 
                       <div style="font-size:0.6rem; color:var(--text-muted); text-align:center;">
-                        ${s.status === 'delivered' ? 'Fondos Liquidados' : 'Payout Retenido en Stripe'}
+                        ${s.status === 'delivered' ? tr('admin.funds_liquidated') : tr('admin.payout_held_stripe')}
                       </div>
                     </td>
                   </tr>
@@ -494,9 +494,9 @@ function renderAdminSubTab(tab, data) {
   else if (tab === 'products') {
     container.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-        <h3>Catálogo de Productos del Marketplace (${data.products.length})</h3>
+        <h3>${tr('admin.catalog_title', { count: data.products.length })}</h3>
         <button class="btn-large primary-btn" style="width:auto; padding: 0.5rem 1rem;" onclick="openAdminAddProductModal()">
-          + Publicar Oficial
+          ${tr('admin.btn_publish_official_short')}
         </button>
       </div>
 
@@ -505,20 +505,20 @@ function renderAdminSubTab(tab, data) {
           <table class="db-table">
             <thead>
               <tr>
-                <th>Artículo</th>
-                <th>Tienda / Seller</th>
-                <th>Precio</th>
-                <th>Stock</th>
-                <th>Tipo Inventario</th>
-                <th>Estado</th>
-                <th>Acciones</th>
+                <th>${tr('admin.col_item')}</th>
+                <th>${tr('admin.col_store_seller')}</th>
+                <th>${tr('admin.col_price')}</th>
+                <th>${tr('admin.col_stock')}</th>
+                <th>${tr('admin.col_inventory_type')}</th>
+                <th>${tr('admin.col_status')}</th>
+                <th>${tr('admin.col_actions')}</th>
               </tr>
             </thead>
             <tbody>
               ${data.products.map(p => {
                 const sName = p.seller_id === 'usr_admin_1' 
-                  ? 'Collectors Shop (Oficial)' 
-                  : (data.profiles.find(sp => sp.user_id === p.seller_id)?.store_name || 'Vendedor');
+                  ? tr('admin.collectors_shop_official') 
+                  : (data.profiles.find(sp => sp.user_id === p.seller_id)?.store_name || tr('admin.col_seller'));
                   
                 return `
                   <tr>
@@ -528,13 +528,13 @@ function renderAdminSubTab(tab, data) {
                     <td>${p.stock} u.</td>
                     <td>
                       ${p.is_external_ebay ? `
-                        <span class="status-tag disputed" style="font-size:0.7rem; border-color:#002f87; color:#3b82f6;">eBay Link</span>
-                      ` : '<span class="status-tag approved" style="font-size:0.7rem; background:none; border:1px solid #10b981; color:#10b981;">Interno</span>'}
+                        <span class="status-tag disputed" style="font-size:0.7rem; border-color:#002f87; color:#3b82f6;">${tr('admin.inventory_external')}</span>
+                      ` : `<span class="status-tag approved" style="font-size:0.7rem; background:none; border:1px solid #10b981; color:#10b981;">${tr('admin.inventory_internal')}</span>`}
                     </td>
                     <td><span class="status-tag ${p.status}">${p.status}</span></td>
                     <td style="display:flex; gap:0.4rem;">
-                      <button class="action-btn-small suspend" style="padding:0.25rem 0.5rem;" onclick="openAdminEditProductModal('${p.id}')">Editar</button>
-                      <button class="action-btn-small reject" style="padding:0.25rem 0.5rem;" onclick="removeProductAdmin('${p.id}')">Eliminar</button>
+                      <button class="action-btn-small suspend" style="padding:0.25rem 0.5rem;" onclick="openAdminEditProductModal('${p.id}')">${tr('admin.btn_edit')}</button>
+                      <button class="action-btn-small reject" style="padding:0.25rem 0.5rem;" onclick="removeProductAdmin('${p.id}')">${tr('admin.btn_delete')}</button>
                     </td>
                   </tr>
                 `;
@@ -548,24 +548,24 @@ function renderAdminSubTab(tab, data) {
   
   else if (tab === 'transactions') {
     container.innerHTML = `
-      <h3>Historial de Ventas y Liquidaciones Stripe Connect</h3>
+      <h3>${tr('admin.transactions_title')}</h3>
       
       <div class="db-table-card">
         <div class="db-table-header">
-          <h4>Ventas Registradas en la Plataforma</h4>
+          <h4>${tr('admin.transactions_subtitle')}</h4>
         </div>
         <div class="db-table-wrapper">
           <table class="db-table">
             <thead>
               <tr>
-                <th>ID Transacción</th>
-                <th>Fecha</th>
-                <th>Comprador</th>
-                <th>Vendedor</th>
-                <th>Bruto</th>
-                <th>Stripe Fee</th>
-                <th>Comisión Plataforma</th>
-                <th>Estado</th>
+                <th>${tr('admin.col_transaction_id')}</th>
+                <th>${tr('admin.col_date')}</th>
+                <th>${tr('admin.col_buyer')}</th>
+                <th>${tr('admin.col_seller')}</th>
+                <th>${tr('admin.col_gross')}</th>
+                <th>${tr('admin.col_stripe_fee')}</th>
+                <th>${tr('admin.col_platform_commission')}</th>
+                <th>${tr('admin.col_status')}</th>
               </tr>
             </thead>
             <tbody>
@@ -573,7 +573,7 @@ function renderAdminSubTab(tab, data) {
                 const bName = data.users.find(u => u.id === t.buyer_id)?.name || 'Buyer';
                 const sName = t.seller_id === 'usr_admin_1' 
                   ? 'Collectors Shop' 
-                  : (data.profiles.find(sp => sp.user_id === t.seller_id)?.store_name || 'Vendedor');
+                  : (data.profiles.find(sp => sp.user_id === t.seller_id)?.store_name || tr('admin.col_seller'));
 
                 return `
                   <tr>
@@ -597,7 +597,7 @@ function renderAdminSubTab(tab, data) {
   
   else if (tab === 'reviews') {
     container.innerHTML = `
-      <h3>Moderar Reseñas de Compradores</h3>
+      <h3>${tr('admin.reviews_title')}</h3>
       
       <div class="reviews-list" style="margin-top:1.5rem;">
         ${data.reviews.map(r => {
@@ -607,11 +607,11 @@ function renderAdminSubTab(tab, data) {
           return `
             <div class="review-item" style="background:var(--bg-card); padding:1rem; border-radius:8px; border:1px solid var(--border-color); margin-bottom:1rem;">
               <div class="review-header">
-                <span style="font-weight:600; color:var(--text-primary);">Reseña de: ${buyer ? buyer.name : 'Usuario'}</span>
-                <span class="status-tag ${r.status === 'approved' ? 'approved' : 'rejected'}">${r.status === 'approved' ? 'Activa' : 'Oculta'}</span>
+                <span style="font-weight:600; color:var(--text-primary);">${tr('admin.review_from', { name: buyer ? buyer.name : 'Usuario' })}</span>
+                <span class="status-tag ${r.status === 'approved' ? 'approved' : 'rejected'}">${r.status === 'approved' ? tr('admin.review_active') : tr('admin.review_hidden')}</span>
               </div>
               <div style="font-size:0.85rem; color:var(--text-muted); margin: 0.2rem 0;">
-                Artículo: <strong>${item ? item.title : 'Figura'}</strong>
+                ${tr('admin.review_item', { title: item ? item.title : 'Figura' })}
               </div>
               <div style="color:var(--gold-light); margin-bottom:0.5rem;">
                 ${drawStarRatingHtml(r.rating)}
@@ -619,8 +619,8 @@ function renderAdminSubTab(tab, data) {
               <p style="color:var(--text-primary); font-size:0.9rem;">"${r.comment}"</p>
               
               <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem; border-top:1px solid var(--border-color); padding-top:0.75rem;">
-                <button class="action-btn-small approve" onclick="moderateReviewAdmin('${r.id}', 'approved')">Habilitar</button>
-                <button class="action-btn-small reject" onclick="moderateReviewAdmin('${r.id}', 'rejected')">Ocultar / Censurar</button>
+                <button class="action-btn-small approve" onclick="moderateReviewAdmin('${r.id}', 'approved')">${tr('admin.btn_enable')}</button>
+                <button class="action-btn-small reject" onclick="moderateReviewAdmin('${r.id}', 'rejected')">${tr('admin.btn_hide_censure')}</button>
               </div>
             </div>
           `;
@@ -634,9 +634,9 @@ function renderAdminSubTab(tab, data) {
       <!-- Coupons Design -->
       <div style="margin-bottom: 2rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-          <h3>Cupones de Descuento Activos</h3>
+          <h3>${tr('admin.marketing_coupons_title')}</h3>
           <button class="btn-large primary-btn" style="width:auto; padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="openAddCouponModal()">
-            Crear Cupón
+            ${tr('admin.btn_create_coupon_short')}
           </button>
         </div>
 
@@ -645,29 +645,29 @@ function renderAdminSubTab(tab, data) {
             <table class="db-table">
               <thead>
                 <tr>
-                  <th>Código</th>
-                  <th>Tipo Descuento</th>
-                  <th>Valor</th>
-                  <th>Compra Mínima</th>
-                  <th>Estado</th>
-                  <th>Acción</th>
+                  <th>${tr('admin.col_code')}</th>
+                  <th>${tr('admin.col_discount_type')}</th>
+                  <th>${tr('admin.col_value')}</th>
+                  <th>${tr('admin.col_min_purchase')}</th>
+                  <th>${tr('admin.col_status')}</th>
+                  <th>${tr('admin.col_action')}</th>
                 </tr>
               </thead>
               <tbody>
                 ${data.coupons.map(c => `
                   <tr>
                     <td><code>${c.code}</code></td>
-                    <td>${c.discount_type === 'percentage' ? 'Porcentual' : 'Fijo (Monto)'}</td>
+                    <td>${c.discount_type === 'percentage' ? tr('admin.coupon_percentage') : tr('admin.coupon_fixed')}</td>
                     <td>${c.discount_type === 'percentage' ? `${c.value}%` : `$${c.value}`}</td>
                     <td>$${c.min_purchase.toFixed(2)}</td>
                     <td>
                       <span class="status-tag ${c.active ? 'approved' : 'rejected'}">
-                        ${c.active ? 'Activo' : 'Inactivo'}
+                        ${c.active ? tr('admin.status_active') : tr('admin.status_inactive')}
                       </span>
                     </td>
                     <td>
                       <button class="action-btn-small reject" onclick="toggleCouponStatus('${c.code}', ${c.active})">
-                        ${c.active ? 'Desactivar' : 'Activar'}
+                        ${c.active ? tr('admin.btn_deactivate') : tr('admin.btn_activate')}
                       </button>
                     </td>
                   </tr>
@@ -680,7 +680,7 @@ function renderAdminSubTab(tab, data) {
 
       <!-- Banners design -->
       <div>
-        <h3>Diseño de Banners del Home</h3>
+        <h3>${tr('admin.marketing_banners_title')}</h3>
         <div class="banners-management-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-top:1rem;">
           ${data.banners.map(b => `
             <div style="border:1px solid var(--border-color); border-radius:8px; overflow:hidden; background:var(--bg-card);">
@@ -689,9 +689,9 @@ function renderAdminSubTab(tab, data) {
                 <h4 style="margin-bottom:0.25rem;">${b.title}</h4>
                 <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.75rem;">${b.subtitle}</p>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <span class="status-tag ${b.active ? 'approved' : 'rejected'}">${b.active ? 'Activo' : 'Pausado'}</span>
+                  <span class="status-tag ${b.active ? 'approved' : 'rejected'}">${b.active ? tr('admin.status_active') : tr('admin.status_paused_banner')}</span>
                   <button class="action-btn-small suspend" onclick="toggleBannerActive('${b.id}', ${b.active})">
-                    ${b.active ? 'Pausar' : 'Activar'}
+                    ${b.active ? tr('admin.btn_pause') : tr('admin.btn_activate')}
                   </button>
                 </div>
               </div>
@@ -723,34 +723,34 @@ function renderAdminComplianceTab(container, data) {
     <div>
       <div style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:flex-start;">
         <div>
-          <h3>Cumplimiento de Envíos y Strikes</h3>
-          <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">Supervisa la salud de la plataforma, aplica reembolsos automáticos y maneja baneos de vendedores problemáticos.</p>
+          <h3>${tr('admin.compliance_title')}</h3>
+          <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">${tr('admin.compliance_subtitle')}</p>
         </div>
         <button class="btn-large secondary-btn" style="width:auto; padding:0.5rem 1rem;" onclick="ComplianceEngine.runFulfillmentChecker()">
-          <i data-lucide="refresh-cw" style="width:1rem;height:1rem;"></i> Forzar Auditoría
+          <i data-lucide="refresh-cw" style="width:1rem;height:1rem;"></i> ${tr('admin.btn_force_audit')}
         </button>
       </div>
 
       <!-- Sellers in Risk -->
       <div class="db-table-card" style="margin-bottom: 2rem;">
         <div class="db-table-header" style="background:var(--bg-lighter);">
-          <h4 style="margin:0;">Vendedores en Riesgo / Sancionados</h4>
+          <h4 style="margin:0;">${tr('admin.risky_sellers_title')}</h4>
         </div>
         <div class="db-table-wrapper">
           <table class="db-table">
             <thead>
               <tr>
-                <th>Vendedor</th>
-                <th>Confiabilidad</th>
-                <th>Strikes</th>
-                <th>Envíos Tarde</th>
-                <th>Estado Suspensión</th>
-                <th>Acciones Admin</th>
+                <th>${tr('admin.col_seller')}</th>
+                <th>${tr('admin.col_reliability')}</th>
+                <th>${tr('admin.col_strikes')}</th>
+                <th>${tr('admin.col_delayed_shipping')}</th>
+                <th>${tr('admin.col_suspension_status')}</th>
+                <th>${tr('admin.col_admin_actions')}</th>
               </tr>
             </thead>
             <tbody>
               ${riskySellers.length === 0 ? `
-                <tr><td colspan="6" style="text-align:center; padding:2rem;">Todos los vendedores están en estado óptimo.</td></tr>
+                <tr><td colspan="6" style="text-align:center; padding:2rem;">${tr('admin.all_sellers_optimal')}</td></tr>
               ` : riskySellers.map(p => {
                 const user = data.users.find(u => u.id === p.user_id);
                 return `
@@ -769,15 +769,15 @@ function renderAdminComplianceTab(container, data) {
                     </td>
                     <td>${p.delayed_orders}</td>
                     <td>
-                      ${p.banned_permanently ? '<span class="status-tag rejected">BANEADO PERMANENTE</span>' :
+                      ${p.banned_permanently ? `<span class="status-tag rejected">${tr('admin.banned_permanent')}</span>` :
                         p.suspension_until && new Date(p.suspension_until) > new Date() ? 
-                        `<span class="status-tag pending">SUSPENDIDO hasta ${new Date(p.suspension_until).toLocaleDateString()}</span>` : 
-                        '<span class="status-tag approved">Activo</span>'
+                        `<span class="status-tag pending">${tr('admin.suspended_until', { date: new Date(p.suspension_until).toLocaleDateString() })}</span>` : 
+                        `<span class="status-tag approved">${tr('admin.status_active_seller')}</span>`
                       }
                     </td>
                     <td style="display:flex; gap:0.5rem; flex-direction:column;">
-                      <button class="action-btn-small approve" onclick="adminRemoveStrike('${p.id}')">Quitar Strike</button>
-                      ${!p.banned_permanently ? `<button class="action-btn-small suspend" onclick="adminForceBan('${p.id}')">Banear Cuenta</button>` : ''}
+                      <button class="action-btn-small approve" onclick="adminRemoveStrike('${p.id}')">${tr('admin.btn_remove_strike')}</button>
+                      ${!p.banned_permanently ? `<button class="action-btn-small suspend" onclick="adminForceBan('${p.id}')">${tr('admin.btn_ban_account')}</button>` : ''}
                     </td>
                   </tr>
                 `;
@@ -790,22 +790,22 @@ function renderAdminComplianceTab(container, data) {
       <!-- Audit Logs -->
       <div class="db-table-card">
         <div class="db-table-header">
-          <h4 style="margin:0;">Logs de Auditoría (Fulfillment)</h4>
+          <h4 style="margin:0;">${tr('admin.audit_logs_title')}</h4>
         </div>
         <div class="db-table-wrapper">
           <table class="db-table">
             <thead>
               <tr>
-                <th>Fecha</th>
-                <th>Vendedor ID</th>
-                <th>Orden / Item</th>
-                <th>Evento</th>
-                <th>Detalles</th>
+                <th>${tr('admin.col_date')}</th>
+                <th>${tr('admin.col_seller')} ID</th>
+                <th>${tr('admin.col_order_item')}</th>
+                <th>${tr('admin.col_event')}</th>
+                <th>${tr('admin.col_details')}</th>
               </tr>
             </thead>
             <tbody>
               ${auditLogs.length === 0 ? `
-                <tr><td colspan="5" style="text-align:center; padding:2rem;">No hay logs registrados.</td></tr>
+                <tr><td colspan="5" style="text-align:center; padding:2rem;">${tr('admin.no_audit_logs')}</td></tr>
               ` : auditLogs.slice().reverse().slice(0,20).map(log => `
                 <tr>
                   <td style="font-size:0.8rem; color:var(--text-secondary);">${new Date(log.created_at).toLocaleString()}</td>
@@ -827,7 +827,7 @@ function renderAdminComplianceTab(container, data) {
 }
 
 function adminRemoveStrike(sellerId) {
-  if(!confirm('¿Estás seguro de quitar 1 strike a este vendedor?')) return;
+  if(!confirm(tr('admin.confirm_remove_strike'))) return;
   const profiles = db.get('seller_profiles');
   const idx = profiles.findIndex(p => p.id === sellerId);
   if (idx > -1 && profiles[idx].active_strikes > 0) {
@@ -837,13 +837,13 @@ function adminRemoveStrike(sellerId) {
     // Recalculate
     ComplianceEngine.recalculateReliability(profiles[idx]);
     db.set('seller_profiles', profiles);
-    showToast(tr("Strike removido con éxito.", "Strike successfully removed."), 'success');
+    showToast(tr("admin.strike_removed_toast"), 'success');
     renderAdminDashboard();
   }
 }
 
 function adminForceBan(sellerId) {
-  if(!confirm('¿Estás seguro de BANEAR PERMANENTEMENTE a este vendedor? Sus productos no serán visibles.')) return;
+  if(!confirm(tr('admin.confirm_force_ban'))) return;
   const profiles = db.get('seller_profiles');
   const idx = profiles.findIndex(p => p.id === sellerId);
   if (idx > -1) {
@@ -855,7 +855,7 @@ function adminForceBan(sellerId) {
     // Auto reject all their pending products or set approved to pending maybe?
     // Not done here for brevity, but good practice
     
-    showToast(tr("Vendedor baneado permanentemente.", "Seller permanently banned."), 'success');
+    showToast(tr("admin.seller_banned_toast"), 'success');
     renderAdminDashboard();
   }
 }
@@ -868,8 +868,8 @@ function renderAdminNotificationsTab(container) {
   container.innerHTML = `
     <div>
       <div style="margin-bottom:1.5rem;">
-        <h3>Logs de Alertas a Compradores</h3>
-        <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">Historial de notificaciones automáticas por Email y SMS enviadas a los seguidores de vendedores favoritos.</p>
+        <h3>${tr('admin.notifications_title')}</h3>
+        <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">${tr('admin.notifications_subtitle')}</p>
       </div>
 
       <div class="db-table-card">
@@ -877,19 +877,19 @@ function renderAdminNotificationsTab(container) {
           <table class="db-table">
             <thead>
               <tr>
-                <th>Destinatario</th>
-                <th>Tipo</th>
-                <th>Contacto</th>
-                <th>Mensaje enviado</th>
-                <th>Fecha de Envío</th>
-                <th>Estado</th>
+                <th>${tr('admin.col_recipient')}</th>
+                <th>${tr('admin.col_type')}</th>
+                <th>${tr('admin.col_contact')}</th>
+                <th>${tr('admin.col_message_sent')}</th>
+                <th>${tr('admin.col_sent_date')}</th>
+                <th>${tr('admin.col_status')}</th>
               </tr>
             </thead>
             <tbody>
               ${notifications.length === 0 ? `
                 <tr>
                   <td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted); font-style:italic;">
-                    No se han registrado envíos de alertas todavía.
+                    ${tr('admin.no_alerts_sent')}
                   </td>
                 </tr>
               ` : notifications.slice().reverse().map(n => {
@@ -925,19 +925,19 @@ function renderAdminNotificationsTab(container) {
 // Admin Shipping Operations
 function adminTriggerDisputedShipping(shipmentId) {
   shippoAPI.updateShipmentStatus(shipmentId, "problema");
-  showToast(tr("🚨 Se ha registrado una Disputa sobre este envío. El Payout correspondiente quedará bloqueado en Stripe Connect.", "🚨 A Dispute has been registered for this shipment. The corresponding Payout will be locked in Stripe Connect."), 'error');
+  showToast(tr("admin.dispute_opened_toast"), 'error');
   renderAdminDashboard();
 }
 
 function adminResolveDisputedShipping(shipmentId) {
   shippoAPI.updateShipmentStatus(shipmentId, "delivered");
-  showToast(tr("🔓 Disputa resuelta. Se ha liberado la retención de los fondos. El vendedor recibirá su payout.", "🔓 Dispute resolved. Funds hold has been released. The seller will receive their payout."), 'success');
+  showToast(tr("admin.dispute_resolved_toast"), 'success');
   renderAdminDashboard();
 }
 
 function adminTriggerReturnedShipping(shipmentId) {
   shippoAPI.updateShipmentStatus(shipmentId, "devuelto");
-  showToast(tr("🔄 Se ha registrado la devolución del paquete al vendedor. La orden se considerará reembolsada.", "🔄 Package return to seller registered. The order will be considered refunded."), 'info');
+  showToast(tr("admin.returned_shipping_toast"), 'info');
   renderAdminDashboard();
 }
 
@@ -945,7 +945,7 @@ function viewEvidencePhoto(imgUrl) {
   const bodyHtml = `
     <div style="text-align:center;">
       <img src="${imgUrl}" style="max-width:100%; max-height:400px; border-radius:8px; border:2px solid var(--border-metallic-yellow); object-fit:contain;">
-      <button class="btn-large secondary-btn" style="margin-top:1.5rem; width:auto; padding: 0.5rem 1rem;" onclick="toggleGlobalModal(false)">Cerrar</button>
+      <button class="btn-large secondary-btn" style="margin-top:1.5rem; width:auto; padding: 0.5rem 1rem;" onclick="toggleGlobalModal(false)">${tr('seller.close')}</button>
     </div>
   `;
   toggleGlobalModal(true, "Evidencia de Empaque del Paquete", bodyHtml);
@@ -960,10 +960,10 @@ function approveSellerProfile(userId, isApproved) {
     if (isApproved) {
       profiles[index].approved = true;
       profiles[index].stripe_connect_id = `acct_1N_${userId}`;
-      showToast(tr("¡Cuenta de Vendedor aprobada exitosamente y cuenta de Stripe Connect vinculada!", "Seller account successfully approved and Stripe Connect account linked!"), 'success');
+      showToast(tr("admin.seller_approved_toast"), 'success');
     } else {
       profiles.splice(index, 1);
-      showToast(tr("Solicitud de vendedor rechazada y perfil eliminado.", "Seller request rejected and profile deleted."), 'info');
+      showToast(tr("admin.seller_rejected_toast"), 'info');
     }
     db.set('seller_profiles', profiles);
     renderAdminDashboard();
@@ -977,11 +977,11 @@ function approveProduct(prodId, isApproved) {
   if (index > -1) {
     if (isApproved) {
       products[index].status = "approved";
-      showToast(tr("¡Producto aprobado y publicado en la tienda!", "Product approved and published in the store!"), 'success');
+      showToast(tr("admin.product_approved_toast"), 'success');
       notifyFollowers(products[index].seller_id, products[index]);
     } else {
       products[index].status = "rejected";
-      showToast(tr("Producto rechazado.", "Product rejected."), 'error');
+      showToast(tr("admin.product_rejected_toast"), 'error');
     }
     db.set('products', products);
     renderAdminDashboard();
@@ -989,10 +989,10 @@ function approveProduct(prodId, isApproved) {
 }
 
 function removeProductAdmin(prodId) {
-  if (confirm("¿Estás seguro de eliminar este producto del marketplace permanentemente?")) {
+  if (confirm(tr("admin.confirm_delete_product"))) {
     const products = db.get('products').filter(p => p.id !== prodId);
     db.set('products', products);
-    showToast(tr("Producto eliminado exitosamente.", "Product successfully deleted."), 'success');
+    showToast(tr("admin.product_deleted_toast"), 'success');
     renderAdminDashboard();
   }
 }
@@ -1003,7 +1003,7 @@ function moderateReviewAdmin(reviewId, status) {
   if (index > -1) {
     reviews[index].status = status;
     db.set('reviews', reviews);
-    showToast(tr(`Estado de la reseña cambiado a: ${status === 'approved' ? 'Habilitada' : 'Oculta'}`, `Review status changed to: ${status === 'approved' ? 'Enabled' : 'Hidden'}`), 'info');
+    showToast(tr('admin.review_status_changed_toast', { status: status === 'approved' ? tr('admin.review_enabled') : tr('admin.review_hidden') }), 'info');
     renderAdminDashboard();
   }
 }
@@ -1015,7 +1015,7 @@ function toggleCouponStatus(code, currentStatus) {
   if (index > -1) {
     coupons[index].active = !currentStatus;
     db.set('coupons', coupons);
-    showToast(tr(`Cupón ${code} ha sido ${!currentStatus ? 'activado' : 'desactivado'}.`, `Coupon ${code} has been ${!currentStatus ? 'activated' : 'deactivated'}.`), 'success');
+    showToast(tr('admin.coupon_status_changed_toast', { code: code, status: !currentStatus ? tr('admin.status_activated') : tr('admin.status_deactivated') }), 'success');
     renderAdminDashboard();
   }
 }
@@ -1026,7 +1026,7 @@ function toggleBannerActive(id, currentStatus) {
   if (index > -1) {
     banners[index].active = !currentStatus;
     db.set('banners', banners);
-    showToast(tr(`El banner ha sido ${!currentStatus ? 'activado' : 'pausado'}.`, `The banner has been ${!currentStatus ? 'activated' : 'paused'}.`), 'success');
+    showToast(tr('admin.banner_status_changed_toast', { status: !currentStatus ? tr('admin.status_activated') : tr('admin.status_paused') }), 'success');
     renderAdminDashboard();
   }
 }
@@ -1035,30 +1035,30 @@ function openAddCouponModal() {
   const bodyHtml = `
     <div style="display:flex; flex-direction:column; gap:1rem;">
       <div class="checkout-input-wrapper">
-        <label>Código de Cupón</label>
+        <label>${tr('admin.coupon_code_label')}</label>
         <input type="text" id="frm-coupon-code" placeholder="EJ: ANIME20" style="text-transform:uppercase;">
       </div>
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
-          <label>Tipo Descuento</label>
+          <label>${tr('admin.discount_type_label')}</label>
           <select id="frm-coupon-type">
-            <option value="percentage">Porcentaje (%)</option>
-            <option value="fixed">Monto Fijo ($USD)</option>
+            <option value="percentage">${tr('admin.discount_percentage')}</option>
+            <option value="fixed">${tr('admin.discount_fixed')}</option>
           </select>
         </div>
         <div class="checkout-input-wrapper">
-          <label>Valor</label>
+          <label>${tr('admin.coupon_val_label')}</label>
           <input type="number" id="frm-coupon-val" placeholder="10">
         </div>
       </div>
       <div class="checkout-input-wrapper">
-        <label>Compra Mínima ($USD)</label>
+        <label>${tr('admin.min_purchase_label')}</label>
         <input type="number" id="frm-coupon-min" value="30">
       </div>
-      <button class="btn-large primary-btn" onclick="submitCreateCoupon()">Crear Cupón</button>
+      <button class="btn-large primary-btn" onclick="submitCreateCoupon()">${tr('admin.create_coupon_btn')}</button>
     </div>
   `;
-  toggleGlobalModal(true, "Crear Nuevo Cupón de Descuento", bodyHtml);
+  toggleGlobalModal(true, tr("admin.coupon_modal_title"), bodyHtml);
 }
 
 function submitCreateCoupon() {
@@ -1068,7 +1068,7 @@ function submitCreateCoupon() {
   const min = parseFloat(document.getElementById('frm-coupon-min').value) || 0;
 
   if (!code || val <= 0) {
-    showToast(tr("Por favor completa los datos del cupón.", "Please fill in the coupon details."), 'error');
+    showToast(tr("validation.all_fields_required"), 'error');
     return;
   }
 
@@ -1083,7 +1083,7 @@ function submitCreateCoupon() {
   db.set('coupons', coupons);
 
   toggleGlobalModal(false);
-  showToast(tr(`¡Cupón ${code} creado exitosamente!`, `Coupon ${code} successfully created!`), 'success');
+  showToast(tr('admin.coupon_status_changed_toast', { code: code, status: tr('admin.status_activated') }), 'success');
   renderAdminDashboard();
 }
 
@@ -1093,52 +1093,52 @@ function openAdminAddProductModal() {
   const formHtml = `
     <div style="display:flex; flex-direction:column; gap:1rem;">
       <div class="checkout-input-wrapper">
-        <label>Título de la figura (Tienda Oficial)</label>
+        <label>${tr('admin.title_official_store')}</label>
         <input type="text" id="adm-prod-title" placeholder="Ej: Iron Man Retro carded">
       </div>
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
-          <label>Marca</label>
+          <label>${tr('seller.frm_brand')}</label>
           <input type="text" id="adm-prod-brand" value="Hasbro">
         </div>
         <div class="checkout-input-wrapper">
-          <label>Categoría</label>
+          <label>${tr('seller.frm_category')}</label>
           <select id="adm-prod-category">${categoriesOptions}</select>
         </div>
       </div>
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
-          <label>Condición</label>
+          <label>${tr('seller.frm_condition')}</label>
           <select id="adm-prod-condition">
-            <option value="Sellado">Sellado</option>
-            <option value="Nuevo">Nuevo</option>
-            <option value="Usado">Usado</option>
+            <option value="Sellado">${tr('seller.cond_sealed_desc')}</option>
+            <option value="Nuevo">${tr('seller.cond_new_desc')}</option>
+            <option value="Usado">${tr('seller.cond_used_desc')}</option>
           </select>
         </div>
         <div class="checkout-input-wrapper">
-          <label>Cantidad (Stock)</label>
+          <label>${tr('seller.frm_stock')}</label>
           <input type="number" id="adm-prod-stock" value="5">
         </div>
       </div>
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
-          <label>Precio ($USD)</label>
+          <label>${tr('seller.frm_price')} ($USD)</label>
           <input type="number" id="adm-prod-price" placeholder="29.99">
         </div>
         <div class="checkout-input-wrapper">
-          <label>Imagen (URL)</label>
+          <label>${tr('seller.frm_image')}</label>
           <input type="text" id="adm-prod-img" placeholder="https://images.unsplash.com/photo-...">
         </div>
       </div>
       <div class="checkout-input-wrapper">
-        <label>Descripción detallada</label>
-        <textarea class="form-textarea" id="adm-prod-desc" placeholder="Descripción..."></textarea>
+        <label>${tr('seller.frm_desc')}</label>
+        <textarea class="form-textarea" id="adm-prod-desc" placeholder="..."></textarea>
       </div>
-      <button class="btn-large primary-btn" onclick="submitAdminAddProduct()">Publicar en Catálogo Oficial</button>
+      <button class="btn-large primary-btn" onclick="submitAdminAddProduct()">${tr('admin.btn_publish_official')}</button>
     </div>
   `;
   
-  toggleGlobalModal(true, "Publicar Producto Oficial (Admin Shop)", formHtml);
+  toggleGlobalModal(true, tr("admin.modal_publish_official_title"), formHtml);
 }
 
 function submitAdminAddProduct() {
@@ -1152,7 +1152,7 @@ function submitAdminAddProduct() {
   const desc = document.getElementById('adm-prod-desc').value.trim();
 
   if (!title || !brand || !price || !desc) {
-    showToast(tr("Por favor completa los campos principales.", "Please fill in the main fields."), 'error');
+    showToast(tr("validation.all_fields_required"), 'error');
     return;
   }
 
@@ -1190,7 +1190,7 @@ function submitAdminAddProduct() {
   db.set('product_media', media);
 
   toggleGlobalModal(false);
-  showToast(tr("¡Producto de la tienda oficial publicado con éxito!", "Official store product published successfully!"), 'success');
+  showToast(tr("admin.official_product_published"), 'success');
   renderAdminDashboard();
 }
 
@@ -1209,52 +1209,52 @@ function openAdminEditProductModal(prodId) {
   const formHtml = `
     <div style="display:flex; flex-direction:column; gap:1rem;">
       <div class="checkout-input-wrapper">
-        <label>Título de la figura</label>
+        <label>${tr('seller.frm_title')}</label>
         <input type="text" id="adm-edit-title" value="${p.title}">
       </div>
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
-          <label>Marca</label>
+          <label>${tr('seller.frm_brand')}</label>
           <input type="text" id="adm-edit-brand" value="${p.brand}">
         </div>
         <div class="checkout-input-wrapper">
-          <label>Categoría</label>
+          <label>${tr('seller.frm_category')}</label>
           <select id="adm-edit-category">${categoriesOptions}</select>
         </div>
       </div>
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
-          <label>Condición</label>
+          <label>${tr('seller.frm_condition')}</label>
           <select id="adm-edit-condition">
-            <option value="Sellado" ${p.condition === 'Sellado' ? 'selected' : ''}>Sellado</option>
-            <option value="Nuevo" ${p.condition === 'Nuevo' ? 'selected' : ''}>Nuevo</option>
-            <option value="Usado" ${p.condition === 'Usado' ? 'selected' : ''}>Usado</option>
+            <option value="Sellado" ${p.condition === 'Sellado' ? 'selected' : ''}>${tr('seller.cond_sealed_desc')}</option>
+            <option value="Nuevo" ${p.condition === 'Nuevo' ? 'selected' : ''}>${tr('seller.cond_new_desc')}</option>
+            <option value="Usado" ${p.condition === 'Usado' ? 'selected' : ''}>${tr('seller.cond_used_desc')}</option>
           </select>
         </div>
         <div class="checkout-input-wrapper">
-          <label>Cantidad (Stock)</label>
+          <label>${tr('seller.frm_stock')}</label>
           <input type="number" id="adm-edit-stock" value="${p.stock}">
         </div>
       </div>
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
-          <label>Precio ($USD)</label>
+          <label>${tr('seller.frm_price')} ($USD)</label>
           <input type="number" id="adm-edit-price" value="${p.price}">
         </div>
         <div class="checkout-input-wrapper">
-          <label>Imagen (URL)</label>
+          <label>${tr('seller.frm_image')}</label>
           <input type="text" id="adm-edit-img" value="${pMed ? pMed.media_url : ''}">
         </div>
       </div>
       <div class="checkout-input-wrapper">
-        <label>Descripción detallada</label>
+        <label>${tr('seller.frm_desc')}</label>
         <textarea class="form-textarea" id="adm-edit-desc">${p.description}</textarea>
       </div>
-      <button class="btn-large primary-btn" onclick="submitAdminEditProduct('${p.id}')">Guardar Cambios Catálogo</button>
+      <button class="btn-large primary-btn" onclick="submitAdminEditProduct('${p.id}')">${tr('admin.btn_save_catalog')}</button>
     </div>
   `;
   
-  toggleGlobalModal(true, "Editar Producto como Administrador", formHtml);
+  toggleGlobalModal(true, tr("admin.modal_edit_admin_title"), formHtml);
 }
 
 function submitAdminEditProduct(productId) {
@@ -1300,7 +1300,7 @@ function submitAdminEditProduct(productId) {
     }
 
     toggleGlobalModal(false);
-    showToast(tr("¡Cambios aplicados exitosamente en el catálogo!", "Changes successfully applied to the catalog!"), 'success');
+    showToast(tr("admin.catalog_changes_applied"), 'success');
     renderAdminDashboard();
   }
 }
@@ -1311,7 +1311,7 @@ function adminToggleUserStatus(userId) {
   if (user) {
     user.status = user.status === 'suspended' ? 'active' : 'suspended';
     db.set('users', users);
-    showToast(tr(`Estado de usuario cambiado con éxito.`, `User status updated successfully.`), 'success');
+    showToast(tr("admin.user_status_updated"), 'success');
     renderAdminDashboard();
   }
 }
@@ -1322,7 +1322,7 @@ function adminEditStorePlan(profileId) {
   if (prof) {
     prof.subscription_plan = prof.subscription_plan === 'Elite' ? 'Free' : 'Elite';
     db.set('seller_profiles', profiles);
-    showToast(tr(`Plan de tienda actualizado con éxito.`, `Store plan updated successfully.`), 'success');
+    showToast(tr("admin.store_plan_updated"), 'success');
     renderAdminDashboard();
   }
 }
@@ -1332,7 +1332,7 @@ function adminEditStoreCommission(profileId) {
   const prof = profiles.find(p => p.id === profileId);
   if (prof) {
     const rateStr = prompt(
-      tr("Ingresa la nueva tasa de comisión para esta tienda (ej. 0.05 para 5%):", "Enter the new commission rate for this store (e.g. 0.05 for 5%):"),
+      tr("admin.prompt_new_commission_rate"),
       prof.commission_rate !== undefined ? prof.commission_rate : "0.05"
     );
     if (rateStr !== null) {
@@ -1340,10 +1340,10 @@ function adminEditStoreCommission(profileId) {
       if (!isNaN(rate) && rate >= 0 && rate <= 1) {
         prof.commission_rate = rate;
         db.set('seller_profiles', profiles);
-        showToast(tr(`Tasa de comisión actualizada con éxito.`, `Commission rate updated successfully.`), 'success');
+        showToast(tr("admin.commission_rate_updated"), 'success');
         renderAdminDashboard();
       } else {
-        showToast(tr(`Tasa de comisión inválida. Debe ser un número entre 0 y 1.`, `Invalid commission rate. Must be a number between 0 and 1.`), 'error');
+        showToast(tr("admin.commission_rate_invalid"), 'error');
       }
     }
   }
@@ -1374,71 +1374,71 @@ function renderAdminCommissionsTab(container) {
   container.innerHTML = `
     <div>
       <div style="margin-bottom:1.5rem;">
-        <h3>Comisiones del Marketplace</h3>
+        <h3>${tr('admin.commissions_title')}</h3>
         <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">
-          Define los porcentajes de cobro y los costos de procesamiento del negocio.
+          ${tr('admin.commissions_subtitle')}
         </p>
       </div>
 
       <div class="db-table-card" style="margin-bottom:2rem; padding:1.5rem; background:var(--bg-card); border-radius:8px; border:1px solid var(--border-color);">
-        <h4 style="margin-top:0; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem; color:var(--text-primary);">Configuración General</h4>
+        <h4 style="margin-top:0; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem; color:var(--text-primary);">${tr('admin.config_title')}</h4>
         
         <div style="display:flex; flex-direction:column; gap:1.2rem; max-width:600px;">
           <!-- platform commission percentage input -->
           <div style="display:flex; flex-direction:column; gap:0.4rem;">
-            <label for="commission-general" style="font-size:0.85rem; font-weight:600; color:var(--text-primary);">Comisión general de Geek Collector (%):</label>
+            <label for="commission-general" style="font-size:0.85rem; font-weight:600; color:var(--text-primary);">${tr('admin.frm_general_commission')}</label>
             <input type="number" id="commission-general" value="${settings.commission_general}" min="0" max="100" step="0.1" style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.6rem; color:#000000; width:150px; outline:none;">
-            <span style="font-size:0.75rem; color:var(--text-muted);">Comisión fija cobrada al vendedor en cada transacción. Predeterminado: 5%</span>
+            <span style="font-size:0.75rem; color:var(--text-muted);">${tr('admin.frm_general_commission_desc')}</span>
           </div>
 
           <!-- minimum fee -->
           <div style="display:flex; flex-direction:column; gap:0.4rem;">
-            <label for="min-fee-per-sale" style="font-size:0.85rem; font-weight:600; color:var(--text-primary);">Tarifa mínima por venta ($):</label>
+            <label for="min-fee-per-sale" style="font-size:0.85rem; font-weight:600; color:var(--text-primary);">${tr('admin.frm_min_fee')}</label>
             <input type="number" id="min-fee-per-sale" value="${settings.min_fee_per_sale || 0}" min="0" step="0.01" style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.6rem; color:#000000; width:150px; outline:none;">
-            <span style="font-size:0.75rem; color:var(--text-muted);">Tarifa fija mínima si la comisión porcentual es menor. Usar 0 para desactivar.</span>
+            <span style="font-size:0.75rem; color:var(--text-muted);">${tr('admin.frm_min_fee_desc')}</span>
           </div>
 
           <!-- toggles -->
           <div style="display:flex; flex-direction:column; gap:0.6rem; margin-top:0.5rem;">
             <div style="display:flex; align-items:center; gap:0.5rem;">
               <input type="checkbox" id="commission-on-shipping" ${settings.commission_on_shipping ? 'checked' : ''} style="width:1.1rem; height:1.1rem; cursor:pointer;">
-              <label for="commission-on-shipping" style="font-size:0.85rem; color:var(--text-primary); cursor:pointer;">Cobrar comisión sobre el costo de envío</label>
+              <label for="commission-on-shipping" style="font-size:0.85rem; color:var(--text-primary); cursor:pointer;">${tr('admin.frm_shipping_commission')}</label>
             </div>
             
             <div style="display:flex; align-items:center; gap:0.5rem;">
               <input type="checkbox" id="commission-on-taxes" ${settings.commission_on_taxes ? 'checked' : ''} style="width:1.1rem; height:1.1rem; cursor:pointer;">
-              <label for="commission-on-taxes" style="font-size:0.85rem; color:var(--text-primary); cursor:pointer;">${tr('Cobrar comisión sobre impuestos (8% IVA)', 'Charge commission on taxes (8% VAT)')}</label>
+              <label for="commission-on-taxes" style="font-size:0.85rem; color:var(--text-primary); cursor:pointer;">${tr('admin.frm_taxes_commission')}</label>
             </div>
 
             <div style="display:flex; align-items:center; gap:0.5rem; opacity:0.6;">
               <input type="checkbox" id="buyer-protection-fee" ${settings.buyer_protection_fee ? 'checked' : ''} style="width:1.1rem; height:1.1rem; cursor:pointer;" disabled>
-              <label for="buyer-protection-fee" style="font-size:0.85rem; color:var(--text-primary); cursor:pointer;">${tr('Activar Buyer Protection Fee (Inactivo - Eliminado por el Administrador)', 'Activate Buyer Protection Fee (Inactive - Removed by Administrator)')}</label>
+              <label for="buyer-protection-fee" style="font-size:0.85rem; color:var(--text-primary); cursor:pointer;">${tr('admin.frm_buyer_protection')}</label>
             </div>
 
             <div style="display:flex; align-items:center; gap:0.5rem; opacity:0.6;">
               <input type="checkbox" id="additional-buyer-fee" ${settings.additional_buyer_fee ? 'checked' : ''} style="width:1.1rem; height:1.1rem; cursor:pointer;" disabled>
-              <label for="additional-buyer-fee" style="font-size:0.85rem; color:var(--text-primary); cursor:pointer;">${tr('Activar cargo de protección adicional (Inactivo - Eliminado por el Administrador)', 'Activate additional protection fee (Inactive - Removed by Administrator)')}</label>
+              <label for="additional-buyer-fee" style="font-size:0.85rem; color:var(--text-primary); cursor:pointer;">${tr('admin.frm_additional_protection')}</label>
             </div>
           </div>
 
           <!-- categories rates & pro discounts MOCK options -->
           <div style="border-top:1px solid var(--border-color); padding-top:1rem; margin-top:0.5rem; display:flex; flex-direction:column; gap:0.8rem;">
-            <h5 style="margin:0 0 0.4rem 0; color:var(--text-primary); font-size:0.9rem;">${tr('Configuraciones Especiales', 'Special Configurations')}</h5>
+            <h5 style="margin:0 0 0.4rem 0; color:var(--text-primary); font-size:0.9rem;">${tr('admin.special_config')}</h5>
             
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
               <div style="display:flex; flex-direction:column; gap:0.25rem;">
-                <label style="font-size:0.8rem; color:var(--text-secondary);">${tr('Tarifas por Categoría:', 'Category Rates:')}</label>
+                <label style="font-size:0.8rem; color:var(--text-secondary);">${tr('admin.category_rates_label')}</label>
                 <select style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.5rem; color:#000000; outline:none;" disabled>
-                  <option>${tr('Funko Pop (General: 5%)', 'Funko Pop (General: 5%)')}</option>
-                  <option>${tr('Figuras de Acción (General: 5%)', 'Action Figures (General: 5%)')}</option>
-                  <option>${tr('Estatuas y Réplicas (General: 5%)', 'Statues & Replicas (General: 5%)')}</option>
+                  <option>${tr('admin.cat_funko_pop')}</option>
+                  <option>${tr('admin.cat_action_figures')}</option>
+                  <option>${tr('admin.cat_statues')}</option>
                 </select>
               </div>
 
               <div style="display:flex; flex-direction:column; gap:0.25rem;">
-                <label style="font-size:0.8rem; color:var(--text-secondary);">${tr('Descuentos sobre comisiones:', 'Commission Discounts:')}</label>
+                <label style="font-size:0.8rem; color:var(--text-secondary);">${tr('admin.commission_discounts_label')}</label>
                 <select style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.5rem; color:#000000; outline:none;" disabled>
-                  <option>${tr('Sin Descuentos (Todos pagan tarifa plana)', 'No Discounts (Flat fee for everyone)')}</option>
+                  <option>${tr('admin.no_discounts_option')}</option>
                 </select>
               </div>
             </div>
@@ -1446,7 +1446,7 @@ function renderAdminCommissionsTab(container) {
 
           <div style="margin-top:1rem;">
             <button class="btn-large primary-btn" style="width:auto; padding:0.6rem 1.5rem; font-size:0.85rem;" onclick="saveMarketplaceCommissionsSubmit()">
-              Guardar Configuración
+              ${tr('admin.save_config_btn')}
             </button>
           </div>
         </div>
@@ -1455,21 +1455,21 @@ function renderAdminCommissionsTab(container) {
       <!-- History of Audit changes -->
       <div class="db-table-card">
         <div class="db-table-header" style="background:var(--bg-lighter);">
-          <h4 style="margin:0; font-size:0.95rem; color:var(--text-primary);">Historial de Auditoría de Comisiones</h4>
+          <h4 style="margin:0; font-size:0.95rem; color:var(--text-primary);">${tr('admin.audit_title')}</h4>
         </div>
         <div class="db-table-wrapper">
           <table class="db-table">
             <thead>
               <tr>
-                <th>Fecha / Hora</th>
-                <th>Administrador</th>
-                <th>Descripción del Cambio</th>
+                <th>${tr('admin.audit_col_date')}</th>
+                <th>${tr('admin.audit_col_admin')}</th>
+                <th>${tr('admin.audit_col_desc')}</th>
               </tr>
             </thead>
             <tbody>
               ${historyHtml ? historyHtml : `
                 <tr>
-                  <td colspan="3" style="text-align:center; padding:2rem; color:var(--text-muted);">No se registran cambios de configuración.</td>
+                  <td colspan="3" style="text-align:center; padding:2rem; color:var(--text-muted);">${tr('admin.no_audit_records')}</td>
                 </tr>
               `}
             </tbody>
@@ -1494,7 +1494,7 @@ function saveMarketplaceCommissionsSubmit() {
   const onTaxes = taxesCheckbox.checked;
 
   if (isNaN(commissionGeneral) || commissionGeneral < 0 || commissionGeneral > 100) {
-    showToast(tr("Por favor, ingrese un porcentaje de comisión válido (0% - 100%).", "Please enter a valid commission percentage (0% - 100%)."), 'error');
+    showToast(tr("validation.commission_percentage_range"), 'error');
     return;
   }
 
@@ -1514,20 +1514,20 @@ function saveMarketplaceCommissionsSubmit() {
   // Build audit description
   let changes = [];
   if (settings.commission_general !== commissionGeneral) {
-    changes.push(`Comisión general ajustada de ${settings.commission_general}% a ${commissionGeneral}%`);
+    changes.push(tr('admin.audit_commission_changed', { prev: settings.commission_general, curr: commissionGeneral }));
   }
   if (settings.min_fee_per_sale !== minFee) {
-    changes.push(`Tarifa mínima por venta cambiada de $${settings.min_fee_per_sale || 0} a $${minFee}`);
+    changes.push(tr('admin.audit_min_fee_changed', { prev: settings.min_fee_per_sale || 0, curr: minFee }));
   }
   if (settings.commission_on_shipping !== onShipping) {
-    changes.push(`Comisión sobre envíos: ${onShipping ? 'activada' : 'desactivada'}`);
+    changes.push(tr('admin.audit_shipping_changed', { status: onShipping ? tr('admin.audit_status_enabled') : tr('admin.audit_status_disabled') }));
   }
   if (settings.commission_on_taxes !== onTaxes) {
-    changes.push(`Comisión sobre impuestos: ${onTaxes ? 'activada' : 'desactivada'}`);
+    changes.push(tr('admin.audit_taxes_changed', { status: onTaxes ? tr('admin.audit_status_enabled') : tr('admin.audit_status_disabled') }));
   }
 
   if (changes.length === 0) {
-    showToast(tr("No se detectaron cambios en la configuración.", "No changes detected in configuration."), 'info');
+    showToast(tr("admin.no_config_changes"), 'info');
     return;
   }
 
@@ -1582,8 +1582,8 @@ function saveMarketplaceCommissionsSubmit() {
         notifications.push({
           id: "not_" + Math.random().toString(36).substr(2, 9),
           user_id: u.id,
-          title: "Actualización de Política de Comisiones",
-          message: `Geek Collector actualizará su comisión de vendedor al ${commissionGeneral}% a partir de hoy. Debes aceptar los nuevos términos.`,
+          title: tr('admin.policy_notification_title'),
+          message: tr('admin.policy_notification_msg', { rate: commissionGeneral }),
           read: false,
           created_at: new Date().toISOString()
         });
@@ -1592,7 +1592,7 @@ function saveMarketplaceCommissionsSubmit() {
     db.set('notifications', notifications);
   }
 
-  showToast(tr("¡Configuración de comisiones guardada exitosamente!", "Commissions configuration saved successfully!"), 'success');
+  showToast(tr("admin.config_saved_success"), 'success');
   
   // Refresh page tab
   renderAdminDashboard();
@@ -1612,18 +1612,18 @@ function renderAdminGuidelinesTab(container, data) {
     return `
       <tr>
         <td><strong>${v.version}</strong></td>
-        <td>${v.is_material ? `<span style="color:#ef4444; font-weight:700;">${tr('Material', 'Material')}</span>` : `<span style="color:var(--text-secondary);">${tr('Informativo', 'Informative')}</span>`}</td>
-        <td>${new Date(v.effective_date).toLocaleDateString()}</td>
+        <td>${v.is_material ? `<span style="color:#ef4444; font-weight:700;">${tr('admin.val_material')}</span>` : `<span style="color:var(--text-secondary);">${tr('admin.val_informative')}</span>`}</td>
+        <td>${window.formatDate(v.effective_date)}</td>
         <td>
           ${v.status === 'active' 
-            ? `<span class="status-tag approved">${tr('Vigente', 'Active')}</span>` 
-            : `<span class="status-tag suspended">${tr('Archivada', 'Archived')}</span>`}
+            ? `<span class="status-tag approved">${tr('admin.val_active')}</span>` 
+            : `<span class="status-tag suspended">${tr('admin.val_archived')}</span>`}
         </td>
-        <td><strong>${accCount}</strong> ${tr('aceptaciones', 'acceptances')}</td>
+        <td><strong>${accCount}</strong> ${tr('admin.signatures_label')}</td>
         <td>
           ${isLocked 
-            ? `<button class="action-btn-small" style="background:#4b5563; cursor:not-allowed; opacity:0.6;" disabled title="${tr('Bloqueado: Esta versión ya tiene firmas de aceptación.', 'Locked: This version has already been signed by sellers.')}"><i data-lucide="lock" style="width:0.8rem; height:0.8rem; display:inline-block; vertical-align:middle; margin-right:2px;"></i> ${tr('Bloqueado', 'Locked')}</button>`
-            : `<button class="action-btn-small approve" onclick="openEditGuidelinesVersionModal('${v.version}')"><i data-lucide="edit" style="width:0.8rem; height:0.8rem; display:inline-block; vertical-align:middle; margin-right:2px;"></i> ${tr('Editar', 'Edit')}</button>`}
+            ? `<button class="action-btn-small" style="background:#4b5563; cursor:not-allowed; opacity:0.6;" disabled title="${tr('admin.locked_title')}"><i data-lucide="lock" style="width:0.8rem; height:0.8rem; display:inline-block; vertical-align:middle; margin-right:2px;"></i> ${tr('admin.locked_label')}</button>`
+            : `<button class="action-btn-small approve" onclick="openEditGuidelinesVersionModal('${v.version}')"><i data-lucide="edit" style="width:0.8rem; height:0.8rem; display:inline-block; vertical-align:middle; margin-right:2px;"></i> ${tr('admin.edit_label')}</button>`}
         </td>
       </tr>
     `;
@@ -1649,18 +1649,18 @@ function renderAdminGuidelinesTab(container, data) {
     let filterStatusType = 'pending';
 
     if (acc) {
-      statusTextHtml = `<span class="status-tag approved">${tr('Aceptado', 'Accepted')}</span>`;
-      acceptDate = new Date(acc.acceptedAt).toLocaleString();
+      statusTextHtml = `<span class="status-tag approved">${tr('seller.status_accepted')}</span>`;
+      acceptDate = window.formatDate(acc.acceptedAt);
       acceptLang = acc.policyLanguage ? acc.policyLanguage.toUpperCase() : 'ES';
       acceptIp = acc.ipAddress || '-';
       acceptSource = acc.acceptanceSource || '-';
       filterStatusType = 'accepted';
     } else {
       if (prof.requiresGuidelinesReacceptance) {
-        statusTextHtml = `<span class="status-tag suspended" style="background:#f59e0b; color:black; font-weight:700;">${tr('Reaceptación Requerida', 'Reacceptance Required')}</span>`;
+        statusTextHtml = `<span class="status-tag suspended" style="background:#f59e0b; color:black; font-weight:700;">${tr('admin.status_reacceptance_required')}</span>`;
         filterStatusType = 'reacceptance';
       } else {
-        statusTextHtml = `<span class="status-tag suspended">${tr('Falta Aceptar', 'Pending')}</span>`;
+        statusTextHtml = `<span class="status-tag suspended">${tr('seller.status_acceptance_required')}</span>`;
         filterStatusType = 'pending';
       }
     }
@@ -1696,8 +1696,8 @@ function renderAdminGuidelinesTab(container, data) {
 
   const sellerRowsHtml = filteredSellers.map(s => {
     const actionBtnHtml = s.isSuspended 
-      ? `<button class="action-btn-small approve" style="background:#10b981; border-color:#10b981;" onclick="toggleSellerPublishingSuspension('${s.profId}', false)">${tr('Reactivar', 'Reinstate')}</button>`
-      : `<button class="action-btn-small reject" style="background:#ef4444; border-color:#ef4444;" onclick="toggleSellerPublishingSuspension('${s.profId}', true)">${tr('Suspender', 'Suspend')}</button>`;
+      ? `<button class="action-btn-small approve" style="background:#10b981; border-color:#10b981;" onclick="toggleSellerPublishingSuspension('${s.profId}', false)">${tr('admin.btn_reactivate')}</button>`
+      : `<button class="action-btn-small reject" style="background:#ef4444; border-color:#ef4444;" onclick="toggleSellerPublishingSuspension('${s.profId}', true)">${tr('admin.btn_suspend')}</button>`;
     
     return `
       <tr>
@@ -1724,35 +1724,35 @@ function renderAdminGuidelinesTab(container, data) {
     <div style="font-family:var(--font-body, sans-serif);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
         <div>
-          <h3>${tr('Gestión de Reglas y Directrices para Vendedores', 'Seller Rules & Guidelines Management')}</h3>
+          <h3>${tr('admin.guidelines_title')}</h3>
           <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">
-            ${tr('Controla las políticas del marketplace, crea nuevas versiones materiales e informativas y audita las aceptaciones.', 'Control marketplace guidelines, release material or informative updates, and audit acceptances.')}
+            ${tr('admin.guidelines_subtitle')}
           </p>
         </div>
         <button class="btn-large primary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="openCreateGuidelinesVersionModal()">
-          <i data-lucide="plus-circle" style="width:1rem; height:1rem; display:inline-block; vertical-align:middle; margin-right:4px;"></i> ${tr('Crear Nueva Versión', 'Create New Version')}
+          <i data-lucide="plus-circle" style="width:1rem; height:1rem; display:inline-block; vertical-align:middle; margin-right:4px;"></i> ${tr('admin.upload_version_btn')}
         </button>
       </div>
 
       <!-- Sección 1: Versiones -->
       <div class="db-table-card" style="margin-bottom:2rem;">
         <div class="db-table-header">
-          <h4>${tr('Versiones de Políticas y Reglas', 'Guidelines Versions & Policies')}</h4>
+          <h4>${tr('admin.guidelines_history_title')}</h4>
         </div>
         <div class="db-table-wrapper">
           <table class="db-table">
             <thead>
               <tr>
-                <th>${tr('Versión', 'Version')}</th>
-                <th>${tr('Tipo de Cambio', 'Change Type')}</th>
-                <th>${tr('Vigente Desde', 'Effective Since')}</th>
-                <th>${tr('Estado', 'Status')}</th>
-                <th>${tr('Firmas Realizadas', 'Signed Acceptances')}</th>
-                <th>${tr('Acciones', 'Actions')}</th>
+                <th>${tr('admin.table_col_version')}</th>
+                <th>${tr('admin.table_col_type')}</th>
+                <th>${tr('admin.table_col_date')}</th>
+                <th>${tr('admin.table_col_status')}</th>
+                <th>${tr('admin.table_col_signatures')}</th>
+                <th>${tr('admin.table_col_actions')}</th>
               </tr>
             </thead>
             <tbody>
-              ${versionRowsHtml || `<tr><td colspan="6" style="text-align:center;">${tr('No hay versiones cargadas.', 'No versions loaded.')}</td></tr>`}
+              ${versionRowsHtml || `<tr><td colspan="6" style="text-align:center;">${tr('admin.no_guidelines_versions')}</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -1761,35 +1761,35 @@ function renderAdminGuidelinesTab(container, data) {
       <!-- Sección 2: Aceptación y Firmas de Vendedores -->
       <div class="db-table-card">
         <div class="db-table-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; padding:1.2rem;">
-          <h4 style="margin:0;">${tr('Auditoría de Aceptación de Vendedores', 'Sellers Acceptance Audit Log')}</h4>
+          <h4 style="margin:0;">${tr('admin.seller_signatures_log')}</h4>
           <button class="btn-large secondary-btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem; border-color:var(--border-metallic-yellow);" onclick="exportGuidelinesAcceptancesCSV()">
-            <i data-lucide="download" style="width:0.85rem; height:0.85rem; display:inline-block; vertical-align:middle; margin-right:4px;"></i> ${tr('Exportar a CSV', 'Export to CSV')}
+            <i data-lucide="download" style="width:0.85rem; height:0.85rem; display:inline-block; vertical-align:middle; margin-right:4px;"></i> ${tr('admin.btn_export_csv')}
           </button>
         </div>
 
         <!-- Filtros interactivos -->
         <div style="background:rgba(255,255,255,0.02); border-bottom:1px solid var(--border-color); padding:1rem; display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
           <div style="display:flex; flex-direction:column; gap:0.25rem; min-width:150px;">
-            <label style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">${tr('Filtrar por Versión', 'Filter by Version')}</label>
+            <label style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">${tr('admin.filter_version')}</label>
             <select id="flt-guide-version" onchange="applyAdminGuidelinesFilter('version', this.value)" style="background:#111; color:white; border:1px solid var(--border-color); border-radius:6px; padding:0.35rem; font-size:0.8rem; outline:none;">
-              <option value="all" ${window.adminGuidelinesFilterVersion === 'all' ? 'selected' : ''}>${tr('Todas', 'All')}</option>
+              <option value="all" ${window.adminGuidelinesFilterVersion === 'all' ? 'selected' : ''}>${tr('categories.Todos')}</option>
               ${versionOptions}
             </select>
           </div>
 
           <div style="display:flex; flex-direction:column; gap:0.25rem; min-width:150px;">
-            <label style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">${tr('Estado Firma', 'Signature Status')}</label>
+            <label style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">${tr('admin.filter_status')}</label>
             <select id="flt-guide-status" onchange="applyAdminGuidelinesFilter('status', this.value)" style="background:#111; color:white; border:1px solid var(--border-color); border-radius:6px; padding:0.35rem; font-size:0.8rem; outline:none;">
-              <option value="all" ${window.adminGuidelinesFilterStatus === 'all' ? 'selected' : ''}>${tr('Todos los Estados', 'All Statuses')}</option>
-              <option value="accepted" ${window.adminGuidelinesFilterStatus === 'accepted' ? 'selected' : ''}>${tr('Aceptado (Vigente)', 'Accepted (Active)')}</option>
-              <option value="reacceptance" ${window.adminGuidelinesFilterStatus === 'reacceptance' ? 'selected' : ''}>${tr('Reaceptación Requerida', 'Reacceptance Required')}</option>
-              <option value="pending" ${window.adminGuidelinesFilterStatus === 'pending' ? 'selected' : ''}>${tr('Falta Aceptar (Nuevo)', 'Pending Accept (New)')}</option>
+              <option value="all" ${window.adminGuidelinesFilterStatus === 'all' ? 'selected' : ''}>${tr('admin.all_statuses_option')}</option>
+              <option value="accepted" ${window.adminGuidelinesFilterStatus === 'accepted' ? 'selected' : ''}>${tr('admin.status_accepted_active')}</option>
+              <option value="reacceptance" ${window.adminGuidelinesFilterStatus === 'reacceptance' ? 'selected' : ''}>${tr('admin.status_reacceptance_required')}</option>
+              <option value="pending" ${window.adminGuidelinesFilterStatus === 'pending' ? 'selected' : ''}>${tr('admin.status_pending_new')}</option>
             </select>
           </div>
 
-          <div style="display:flex; flex-direction:column; gap:0.25rem; flex:1; min-width:200px;">
-            <label style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">${tr('Buscar Vendedor', 'Search Seller')}</label>
-            <input type="text" id="flt-guide-search" value="${window.adminGuidelinesSearchQuery}" oninput="applyAdminGuidelinesFilter('search', this.value)" placeholder="${tr('Nombre de tienda, usuario o email...', 'Store name, owner, or email...')}" style="background:#111; color:white; border:1px solid var(--border-color); border-radius:6px; padding:0.35rem; font-size:0.8rem; outline:none;">
+          <div style="display:flex; flex-direction:column; gap:0.25rem; min-width:200px; flex:1;">
+            <label style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">${tr('admin.search_seller_placeholder_label')}</label>
+            <input type="text" id="flt-guide-search" value="${window.adminGuidelinesSearchQuery}" oninput="applyAdminGuidelinesFilter('search', this.value)" placeholder="${tr('admin.search_seller_placeholder')}" style="background:#111; color:white; border:1px solid var(--border-color); border-radius:6px; padding:0.35rem; font-size:0.8rem; outline:none;">
           </div>
         </div>
 
@@ -1797,17 +1797,17 @@ function renderAdminGuidelinesTab(container, data) {
           <table class="db-table">
             <thead>
               <tr>
-                <th>${tr('Vendedor / Tienda', 'Seller / Store')}</th>
-                <th>${tr('Estado Firma', 'Signature Status')}</th>
-                <th>${tr('Versión Aceptada', 'Accepted Version')}</th>
-                <th>${tr('Fecha Firma', 'Signing Date')}</th>
-                <th>${tr('Idioma', 'Language')}</th>
-                <th>${tr('Origen y Auditoría IP', 'Source & IP Audit')}</th>
-                <th>${tr('Acción Capacidad', 'Publishing Action')}</th>
+                <th>${tr('admin.col_seller')}</th>
+                <th>${tr('admin.filter_status')}</th>
+                <th>${tr('admin.col_version')}</th>
+                <th>${tr('admin.col_date')}</th>
+                <th>${tr('admin.col_language')}</th>
+                <th>${tr('admin.col_ip')}</th>
+                <th>${tr('admin.col_actions')}</th>
               </tr>
             </thead>
             <tbody>
-              ${sellerRowsHtml || `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-secondary);">${tr('No se encontraron registros de vendedores para el filtro seleccionado.', 'No seller records found for the selected filter.')}</td></tr>`}
+              ${sellerRowsHtml || `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-secondary);">${tr('admin.no_signatures')}</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -1838,28 +1838,22 @@ function toggleSellerPublishingSuspension(profId, doSuspend) {
       notifications.push({
         id: "not_" + Math.random().toString(36).substr(2, 9),
         user_id: prof.user_id,
-        title: tr("Capacidad de Publicación Suspendida", "Publishing Privileges Suspended"),
-        message: tr(
-          "El Administrador ha suspendido temporalmente tu capacidad para publicar nuevos artículos.",
-          "The Administrator has temporarily suspended your ability to list new products."
-        ),
+        title: tr("admin.publishing_suspended_title"),
+        message: tr("admin.publishing_suspended_msg"),
         read: false,
         created_at: new Date().toISOString()
       });
-      showToast(tr("Publicación del vendedor suspendida.", "Seller publishing suspended."), 'info');
+      showToast(tr("admin.publishing_suspended_toast"), 'info');
     } else {
       notifications.push({
         id: "not_" + Math.random().toString(36).substr(2, 9),
         user_id: prof.user_id,
-        title: tr("Capacidad de Publicación Reactivada", "Publishing Privileges Reinstated"),
-        message: tr(
-          "El Administrador ha reactivado tu capacidad para publicar artículos. Asegúrate de cumplir con todas las directrices.",
-          "The Administrator has reinstated your ability to list items. Make sure to adhere to all guidelines."
-        ),
+        title: tr("admin.publishing_reactivated_title"),
+        message: tr("admin.publishing_reactivated_msg"),
         read: false,
         created_at: new Date().toISOString()
       });
-      showToast(tr("Publicación del vendedor reactivada.", "Seller publishing reinstated."), 'success');
+      showToast(tr("admin.publishing_reactivated_toast"), 'success');
     }
     db.set('notifications', notifications);
     renderAdminDashboard();
@@ -1903,7 +1897,7 @@ function exportGuidelinesAcceptancesCSV() {
   link.click();
   document.body.removeChild(link);
   
-  showToast(tr("Historial de aceptaciones exportado en formato CSV.", "Acceptance history exported in CSV format."), 'success');
+  showToast(tr("admin.signatures_csv_exported"), 'success');
 }
 
 function openCreateGuidelinesVersionModal() {
@@ -1969,13 +1963,13 @@ function openCreateGuidelinesVersionModal() {
       </div>
 
       <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1rem;">
-        <button class="btn-large secondary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="toggleGlobalModal(false)">Cancelar</button>
-        <button class="btn-large primary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="submitCreateGuidelinesVersion()">Publicar Versión</button>
+        <button class="btn-large secondary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="toggleGlobalModal(false)">${tr('seller.cancel_btn')}</button>
+        <button class="btn-large primary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="submitCreateGuidelinesVersion()">${tr('admin.publish_version_btn')}</button>
       </div>
     </div>
   `;
 
-  toggleGlobalModal(true, "Crear Nueva Versión de Reglas", html);
+  toggleGlobalModal(true, tr('admin.create_version_modal_title'), html);
   lucide.createIcons();
 }
 
@@ -1990,13 +1984,13 @@ function submitCreateGuidelinesVersion() {
   const makeActive = document.getElementById('frm-ver-active').checked;
 
   if (!version || !titleEs || !titleEn || !contentEs || !contentEn || !dateVal) {
-    showToast("Por favor completa todos los campos para crear la política.", "error");
+    showToast(tr('admin.fill_all_fields'), "error");
     return;
   }
 
   const versions = db.get('seller_guidelines_versions') || [];
   if (versions.some(v => v.version === version)) {
-    showToast(`El identificador de versión "${version}" ya existe. Elige uno diferente.`, "error");
+    showToast(tr('admin.version_id_exists', { version }), "error");
     return;
   }
 
@@ -2039,11 +2033,8 @@ function submitCreateGuidelinesVersion() {
         notifications.push({
           id: "not_" + Math.random().toString(36).substr(2, 9),
           user_id: u.id,
-          title: tr("Actualización de Reglas de Vendedor", "Seller Guidelines Updated"),
-          message: tr(
-            `Hemos actualizado las reglas para vendedores (${version}). Debes revisar y aceptar la nueva versión antes de publicar artículos adicionales.`,
-            `We updated the Seller Guidelines (${version}). You must review and accept the new version before listing additional items.`
-          ),
+          title: tr("admin.policy_notification_title"),
+          message: tr("admin.policy_notification_msg_ver", { version: version }),
           read: false,
           created_at: new Date().toISOString()
         });
@@ -2064,7 +2055,7 @@ function submitCreateGuidelinesVersion() {
   db.set('compliance_audit_logs', auditLogs);
 
   toggleGlobalModal(false);
-  showToast(tr("¡Nueva versión de reglas publicada con éxito!", "New guidelines version published successfully!"), "success");
+  showToast(tr("admin.save_policy_success"), "success");
   renderAdminDashboard();
 }
 
@@ -2077,60 +2068,60 @@ function openEditGuidelinesVersionModal(version) {
   const hasAcceptances = acceptances.some(a => a.policyVersion === version && a.acceptanceStatus === 'accepted');
 
   if (hasAcceptances) {
-    showToast(tr("Esta versión ya tiene aceptaciones y no se puede editar.", "This version has acceptances and cannot be edited."), "error");
+    showToast(tr("admin.guidelines_locked_edit_error"), "error");
     return;
   }
 
   const html = `
     <div style="display:flex; flex-direction:column; gap:1rem; font-family:var(--font-body, sans-serif); color:var(--text-primary); max-height: 500px; overflow-y: auto; padding-right: 0.5rem;">
       <div class="checkout-input-wrapper">
-        <label>Identificador de Versión (Bloqueado)</label>
+        <label>${tr('admin.frm_ver_label_locked')}</label>
         <input type="text" id="frm-ver-id" value="${ver.version}" disabled style="background:#ddd; cursor:not-allowed; color:#555;">
       </div>
 
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
-          <label>Título (Español)</label>
+          <label>${tr('admin.frm_ver_title_es')}</label>
           <input type="text" id="frm-ver-title-es" value="${ver.title_es}">
         </div>
         <div class="checkout-input-wrapper">
-          <label>Título (Inglés)</label>
+          <label>${tr('admin.frm_ver_title_en')}</label>
           <input type="text" id="frm-ver-title-en" value="${ver.title_en}">
         </div>
       </div>
 
       <div class="checkout-input-wrapper">
-        <label>Contenido del Documento (Español)</label>
+        <label>${tr('admin.frm_ver_content_es')}</label>
         <textarea id="frm-ver-content-es" style="height:120px; font-size:0.8rem; background:white; color:black; border-radius:6px; padding:0.5rem; outline:none;">${ver.content_es}</textarea>
       </div>
 
       <div class="checkout-input-wrapper">
-        <label>Contenido del Documento (Inglés)</label>
+        <label>${tr('admin.frm_ver_content_en')}</label>
         <textarea id="frm-ver-content-en" style="height:120px; font-size:0.8rem; background:white; color:black; border-radius:6px; padding:0.5rem; outline:none;">${ver.content_en}</textarea>
       </div>
 
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
-          <label>Fecha de Entrada en Vigor</label>
+          <label>${tr('admin.frm_ver_date')}</label>
           <input type="datetime-local" id="frm-ver-date" value="${new Date(ver.effective_date).toISOString().slice(0, 16)}">
         </div>
         <div class="checkout-input-wrapper">
-          <label>Tipo de Cambio</label>
+          <label>${tr('admin.table_col_type')}</label>
           <select id="frm-ver-material">
-            <option value="true" ${ver.is_material ? 'selected' : ''}>Material (Requiere reaceptación obligatoria)</option>
-            <option value="false" ${!ver.is_material ? 'selected' : ''}>Informativo (Sin bloqueo inmediato)</option>
+            <option value="true" ${ver.is_material ? 'selected' : ''}>${tr('admin.frm_ver_material_yes')}</option>
+            <option value="false" ${!ver.is_material ? 'selected' : ''}>${tr('admin.frm_ver_material_no')}</option>
           </select>
         </div>
       </div>
 
       <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1rem;">
-        <button class="btn-large secondary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="toggleGlobalModal(false)">Cancelar</button>
-        <button class="btn-large primary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="submitEditGuidelinesVersion('${version}')">Guardar Cambios</button>
+        <button class="btn-large secondary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="toggleGlobalModal(false)">${tr('seller.cancel_btn')}</button>
+        <button class="btn-large primary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="submitEditGuidelinesVersion('${version}')">${tr('seller.save_changes')}</button>
       </div>
     </div>
   `;
 
-  toggleGlobalModal(true, "Editar Versión de Reglas", html);
+  toggleGlobalModal(true, tr('admin.version_modal_edit_title'), html);
   lucide.createIcons();
 }
 
@@ -2142,7 +2133,7 @@ function submitEditGuidelinesVersion(version) {
   const acceptances = db.get('seller_guidelines_acceptances') || [];
   const hasAcceptances = acceptances.some(a => a.policyVersion === version && a.acceptanceStatus === 'accepted');
   if (hasAcceptances) {
-    showToast(tr("Esta versión ya tiene aceptaciones y no se puede editar.", "This version has acceptances and cannot be edited."), "error");
+    showToast(tr("admin.guidelines_locked_edit_error"), "error");
     return;
   }
 
@@ -2154,7 +2145,7 @@ function submitEditGuidelinesVersion(version) {
   const isMaterial = document.getElementById('frm-ver-material').value === 'true';
 
   if (!titleEs || !titleEn || !contentEs || !contentEn || !dateVal) {
-    showToast("Por favor completa todos los campos para editar la política.", "error");
+    showToast(tr("validation.all_fields_required"), "error");
     return;
   }
 
@@ -2180,6 +2171,6 @@ function submitEditGuidelinesVersion(version) {
   db.set('compliance_audit_logs', auditLogs);
 
   toggleGlobalModal(false);
-  showToast(tr("¡Cambios guardados con éxito!", "Changes saved successfully!"), "success");
+  showToast(tr("admin.config_saved_success"), "success");
   renderAdminDashboard();
 }
