@@ -18,7 +18,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { amount, applicationFeeAmount, sellerStripeAccountId, description } = JSON.parse(event.body);
+    const { amount, applicationFeeAmount, sellerStripeAccountId, description, itemsSubtotal } = JSON.parse(event.body);
 
     if (!amount || amount <= 0) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid amount.' }) };
@@ -36,6 +36,14 @@ exports.handler = async (event, context) => {
 
     // Set destination Connected Account details if it's a seller transaction
     if (sellerStripeAccountId && sellerStripeAccountId.startsWith('acct_')) {
+      if (itemsSubtotal === undefined) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing itemsSubtotal for application fee validation.' }) };
+      }
+      const calculatedFee = parseFloat((itemsSubtotal * 0.05).toFixed(2));
+      if (Math.abs(calculatedFee - applicationFeeAmount) > 0.02) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Security alert: Application fee amount mismatch.' }) };
+      }
+
       paymentIntentConfig.application_fee_amount = Math.round((applicationFeeAmount || 0) * 100);
       paymentIntentConfig.transfer_data = {
         destination: sellerStripeAccountId,

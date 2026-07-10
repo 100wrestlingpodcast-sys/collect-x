@@ -27,6 +27,64 @@ function renderSellerDashboard() {
     return;
   }
 
+  // Comprobar aceptación de directrices vigentes
+  const guidelinesVersions = db.get('seller_guidelines_versions') || [];
+  const activeGuidelinesVer = guidelinesVersions.find(v => v.status === 'active') || { version: 'seller-policy-v1.0' };
+  
+  const guidelinesAcceptances = db.get('seller_guidelines_acceptances') || [];
+  const hasAcceptedGuidelines = guidelinesAcceptances.some(a => 
+    a.sellerId === sellerProf.id && 
+    a.policyVersion === activeGuidelinesVer.version && 
+    a.acceptanceStatus === 'accepted'
+  );
+
+  if (!hasAcceptedGuidelines || sellerProf.requiresGuidelinesReacceptance) {
+    const errorMsg = sellerProf.requiresGuidelinesReacceptance
+      ? tr(
+          "sellerGuidelines.newVersionNotice",
+          "We updated the Seller Guidelines. You must review and accept the new version before listing additional items."
+        )
+      : tr(
+          "sellerGuidelines.requiredMessage",
+          "You must read and accept the Seller Guidelines before listing an item."
+        );
+
+    viewport.innerHTML = `
+      <div class="section-container" style="max-width: 600px; margin: 4rem auto;">
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); padding:2rem; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.3);">
+          <div style="text-align:center; margin-bottom:1.5rem;">
+            <i data-lucide="shield-alert" style="width:3rem; height:3rem; color:var(--gold-light); margin-bottom:0.5rem; display:block; margin-left:auto; margin-right:auto;"></i>
+            <h2 style="font-family:var(--font-heading); color:var(--text-primary); font-size:1.4rem;">${tr('Aceptación de Reglas de Vendedor', 'Seller Guidelines Agreement')}</h2>
+          </div>
+          
+          <p style="font-size:0.9rem; color:var(--text-primary); line-height:1.6; margin-bottom:1.5rem; font-weight:600; text-align:center;">
+            ${errorMsg}
+          </p>
+
+          <div style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:6px; font-size:0.8rem; color:var(--text-secondary); margin-bottom:1.5rem; line-height:1.5; border:1px solid var(--border-color); text-align:center;">
+            <strong>${tr('Versión Requerida:', 'Required Version:')}</strong> ${activeGuidelinesVer.version}<br>
+            <a onclick="viewFullGuidelinesText('${activeGuidelinesVer.version}')" style="color:var(--gold-light); font-weight:700; cursor:pointer; text-decoration:underline; font-size:0.85rem; display:inline-block; margin-top:0.5rem;">
+              ${tr('Ver Reglas Completas para Vendedores', 'View Full Seller Guidelines')}
+            </a>
+          </div>
+
+          <div style="display:flex; align-items:flex-start; gap:0.5rem; margin-bottom:2rem; background:rgba(0,0,0,0.1); padding:0.8rem; border-radius:6px;">
+            <input type="checkbox" id="blocker-accept-checkbox" style="width:1.2rem; height:1.2rem; margin-top:0.1rem; cursor:pointer;" onchange="document.getElementById('blocker-accept-btn').disabled = !this.checked">
+            <label for="blocker-accept-checkbox" style="font-size:0.8rem; color:var(--text-primary); cursor:pointer; line-height:1.4;">
+              ${tr('sellerGuidelines.checkbox').replace('Reglas para Vendedores', `<a onclick="viewFullGuidelinesText('${activeGuidelinesVer.version}')" style="color:var(--gold-light); cursor:pointer; text-decoration:underline; font-weight:700;">Reglas para Vendedores</a>`).replace('Seller Guidelines', `<a onclick="viewFullGuidelinesText('${activeGuidelinesVer.version}')" style="color:var(--gold-light); cursor:pointer; text-decoration:underline; font-weight:700;">Seller Guidelines</a>`)}
+            </label>
+          </div>
+
+          <button id="blocker-accept-btn" class="btn-large primary-btn" disabled onclick="submitBlockerGuidelinesAcceptance('${activeGuidelinesVer.version}')">
+            ${tr('sellerGuidelines.acceptButton')}
+          </button>
+        </div>
+      </div>
+    `;
+    lucide.createIcons();
+    return;
+  }
+
   // Active sub-section tab inside dashboard
   if (!window.activeSellerTab) window.activeSellerTab = 'overview';
 
@@ -56,11 +114,13 @@ function renderSellerDashboard() {
   // Render Shell structure
   viewport.innerHTML = `
     <div class="section-container">
-      <div style="margin-bottom: 1.5rem;">
-        <h2 class="section-title">${tr('Panel del Vendedor', 'Seller Dashboard')}</h2>
-        <p style="color:var(--text-secondary); margin-top:0.25rem;">
-          Gestiona tu tienda: <strong>${sellerProf.store_name}</strong> | Plan: <span class="status-tag approved" style="font-weight:700;">${sellerProf.subscription_plan}</span>
-        </p>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom: 1.5rem;">
+        <div>
+          <h2 class="section-title">${tr('Panel del Vendedor', 'Seller Dashboard')}</h2>
+          <p style="color:var(--text-secondary); margin-top:0.25rem;">
+            Gestiona tu tienda: <strong>${sellerProf.store_name}</strong>
+          </p>
+        </div>
       </div>
 
       <div class="dashboard-shell">
@@ -82,13 +142,13 @@ function renderSellerDashboard() {
             <i data-lucide="truck" style="width:1.05rem;height:1.05rem;"></i>
             ${tr('Órdenes Recibidas', 'Orders Received')} (${sellerOrders.length})
           </a>
+          <a class="db-menu-item ${window.activeSellerTab === 'fees' ? 'active' : ''}" onclick="setSellerTab('fees')">
+            <i data-lucide="percent" style="width:1.05rem;height:1.05rem;"></i>
+            ${tr('Comisiones y ganancias', 'Seller Fees & Guidelines')}
+          </a>
           <a class="db-menu-item ${window.activeSellerTab === 'reviews' ? 'active' : ''}" onclick="setSellerTab('reviews')">
             <i data-lucide="star" style="width:1.05rem;height:1.05rem;"></i>
             ${tr('Valoraciones', 'Ratings')} (${sellerReviews.length})
-          </a>
-          <a class="db-menu-item ${window.activeSellerTab === 'subscription' ? 'active' : ''}" onclick="setSellerTab('subscription')">
-            <i data-lucide="credit-card" style="width:1.05rem;height:1.05rem;"></i>
-            ${tr('Mi Suscripción', 'My Subscription')}
           </a>
         </aside>
 
@@ -149,34 +209,47 @@ function renderSellerSubTab(tab, data) {
   }
 
   if (tab === 'overview') {
+    const displayRate = (data.sellerProf.user_id !== 'usr_admin_1') ? (data.sellerProf.commission_rate !== 0.10 ? data.sellerProf.commission_rate * 100 : (db.get('marketplace_settings').commission_general || 5)) : 0;
+    
     container.innerHTML = `
       ${stripeAlertHtml}
       <!-- Stats Cards -->
       <div class="stat-cards-grid">
         <div class="stat-card">
-          <div class="stat-card-title">Ventas Totales Brutas</div>
+          <div class="stat-card-title">${tr('Ventas Totales Brutas', 'Total Gross Sales')}</div>
           <div class="stat-card-value">$${data.totalSales.toFixed(2)}</div>
-          <div class="stat-card-change up">Ingresos totales facturados</div>
+          <div class="stat-card-change up">${tr('Ingresos totales facturados', 'Total invoiced revenue')}</div>
         </div>
         <div class="stat-card">
-          <div class="stat-card-title">Fondos Retenidos (Custodia Stripe)</div>
+          <div class="stat-card-title">${tr('Fondos Retenidos (Custodia Stripe)', 'Held Funds (Stripe Escrow)')}</div>
           <div class="stat-card-value" style="color:#d97706;">$${data.pendingPayouts.toFixed(2)}</div>
-          <div class="stat-card-change" style="color:var(--text-secondary);">Retenido hasta entrega verificada</div>
+          <div class="stat-card-change" style="color:var(--text-secondary);">${tr('Retenido hasta entrega verificada', 'Held until delivery is verified')}</div>
         </div>
         <div class="stat-card">
-          <div class="stat-card-title">Comisiones Cobradas</div>
+          <div class="stat-card-title">${tr('Comisiones Cobradas', 'Commissions Charged')}</div>
           <div class="stat-card-value" style="color:var(--primary-light);">$${data.commissionsPaid.toFixed(2)}</div>
-          <div class="stat-card-change" style="color:var(--text-secondary);">Tasa de comisión activa: ${(data.sellerProf.commission_rate * 100).toFixed(0)}%</div>
+          <div class="stat-card-change" style="color:var(--text-secondary);">${tr('Tasa de comisión activa:', 'Active commission rate:')} ${displayRate.toFixed(0)}%</div>
         </div>
         <div class="stat-card">
-          <div class="stat-card-title">Límite de Productos</div>
+          <div class="stat-card-title">${tr('Productos Publicados', 'Listed Products')}</div>
           <div class="stat-card-value">
-            ${data.sellerProf.subscription_plan === 'Free' ? `${data.sellerProducts.length} / 10` : 
-              data.sellerProf.subscription_plan === 'Pro' ? `${data.sellerProducts.length} / 100` : 
-              'Ilimitado'}
+            ${data.sellerProducts.length}
           </div>
-          <div class="stat-card-change" style="color:var(--text-secondary);">Depende de tu plan de suscripción</div>
+          <div class="stat-card-change" style="color:var(--text-secondary);">${tr('Publicaciones activas en la tienda', 'Active listings in store')}</div>
         </div>
+      </div>
+
+      <!-- Resumen de Comisión -->
+      <div style="background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.2); border-radius:8px; padding:1rem; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div style="flex:1; min-width:280px;">
+          <h4 style="margin:0 0 0.25rem 0; color:var(--text-primary); font-size:0.9rem;">${tr('Estructura de Comisiones del Vendedor', 'Seller Commission Structure')}</h4>
+          <p style="margin:0; font-size:0.8rem; color:var(--text-secondary); line-height:1.4;">
+            ${tr(`Tu comisión actual es de <strong>${displayRate.toFixed(0)}%</strong>. Publicar es gratis. Al completar una venta, se descontará la comisión de Geek Collector y la tarifa real de procesamiento de Stripe.`, `Your current commission is <strong>${displayRate.toFixed(0)}%</strong>. Listing is free. Upon completing a sale, Geek Collector's commission and Stripe's actual processing fee will be deducted.`)}
+          </p>
+        </div>
+        <button class="btn-large primary-btn" style="width:auto; padding:0.5rem 1rem; font-size:0.8rem;" onclick="setSellerTab('fees')">
+          ${tr('Ver comisiones y cómo se calculan mis ganancias', 'View fees & how my earnings are calculated')}
+        </button>
       </div>
 
       <!-- sales history chart -->
@@ -188,18 +261,18 @@ function renderSellerSubTab(tab, data) {
           <table class="db-table">
             <thead>
               <tr>
-                <th>ID Transacción</th>
-                <th>Fecha</th>
-                <th>Bruto</th>
-                <th>Comisión Plataforma</th>
-                <th>Neto Stripe Connect</th>
-                <th>Estado</th>
+                <th>${tr('ID Transacción', 'Transaction ID')}</th>
+                <th>${tr('Fecha', 'Date')}</th>
+                <th>${tr('Bruto', 'Gross')}</th>
+                <th>${tr('Comisión Plataforma', 'Platform Commission')}</th>
+                <th>${tr('Neto Stripe Connect', 'Net Payout')}</th>
+                <th>${tr('Estado', 'Status')}</th>
               </tr>
             </thead>
             <tbody>
               ${db.get('transactions').filter(t => t.seller_id === state.currentUser.id).length === 0 ? `
                 <tr>
-                  <td colspan="6" style="text-align:center; padding:2rem;">No se registran transacciones de pago aún.</td>
+                  <td colspan="6" style="text-align:center; padding:2rem;">${tr('No se registran transacciones de pago aún.', 'No payment transactions recorded yet.')}</td>
                 </tr>
               ` : db.get('transactions').filter(t => t.seller_id === state.currentUser.id).map(t => `
                 <tr>
@@ -435,12 +508,13 @@ function renderSellerSubTab(tab, data) {
                 <th>Monto Payout</th>
                 <th>Estado Envío</th>
                 <th>Tracking / Deadline</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               ${data.sellerOrders.length === 0 ? `
                 <tr>
-                  <td colspan="6" style="text-align:center; padding:3rem;">No has recibido órdenes de compra todavía.</td>
+                  <td colspan="7" style="text-align:center; padding:3rem;">No has recibido órdenes de compra todavía.</td>
                 </tr>
               ` : data.sellerOrders.map(o => {
                 const items = data.orderItems.filter(oi => oi.order_id === o.id);
@@ -485,6 +559,11 @@ function renderSellerSubTab(tab, data) {
                         ${deadlineHtml}
                       `}
                     </td>
+                    <td>
+                      <button class="btn-large primary-btn" style="width:auto; padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="openOrderDetailsModal('${o.id}')">
+                        <i data-lucide="eye" style="width:0.8rem;height:0.8rem;display:inline-block;vertical-align:middle;margin-right:0.2rem;"></i> Detalle
+                      </button>
+                    </td>
                   </tr>
                 `;
               }).join('')}
@@ -519,52 +598,14 @@ function renderSellerSubTab(tab, data) {
         `).join('')}
       </div>
     `;
+  }
+  
+  else if (tab === 'fees') {
+    renderSellerFeesTab(container, data);
   } 
   
-  else if (tab === 'subscription') {
-    container.innerHTML = `
-      <div style="margin-bottom:1.5rem;">
-        <h3>${tr('Administración de Suscripción', 'Subscription Management')}</h3>
-        <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">
-          ${tr('Tu plan de suscripción actual determina tu límite de publicaciones y la tasa de comisión retenida por Geek Collector PR.', 'Your current subscription plan determines your listing limit and the commission rate retained by Geek Collector PR.')}
-        </p>
-      </div>
 
-      <div class="subscription-plans-grid">
-        <div class="sub-plan-card ${data.sellerProf.subscription_plan === 'Free' ? 'active' : ''}">
-          <div class="plan-price">Gratis</div>
-          <h4 style="margin: 0.5rem 0;">Plan Basic Free</h4>
-          <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.4;">Comisión por venta: <strong>12%</strong></p>
-          <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.4;">Límite: Hasta 10 publicaciones de figuras.</p>
-          <button class="btn-large secondary-btn" style="margin-top:1.5rem;" ${data.sellerProf.subscription_plan === 'Free' ? 'disabled' : ''} onclick="updateSellerPlan('Free')">
-            ${data.sellerProf.subscription_plan === 'Free' ? 'Plan Activo' : 'Bajar a Free'}
-          </button>
-        </div>
 
-        <div class="sub-plan-card ${data.sellerProf.subscription_plan === 'Pro' ? 'active' : ''}" style="border-color:var(--border-metallic-yellow);">
-          <div class="plan-price">$9.99<span style="font-size:0.8rem; font-weight:normal;">/mes</span></div>
-          <h4 style="margin: 0.5rem 0; display:flex; align-items:center; gap:0.4rem;">
-            Plan Pro Collector
-          </h4>
-          <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.4;">Comisión por venta: <strong>10%</strong></p>
-          <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.4;">Límite: Hasta 100 publicaciones de figuras.</p>
-          <button class="btn-large primary-btn" style="margin-top:1.5rem;" ${data.sellerProf.subscription_plan === 'Pro' ? 'disabled' : ''} onclick="updateSellerPlan('Pro')">
-            ${data.sellerProf.subscription_plan === 'Pro' ? 'Plan Activo' : 'Mejorar a Pro'}
-          </button>
-        </div>
-
-        <div class="sub-plan-card ${data.sellerProf.subscription_plan === 'Elite' ? 'active' : ''}">
-          <div class="plan-price">$19.99<span style="font-size:0.8rem; font-weight:normal;">/mes</span></div>
-          <h4 style="margin: 0.5rem 0;">Plan Elite Store</h4>
-          <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.4;">Comisión por venta: <strong>8%</strong> (Mínima comisión)</p>
-          <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.4;">Límite: Publicaciones de figuras ilimitadas.</p>
-          <button class="btn-large primary-btn" style="margin-top:1.5rem;" ${data.sellerProf.subscription_plan === 'Elite' ? 'disabled' : ''} onclick="updateSellerPlan('Elite')">
-            ${data.sellerProf.subscription_plan === 'Elite' ? 'Plan Activo' : 'Mejorar a Elite'}
-          </button>
-        </div>
-      </div>
-    `;
-  }
 }
 
 // Open label print mock overlay
@@ -710,43 +751,15 @@ function triggerSimulateDelivery(shipmentId) {
   renderSellerDashboard();
 }
 
-// Plan Upgrade
-function updateSellerPlan(planName) {
-  const profiles = db.get('seller_profiles');
-  const subs = db.get('seller_subscriptions');
-  const sIdx = profiles.findIndex(p => p.user_id === state.currentUser.id);
-  
-  if (sIdx > -1) {
-    let rate = 0.10;
-    let price = 9.99;
-    if (planName === 'Free') { rate = 0.12; price = 0.00; }
-    if (planName === 'Elite') { rate = 0.08; price = 19.99; }
-
-    profiles[sIdx].subscription_plan = planName;
-    profiles[sIdx].commission_rate = rate;
-    db.set('seller_profiles', profiles);
-
-    // Create sub log
-    const newSub = {
-      id: "sub_" + Date.now(),
-      seller_id: state.currentUser.id,
-      plan_name: planName,
-      monthly_price: price,
-      commission_rate: rate,
-      status: "active",
-      start_date: new Date().toISOString(),
-      renewal_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-    };
-    subs.push(newSub);
-    db.set('seller_subscriptions', subs);
-
-    showToast(tr(`¡Tu plan ha sido cambiado exitosamente a ${planName}! La comisión ahora es del ${(rate * 100).toFixed(0)}%.`, `Your plan has been successfully changed to ${planName}! The commission is now ${(rate * 100).toFixed(0)}%.`), 'success');
-    renderSellerDashboard();
-  }
-}
 
 // Open add/edit modal actions
 function openAddProductModal() {
+  verifyGuidelinesAcceptanceFlow(() => {
+    openAddProductModalReal();
+  });
+}
+
+function openAddProductModalReal() {
   const sellerProf = db.get('seller_profiles').find(p => p.user_id === state.currentUser.id);
   if (sellerProf && sellerProf.active_strikes >= 2) {
     showToast(tr("⛔ Tienes 2 o más strikes activos por retrasos en envíos. La creación de nuevos artículos ha sido temporalmente bloqueada.", "⛔ You have 2 or more active strikes for shipping delays. Creating new items has been temporarily blocked."), 'error');
@@ -833,7 +846,8 @@ function openAddProductModal() {
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
           <label>Precio ($USD)</label>
-          <input type="number" id="frm-prod-price" placeholder="49.99">
+          <input type="number" id="frm-prod-price" placeholder="49.99" oninput="updateProfitEstimator('frm-prod-price', 'profit-estimator')">
+          <div id="profit-estimator" style="margin-top:0.4rem; padding:0.5rem; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); border-radius:6px; font-size:0.75rem; color:var(--text-secondary); display:none;"></div>
         </div>
         <div class="checkout-input-wrapper">
           <label>Fotos y Videos (Máx 5)</label>
@@ -869,7 +883,7 @@ function openAddProductModal() {
   renderFormMediaGallery(); // Load empty gallery view initially
 }
 
-function submitAddProduct() {
+async function submitAddProduct() {
   const title = document.getElementById('frm-prod-title').value.trim();
   const brand = document.getElementById('frm-prod-brand').value.trim();
   const category = document.getElementById('frm-prod-category').value;
@@ -891,13 +905,7 @@ function submitAddProduct() {
     return;
   }
 
-  const products = db.get('products');
-  const media = db.get('product_media');
-  
-  const newProdId = "prod_" + Date.now();
-  const newProd = {
-    id: newProdId,
-    seller_id: state.currentUser.id,
+  const productData = {
     title: title,
     description: desc,
     brand: brand,
@@ -905,12 +913,8 @@ function submitAddProduct() {
     condition: condition,
     price: price,
     stock: stock,
-    status: state.currentUser.role === 'admin' ? "approved" : "pending",
     ebay_url: "",
     is_external_ebay: false,
-    created_at: new Date().toISOString(),
-    
-    // Shipping configs
     weight: weight,
     length: length,
     width: width,
@@ -918,44 +922,39 @@ function submitAddProduct() {
     fragile: fragile,
     insurance_required: insurance,
     declared_value: price,
-    shipping_origin_address_id: "addr_seller_1" // Maps to default
+    shipping_origin_address_id: "addr_seller_1"
   };
 
-  products.push(newProd);
-  db.set('products', products);
+  const res = await window.simulatedApiCall('/api/products', 'POST', {
+    productData: productData,
+    mediaData: window.newProductMedia
+  });
 
-  // Save multiple media files
-  if (window.newProductMedia.length === 0) {
-    // Default fallback image
-    media.push({
-      id: "med_" + Date.now(),
-      product_id: newProdId,
-      media_url: 'https://images.unsplash.com/photo-1608889174649-414430997ee6?w=600&auto=format&fit=crop&q=80',
-      media_type: 'image'
-    });
+  if (res.status === 201) {
+    toggleGlobalModal(false);
+    if (state.currentUser.role === 'admin') {
+      showToast(tr("¡Figura publicada con éxito! Al ser el Administrador, se ha auto-aprobado y publicado.", "Figure published successfully! Since you are an Admin, it has been auto-approved and published."), 'success');
+      notifyFollowers(res.data.seller_id, res.data);
+    } else {
+      showToast(tr("¡Figura publicada con éxito! Queda pendiente de aprobación por el Administrador.", "Figure published successfully! It is pending approval by an Administrator."), 'success');
+    }
+    renderSellerDashboard();
+  } else if (res.status === 403 && res.error === 'SELLER_GUIDELINES_ACCEPTANCE_REQUIRED') {
+    showToast(res.message, 'error');
+    toggleGlobalModal(false);
+    setSellerTab('fees');
   } else {
-    window.newProductMedia.forEach((m, idx) => {
-      media.push({
-        id: `med_${Date.now()}_${idx}`,
-        product_id: newProdId,
-        media_url: m.media_url,
-        media_type: m.media_type
-      });
-    });
+    showToast(res.message || tr("Error al publicar el artículo.", "Error listing the item."), 'error');
   }
-  db.set('product_media', media);
-
-  toggleGlobalModal(false);
-  if (state.currentUser.role === 'admin') {
-    showToast(tr("¡Figura publicada con éxito! Al ser el Administrador, se ha auto-aprobado y publicado.", "Figure published successfully! Since you are an Admin, it has been auto-approved and published."), 'success');
-    notifyFollowers(newProd.seller_id, newProd);
-  } else {
-    showToast(tr("¡Figura publicada con éxito! Queda pendiente de aprobación por el Administrador.", "Figure published successfully! It is pending approval by an Administrator."), 'success');
-  }
-  renderSellerDashboard();
 }
 
 function openEditProductModal(prodId) {
+  verifyGuidelinesAcceptanceFlow(() => {
+    openEditProductModalReal(prodId);
+  });
+}
+
+function openEditProductModalReal(prodId) {
   const products = db.get('products');
   const media = db.get('product_media');
   
@@ -1047,7 +1046,8 @@ function openEditProductModal(prodId) {
       <div class="checkout-form-group">
         <div class="checkout-input-wrapper">
           <label>Precio ($USD)</label>
-          <input type="number" id="edit-prod-price" value="${p.price}">
+          <input type="number" id="edit-prod-price" value="${p.price}" oninput="updateProfitEstimator('edit-prod-price', 'edit-profit-estimator')">
+          <div id="edit-profit-estimator" style="margin-top:0.4rem; padding:0.5rem; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); border-radius:6px; font-size:0.75rem; color:var(--text-secondary); display:none;"></div>
         </div>
         <div class="checkout-input-wrapper">
           <label>Fotos y Videos (Máx 5)</label>
@@ -1081,9 +1081,10 @@ function openEditProductModal(prodId) {
   toggleGlobalModal(true, "Editar Figura Coleccionable", formHtml);
   lucide.createIcons();
   renderFormMediaGallery(); // Load media previews inside the gallery
+  updateProfitEstimator('edit-prod-price', 'edit-profit-estimator');
 }
 
-function submitEditProduct(productId) {
+async function submitEditProduct(productId) {
   const title = document.getElementById('edit-prod-title').value.trim();
   const brand = document.getElementById('edit-prod-brand').value.trim();
   const category = document.getElementById('edit-prod-category').value;
@@ -1100,58 +1101,44 @@ function submitEditProduct(productId) {
   const fragile = document.getElementById('edit-prod-fragile').checked;
   const insurance = document.getElementById('edit-prod-insurance').checked;
 
-  const products = db.get('products');
-  const media = db.get('product_media');
-  
-  const pIndex = products.findIndex(p => p.id === productId);
-  if (pIndex > -1) {
-    products[pIndex].title = title;
-    products[pIndex].brand = brand;
-    products[pIndex].category = category;
-    products[pIndex].condition = condition;
-    products[pIndex].stock = stock;
-    products[pIndex].price = price;
-    products[pIndex].description = desc;
-    
-    // Shipping configurations
-    products[pIndex].weight = weight;
-    products[pIndex].length = length;
-    products[pIndex].width = width;
-    products[pIndex].height = height;
-    products[pIndex].fragile = fragile;
-    products[pIndex].insurance_required = insurance;
-    products[pIndex].declared_value = price;
-    
-    products[pIndex].status = "pending"; 
+  if (!title || !brand || !price || !desc) {
+    showToast(tr("Por favor completa los campos principales (Título, Marca, Precio y Descripción).", "Please fill in the main fields (Title, Brand, Price, and Description)."), 'error');
+    return;
+  }
 
-    db.set('products', products);
+  const productData = {
+    id: productId,
+    title: title,
+    description: desc,
+    brand: brand,
+    category: category,
+    condition: condition,
+    price: price,
+    stock: stock,
+    weight: weight,
+    length: length,
+    width: width,
+    height: height,
+    fragile: fragile,
+    insurance_required: insurance,
+    declared_value: price
+  };
 
-    // Filter out old media
-    let updatedMedia = media.filter(m => m.product_id !== productId);
-    
-    // Save updated media list
-    if (window.newProductMedia.length === 0) {
-      updatedMedia.push({
-        id: "med_" + Date.now(),
-        product_id: productId,
-        media_url: 'https://images.unsplash.com/photo-1608889174649-414430997ee6?w=600&auto=format&fit=crop&q=80',
-        media_type: 'image'
-      });
-    } else {
-      window.newProductMedia.forEach((m, idx) => {
-        updatedMedia.push({
-          id: `med_${Date.now()}_${idx}`,
-          product_id: productId,
-          media_url: m.media_url,
-          media_type: m.media_type
-        });
-      });
-    }
-    db.set('product_media', updatedMedia);
+  const res = await window.simulatedApiCall('/api/products', 'POST', {
+    productData: productData,
+    mediaData: window.newProductMedia
+  });
 
+  if (res.status === 200) {
     toggleGlobalModal(false);
     showToast(tr("¡Cambios guardados con éxito! El producto volverá a revisión administrativa antes de salir a la venta.", "Changes saved successfully! The product will go back to admin review before going live."), 'success');
     renderSellerDashboard();
+  } else if (res.status === 403 && res.error === 'SELLER_GUIDELINES_ACCEPTANCE_REQUIRED') {
+    showToast(res.message, 'error');
+    toggleGlobalModal(false);
+    setSellerTab('fees');
+  } else {
+    showToast(res.message || tr("Error al actualizar el artículo.", "Error updating the item."), 'error');
   }
 }
 
@@ -1307,3 +1294,861 @@ function startStripeOnboarding() {
     showToast(tr(`Error de conexión con Stripe: ${err.message}`, `Stripe Connection Error: ${err.message}`), 'error');
   });
 }
+
+function openOrderDetailsModal(orderId) {
+  const orders = db.get('orders');
+  const o = orders.find(ord => ord.id === orderId);
+  if (!o) return;
+
+  const orderItems = db.get('order_items').filter(oi => oi.order_id === orderId);
+  const products = db.get('products');
+  
+  // Calculate or retrieve values in cents (representing as dollar floats for display)
+  const itemsSubtotalVal = o.itemsSubtotal !== undefined ? o.itemsSubtotal / 100 : (o.total_amount - (o.shippingAmount || 0)/100);
+  const shippingAmountVal = o.shippingAmount !== undefined ? o.shippingAmount / 100 : 0.00;
+  const taxAmountVal = o.taxAmount !== undefined ? o.taxAmount / 100 : 0.00;
+  const buyerTotalVal = o.buyerTotal !== undefined ? o.buyerTotal / 100 : o.total_amount;
+  const platformFeePercentageVal = o.platformFeePercentage !== undefined ? o.platformFeePercentage : 5;
+  const platformFeeAmountVal = o.platformFeeAmount !== undefined ? o.platformFeeAmount / 100 : o.platform_fee;
+  const paymentProcessingFeeVal = o.paymentProcessingFee !== undefined ? o.paymentProcessingFee / 100 : (o.processing_fee || (buyerTotalVal * 0.029 + 0.30));
+  const sellerShippingLabelCostVal = o.sellerShippingLabelCost !== undefined ? o.sellerShippingLabelCost / 100 : 0.00;
+  const refundAmountVal = o.refundAmount !== undefined ? o.refundAmount / 100 : 0.00;
+  const sellerNetAmountVal = o.sellerNetAmount !== undefined ? o.sellerNetAmount / 100 : o.seller_payout;
+  const currencyVal = o.currency ? o.currency.toUpperCase() : 'USD';
+  const payoutStatusVal = o.payoutStatus || 'held_in_escrow';
+
+  // Items detail
+  const itemsHtml = orderItems.map(oi => {
+    const p = products.find(prod => prod.id === oi.product_id);
+    const priceStr = o.itemsSubtotal !== undefined ? `$${((p ? p.price : 0)).toFixed(2)}` : `$${(oi.price || 0).toFixed(2)}`;
+    return `
+      <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--text-primary); margin-bottom:0.4rem;">
+        <span>${p ? p.title : 'Figura'} (x${oi.quantity})</span>
+        <span>${priceStr}</span>
+      </div>
+    `;
+  }).join('');
+
+  const estDepositDate = new Date(new Date(o.created_at).getTime() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString();
+
+  const detailsHtml = `
+    <div style="font-family:var(--font-body, sans-serif); color:var(--text-primary); padding: 0.5rem 0;">
+      <div style="border-bottom:1px solid var(--border-color); padding-bottom:1rem; margin-bottom:1rem;">
+        <h4 style="margin:0 0 0.5rem 0; color:var(--text-primary); font-size:0.95rem;">Resumen de Artículos</h4>
+        ${itemsHtml}
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:0.6rem; border-bottom:1px solid var(--border-color); padding-bottom:1rem; margin-bottom:1rem; font-size:0.85rem;">
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-secondary);">Subtotal de productos:</span>
+          <span style="font-weight:600;">$${itemsSubtotalVal.toFixed(2)}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-secondary);">Costo de envío (pagado por comprador):</span>
+          <span>+$${shippingAmountVal.toFixed(2)}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-secondary);">Impuestos cobrados (8% IVA):</span>
+          <span>+$${taxAmountVal.toFixed(2)}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-weight:700; font-size:0.9rem; border-top: 1px dashed var(--border-color); padding-top:0.4rem;">
+          <span>Total pagado por comprador:</span>
+          <span style="color:var(--text-primary);">$${buyerTotalVal.toFixed(2)}</span>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:0.6rem; border-bottom:1px solid var(--border-color); padding-bottom:1rem; margin-bottom:1rem; font-size:0.85rem;">
+        <h4 style="margin:0 0 0.5rem 0; color:var(--text-primary); font-size:0.95rem;">Descuentos y Deducciones del Vendedor</h4>
+        <div style="display:flex; justify-content:space-between; color:#ef4444;">
+          <span>Comisión Geek Collector (${platformFeePercentageVal}%):</span>
+          <span>-$${platformFeeAmountVal.toFixed(2)}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; color:#ef4444;">
+          <span>Procesamiento de Pago (Stripe Connect):</span>
+          <span>-$${paymentProcessingFeeVal.toFixed(2)}</span>
+        </div>
+        ${sellerShippingLabelCostVal > 0 ? `
+          <div style="display:flex; justify-content:space-between; color:#ef4444;">
+            <span>Costo de etiqueta de envío:</span>
+            <span>-$${sellerShippingLabelCostVal.toFixed(2)}</span>
+          </div>
+        ` : ''}
+        ${refundAmountVal > 0 ? `
+          <div style="display:flex; justify-content:space-between; color:#ef4444; font-weight:600;">
+            <span>Monto reembolsado:</span>
+            <span>-$${refundAmountVal.toFixed(2)}</span>
+          </div>
+        ` : ''}
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.9rem; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); padding:0.8rem; border-radius:6px; margin-bottom:1rem;">
+        <div style="display:flex; justify-content:space-between; font-weight:700; color:#10b981;">
+          <span>Ganancia Neta Estimada Vendedor:</span>
+          <span>$${sellerNetAmountVal.toFixed(2)} ${currencyVal}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-secondary); border-top: 1px solid rgba(16,185,129,0.2); padding-top:0.4rem; margin-top:0.2rem;">
+          <span>Estado del Pago: <strong style="text-transform:uppercase; color:var(--text-primary);">${o.payment_status}</strong></span>
+          <span>Estado del Depósito: <strong style="text-transform:uppercase; color:var(--text-primary);">${payoutStatusVal}</strong></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-secondary);">
+          <span>Fecha estimada de depósito:</span>
+          <span><strong>${estDepositDate}</strong></span>
+        </div>
+      </div>
+
+      <div style="text-align:center; margin-top:0.8rem; border-top:1px dashed var(--border-color); padding-top:0.8rem;">
+        <a onclick="toggleGainCalculationDetails()" style="font-size:0.8rem; color:var(--gold-light); cursor:pointer; text-decoration:underline; font-weight:600; display:block;">Ver cómo se calcularon mis ganancias</a>
+        <div id="gain-calc-details" style="display:none; text-align:left; background:rgba(0,0,0,0.2); padding:0.8rem; border-radius:6px; margin-top:0.5rem; font-size:0.75rem; line-height:1.5; color:var(--text-secondary);">
+          <strong>Fórmula de Ganancia Neta:</strong><br>
+          Ganancia Neta = Subtotal Artículos - Comisión de Plataforma - Comisión de Stripe - Envío Vendedor - Reembolsos Vendedor<br><br>
+          <strong>Cálculo Real en Centavos (Base de Datos):</strong><br>
+          - Subtotal Artículos: ${o.itemsSubtotal || 0}¢ ($${itemsSubtotalVal.toFixed(2)})<br>
+          - Comisión Geek Collector (${platformFeePercentageVal}%): -${o.platformFeeAmount || 0}¢ (-$${platformFeeAmountVal.toFixed(2)})<br>
+          - Procesamiento Stripe: -${o.paymentProcessingFee || 0}¢ (-$${paymentProcessingFeeVal.toFixed(2)})<br>
+          ${sellerShippingLabelCostVal > 0 ? `- Envío Vendedor: -${o.sellerShippingLabelCost || 0}¢ (-$${sellerShippingLabelCostVal.toFixed(2)})<br>` : ''}
+          ${refundAmountVal > 0 ? `- Reembolsos: -${o.refundAmount || 0}¢ (-$${refundAmountVal.toFixed(2)})<br>` : ''}
+          --------------------------------------------------<br>
+          <strong>Total Vendedor: ${o.sellerNetAmount || 0}¢ ($${sellerNetAmountVal.toFixed(2)})</strong>
+        </div>
+      </div>
+      
+      <div style="text-align:right;">
+        <button class="btn-large secondary-btn" style="width:auto; padding:0.5rem 1rem;" onclick="toggleGlobalModal(false)">Cerrar</button>
+      </div>
+    </div>
+  `;
+
+  toggleGlobalModal(true, `Detalle de Orden: ${o.id}`, detailsHtml);
+  lucide.createIcons();
+}
+
+function updateProfitEstimator(inputId, estimatorId) {
+  const priceInput = document.getElementById(inputId);
+  const estimator = document.getElementById(estimatorId);
+  if (!priceInput || !estimator) return;
+
+  const price = parseFloat(priceInput.value);
+  if (isNaN(price) || price <= 0) {
+    estimator.style.display = 'none';
+    return;
+  }
+
+  const settings = db.get('marketplace_settings') || { commission_general: 5 };
+  const commPct = settings.commission_general !== undefined ? settings.commission_general : 5;
+  const platformFee = price * (commPct / 100);
+  
+  const stripeFee = (price * 0.029) + 0.30;
+  const netEarnings = price - platformFee - stripeFee;
+
+  estimator.style.display = 'block';
+  estimator.innerHTML = `
+    <div style="font-weight:600; color:var(--text-primary); margin-bottom:0.25rem;">Estimación de Ganancias Vendedor:</div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:0.15rem; font-size:0.75rem;">
+      <span>Comisión Geek Collector (${commPct}%):</span>
+      <span style="color:#ef4444;">-$${platformFee.toFixed(2)}</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:0.15rem; font-size:0.75rem;">
+      <span>Tarifa Stripe (Aprox. 2.9% + 30¢):</span>
+      <span style="color:#ef4444;">-$${stripeFee.toFixed(2)}</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; font-weight:700; color:#10b981; border-top:1px dashed rgba(99,102,241,0.3); padding-top:0.25rem; margin-top:0.25rem; font-size:0.75rem;">
+      <span>Ganancia Neta Estimada:</span>
+      <span>$${Math.max(0, netEarnings).toFixed(2)} USD</span>
+    </div>
+  `;
+}
+
+function renderSellerFeesTab(container, data) {
+  const settings = db.get('marketplace_settings') || { commission_general: 5 };
+  const commPct = settings.commission_general !== undefined ? settings.commission_general : 5;
+  
+  const visualSubtotal = 60.00;
+  const visualPlatformFee = visualSubtotal * (commPct / 100);
+  const visualStripeFee = (visualSubtotal * 0.029) + 0.30;
+  const visualNet = visualSubtotal - visualPlatformFee - visualStripeFee;
+
+  const sellerOrders = db.get('orders').filter(o => o.seller_id === state.currentUser.id);
+  const availableBalance = sellerOrders.reduce((sum, o) => {
+    if (o.order_status === 'delivered' && o.payment_status === 'paid' && o.payoutStatus !== 'paid_out') {
+      return sum + o.seller_payout;
+    }
+    return sum;
+  }, 0);
+
+  const pendingBalance = sellerOrders.reduce((sum, o) => {
+    if (o.order_status !== 'delivered' && o.order_status !== 'cancelled' && o.order_status !== 'refunded') {
+      return sum + o.seller_payout;
+    }
+    return sum;
+  }, 0);
+
+  const nextDepositDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString();
+  const stripeIdStr = data.sellerProf.stripe_connect_id || 'acct_Connected_Simulado';
+  const stripeStatusStr = data.sellerProf.stripe_connect_id ? 'VINCULADO Y ACTIVO' : 'NO VINCULADO';
+
+  // Seller rules acceptance status
+  const guidelinesVersions = db.get('seller_guidelines_versions') || [];
+  const activeGuidelinesVer = guidelinesVersions.find(v => v.status === 'active') || { version: 'seller-policy-v1.0' };
+  
+  const guidelinesAcceptances = db.get('seller_guidelines_acceptances') || [];
+  const myGuidelinesAcc = guidelinesAcceptances.find(a => 
+    a.sellerId === data.sellerProf.id && 
+    a.policyVersion === activeGuidelinesVer.version && 
+    a.acceptanceStatus === 'accepted'
+  );
+
+  let statusCardHtml = '';
+  if (myGuidelinesAcc && !data.sellerProf.requiresGuidelinesReacceptance) {
+    statusCardHtml = `
+      <div style="background:rgba(16,185,129,0.05); border:1px solid #10b981; border-radius:12px; padding:1.5rem; margin-bottom:2rem; font-size:0.85rem; display:flex; flex-direction:column; gap:0.6rem; color:var(--text-primary);">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(16,185,129,0.2); padding-bottom:0.6rem; margin-bottom:0.4rem;">
+          <strong style="color:#10b981; text-transform:uppercase; font-size:0.8rem; font-family:var(--font-heading); display:flex; align-items:center; gap:0.4rem;">
+            <i data-lucide="shield-check" style="width:1.1rem; height:1.1rem;"></i> ${tr('sellerGuidelines.title')}
+          </strong>
+          <span style="background:#10b981; color:#fff; padding:0.25rem 0.6rem; border-radius:20px; font-weight:700; font-size:0.7rem; text-transform:uppercase;">${tr('Aceptado', 'Accepted')}</span>
+        </div>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; margin-bottom:0.4rem;">
+          <div>
+            <span style="color:var(--text-secondary); display:block; font-size:0.75rem;">${tr('Versión Aceptada', 'Accepted version')}</span>
+            <strong>${myGuidelinesAcc.policyVersion}</strong>
+          </div>
+          <div>
+            <span style="color:var(--text-secondary); display:block; font-size:0.75rem;">${tr('Fecha de Aceptación', 'Acceptance date')}</span>
+            <strong>${new Date(myGuidelinesAcc.acceptedAt).toLocaleString()}</strong>
+          </div>
+          <div>
+            <span style="color:var(--text-secondary); display:block; font-size:0.75rem;">${tr('Idioma de Aceptación', 'Acceptance language')}</span>
+            <strong>${myGuidelinesAcc.policyLanguage ? myGuidelinesAcc.policyLanguage.toUpperCase() : 'ES'}</strong>
+          </div>
+          <div>
+            <span style="color:var(--text-secondary); display:block; font-size:0.75rem;">${tr('Comisión Aceptada', 'Accepted commission rate')}</span>
+            <strong>${myGuidelinesAcc.platformFeePercentage}%</strong>
+          </div>
+        </div>
+
+        <div style="text-align:right;">
+          <button class="btn-large secondary-btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem; border-color:#10b981;" onclick="viewFullGuidelinesText('${myGuidelinesAcc.policyVersion}')">
+            ${tr('sellerGuidelines.viewFullPolicy')}
+          </button>
+        </div>
+      </div>
+    `;
+  } else {
+    const errorMsg = data.sellerProf.requiresGuidelinesReacceptance
+      ? tr(
+          "sellerGuidelines.newVersionNotice",
+          "We updated the Seller Guidelines. You must review and accept the new version before listing additional items."
+        )
+      : tr(
+          "sellerGuidelines.requiredMessage",
+          "You must read and accept the Seller Guidelines before listing an item."
+        );
+    statusCardHtml = `
+      <div style="background:rgba(239,68,68,0.05); border:1px solid #ef4444; border-radius:12px; padding:1.5rem; margin-bottom:2rem; font-size:0.85rem; display:flex; flex-direction:column; gap:0.6rem; color:var(--text-primary);">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(239,68,68,0.2); padding-bottom:0.6rem; margin-bottom:0.4rem;">
+          <strong style="color:#ef4444; text-transform:uppercase; font-size:0.8rem; font-family:var(--font-heading); display:flex; align-items:center; gap:0.4rem;">
+            <i data-lucide="shield-alert" style="width:1.1rem; height:1.1rem;"></i> ${tr('sellerGuidelines.title')}
+          </strong>
+          <span style="background:#ef4444; color:#fff; padding:0.25rem 0.6rem; border-radius:20px; font-weight:700; font-size:0.7rem; text-transform:uppercase;">${tr('Falta Aceptar', 'Acceptance required')}</span>
+        </div>
+        
+        <p style="margin:0; font-weight:600; font-size:0.85rem; line-height:1.5; color:var(--text-primary);">
+          ${errorMsg}
+        </p>
+
+        <div style="text-align:right; margin-top:0.4rem;">
+          <button class="btn-large primary-btn" style="width:auto; padding:0.5rem 1.2rem; font-size:0.8rem;" onclick="verifyGuidelinesAcceptanceFlow(() => { renderSellerDashboard(); })">
+            ${tr('sellerGuidelines.acceptButton')}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = `
+    <div style="font-family:var(--font-body, sans-serif);">
+      <div style="margin-bottom:1.5rem;">
+        <h3>Comisiones y ganancias para vendedores</h3>
+        <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">
+          Conoce detalladamente la estructura de cobros, procesadores de pago y políticas de depósitos de Geek Collector.
+        </p>
+      </div>
+
+      ${statusCardHtml}
+
+      <!-- Tarjeta Destacada -->
+      <div style="background:linear-gradient(135deg, rgba(99,102,241,0.1), rgba(16,185,129,0.05)); border:1.5px solid var(--border-metallic-yellow); border-radius:12px; padding:1.5rem; margin-bottom:2rem; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+          <h4 style="margin:0; font-size:1.1rem; color:var(--text-primary); font-family:var(--font-heading);">Comisión Actual de Geek Collector: <span style="color:var(--gold-light); font-size:1.3rem; font-weight:700;">${commPct}%</span></h4>
+          <span style="background:var(--gold-light); color:#000000; font-weight:700; font-size:0.7rem; padding:0.25rem 0.6rem; border-radius:10px; text-transform:uppercase;">Transparencia Garantizada</span>
+        </div>
+        <p style="margin:0 0 1rem 0; font-size:0.9rem; color:var(--text-primary); line-height:1.6;">
+          “Publicar artículos en Geek Collector es gratis. Cuando completas una venta, Geek Collector descuenta una comisión del <strong>${commPct}%</strong> sobre el subtotal de los artículos vendidos. También se descuenta la tarifa real de procesamiento de pago cobrada por Stripe.”
+        </p>
+        <div style="background:rgba(255,255,255,0.04); border-radius:6px; padding:0.8rem; border-left:4px solid #10b981; font-size:0.8rem; color:var(--text-secondary); font-style:italic;">
+          “El comprador no paga la comisión de Geek Collector. El comprador solamente paga el precio de los artículos, el envío y los impuestos aplicables.”
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem; align-items:start; flex-wrap:wrap;">
+        <!-- Base de Cálculo -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:1.2rem; min-height:220px;">
+          <h4 style="margin-top:0; color:var(--text-primary); font-size:0.95rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem;">
+            <i data-lucide="calculator" style="width:1rem;height:1rem;color:#818cf8;"></i> Sobre Qué se Calcula la Comisión
+          </h4>
+          <p style="font-size:0.8rem; color:var(--text-secondary); line-height:1.5; margin-bottom:1rem;">
+            Por defecto, el 5% se calcula únicamente sobre el subtotal de los productos vendidos.
+          </p>
+          <div style="font-size:0.85rem; color:var(--text-primary); display:flex; flex-direction:column; gap:0.4rem; background:rgba(0,0,0,0.1); padding:0.6rem; border-radius:6px;">
+            <div style="display:flex; justify-content:space-between;">
+              <span>Subtotal de artículos de ejemplo:</span>
+              <span>$${visualSubtotal.toFixed(2)}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-weight:700; color:#ef4444;">
+              <span>Comisión Geek Collector (${commPct}%):</span>
+              <span>-$${visualPlatformFee.toFixed(2)}</span>
+            </div>
+          </div>
+          <div style="margin-top:0.8rem; font-size:0.75rem; color:var(--text-muted);">
+            <strong>No se calcula comisión sobre:</strong> Impuestos, Costo de envío, Propinas, Créditos promocionales, ni Cantidades reembolsadas.<br>
+            <span style="font-style:italic; margin-top:0.25rem; display:block; color:#818cf8;">Esta regla refleja la configuración activa del administrador y se actualiza automáticamente.</span>
+          </div>
+        </div>
+
+        <!-- Stripe Fees -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:1.2rem; min-height:220px;">
+          <h4 style="margin-top:0; color:var(--text-primary); font-size:0.95rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem;">
+            <i data-lucide="credit-card" style="width:1rem;height:1rem;color:#10b981;"></i> Tarifa de Procesamiento de Pago (Stripe)
+          </h4>
+          <p style="font-size:0.8rem; color:var(--text-secondary); line-height:1.5; margin-bottom:1rem;">
+            “Stripe procesa los pagos realizados en Geek Collector. La tarifa de procesamiento de pago se descuenta de las ganancias del vendedor y puede variar según el método de pago, país, tipo de tarjeta o configuración de la cuenta.”
+          </p>
+          <div style="background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.2); border-radius:6px; padding:0.6rem; font-size:0.8rem;">
+            <strong>Tarifa de Stripe Configurada:</strong> 2.9% + $0.30 por transacción (Estimado)
+          </div>
+          <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.8rem; line-height:1.4;">
+            <strong>Aclaración:</strong> “La tarifa final será la cantidad real confirmada por Stripe. Geek Collector no presenta una tarifa estimada como si fuera una cantidad garantizada.”
+          </p>
+        </div>
+      </div>
+
+      <!-- Ejemplo Completo de Venta -->
+      <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:1.5rem; margin-bottom:2rem;">
+        <h4 style="margin-top:0; color:var(--text-primary); font-size:0.95rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem;">
+          <i data-lucide="receipt" style="width:1rem;height:1rem;color:var(--gold-light);"></i> Ejemplo Completo de Liquidación de Fondos
+        </h4>
+        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:1rem;">
+          Desglose matemático de una venta de una figura coleccionable de $60.00:
+        </p>
+        
+        <div style="max-width:500px; font-size:0.85rem; display:flex; flex-direction:column; gap:0.6rem; margin-bottom:1rem;">
+          <div style="display:flex; justify-content:space-between;">
+            <span>Subtotal de los artículos:</span>
+            <span>$${visualSubtotal.toFixed(2)}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; color:#ef4444;">
+            <span>Comisión Geek Collector (${commPct}%):</span>
+            <span>-$${visualPlatformFee.toFixed(2)}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; color:#ef4444;">
+            <span>Procesamiento estimado de Stripe:</span>
+            <span>-$${visualStripeFee.toFixed(2)}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-weight:700; color:#10b981; border-top:1px dashed var(--border-color); padding-top:0.4rem;">
+            <span>Ganancia estimada del vendedor:</span>
+            <span>$${visualNet.toFixed(2)} USD</span>
+          </div>
+        </div>
+
+        <span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">
+          “Este ejemplo no incluye el costo de una etiqueta de envío, reembolsos, disputas, impuestos retenidos u otros ajustes que puedan aplicar.”
+        </span>
+      </div>
+
+      <!-- Calculadora Interactiva -->
+      <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:1.5rem; margin-bottom:2rem;">
+        <h4 style="margin-top:0; color:var(--text-primary); font-size:0.95rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem;">
+          <i data-lucide="percent" style="width:1rem;height:1rem;color:#6366f1;"></i> Calculadora Interactiva de Ganancias
+        </h4>
+        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:1.2rem;">
+          Introduce los datos de tu próxima publicación para estimar tus ingresos netos en tiempo real:
+        </p>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; flex-wrap:wrap;">
+          <!-- Inputs -->
+          <div style="display:flex; flex-direction:column; gap:0.8rem;">
+            <div style="display:flex; flex-direction:column; gap:0.25rem;">
+              <label for="calc-price" style="font-size:0.75rem; color:var(--text-primary); font-weight:600;">Precio del artículo ($USD):</label>
+              <input type="number" id="calc-price" value="60" min="0" step="0.01" style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.5rem; color:#000000; outline:none;" oninput="runInteractiveCalculator()">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.25rem;">
+              <label for="calc-qty" style="font-size:0.75rem; color:var(--text-primary); font-weight:600;">Cantidad:</label>
+              <input type="number" id="calc-qty" value="1" min="1" style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.5rem; color:#000000; outline:none;" oninput="runInteractiveCalculator()">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.25rem;">
+              <label for="calc-discount" style="font-size:0.75rem; color:var(--text-primary); font-weight:600;">Descuento aplicado ($USD):</label>
+              <input type="number" id="calc-discount" value="0" min="0" step="0.01" style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.5rem; color:#000000; outline:none;" oninput="runInteractiveCalculator()">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.25rem;">
+              <label for="calc-shipping" style="font-size:0.75rem; color:var(--text-primary); font-weight:600;">Costo de envío asumido por vendedor ($USD):</label>
+              <input type="number" id="calc-shipping" value="0" min="0" step="0.01" style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.5rem; color:#000000; outline:none;" oninput="runInteractiveCalculator()">
+              <span style="font-size:0.65rem; color:var(--text-muted);">Completa este campo solo si ofreces envío gratuito o cubres la etiqueta.</span>
+            </div>
+          </div>
+
+          <!-- Outputs -->
+          <div style="background:rgba(99,102,241,0.04); border:1px solid rgba(99,102,241,0.15); border-radius:6px; padding:1rem; display:flex; flex-direction:column; gap:0.6rem; justify-content:center;">
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+              <span style="color:var(--text-secondary);">Subtotal de la venta:</span>
+              <strong id="out-calc-subtotal">$60.00</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#ef4444;">
+              <span>Comisión de Geek Collector (${commPct}%):</span>
+              <strong id="out-calc-fee">-$3.00</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#ef4444;">
+              <span>Procesamiento estimado Stripe:</span>
+              <strong id="out-calc-stripe">-$2.04</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#ef4444;">
+              <span>Costo de envío asumido:</span>
+              <strong id="out-calc-shipping">-$0.00</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.95rem; color:#10b981; font-weight:700; border-top:1px solid rgba(99,102,241,0.2); padding-top:0.5rem; margin-top:0.3rem;">
+              <span>Ganancia neta estimada:</span>
+              <span id="out-calc-net">$54.96</span>
+            </div>
+            <p style="font-size:0.7rem; color:var(--text-muted); margin:0.3rem 0 0 0; line-height:1.3; font-style:italic;">
+              “Esta es una estimación. La ganancia final puede variar según la tarifa real de Stripe, reembolsos, ajustes, envío e impuestos aplicables.”
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem; flex-wrap:wrap; align-items:start;">
+        <!-- Deducciones Posibles -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:1.2rem; min-height:270px;">
+          <h4 style="margin-top:0; color:var(--text-primary); font-size:0.95rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+            Posibles deducciones de tus ganancias
+          </h4>
+          <ul style="font-size:0.8rem; color:var(--text-secondary); line-height:1.6; margin:0; padding-left:1.2rem;">
+            <li><strong>Comisión de Geek Collector:</strong> El fee transaccional general sobre el subtotal.</li>
+            <li><strong>Tarifa de procesamiento de Stripe:</strong> El cobro por el proceso de fondos a tu cuenta conectada.</li>
+            <li><strong>Costo de etiqueta de envío:</strong> Cuando el vendedor ofrece envío gratuito o acepta cubrir la etiqueta.</li>
+            <li><strong>Reembolsos totales o parciales:</strong> Devoluciones acordadas con el cliente.</li>
+            <li><strong>Contracargos o disputas:</strong> Fondos retenidos por cargos no reconocidos o fraudes de compradores.</li>
+            <li><strong>Ajustes del administrador:</strong> Penalizaciones o correcciones aplicadas por auditoría.</li>
+            <li><strong>Impuestos o retenciones:</strong> En caso de que legalmente aplique retención fiscal.</li>
+          </ul>
+          <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.8rem; font-style:italic;">
+            * Nota: Estos cargos no son automáticos en todas las compras; se aplican exclusivamente según corresponda en cada orden de venta.
+          </div>
+        </div>
+
+        <!-- Publicar es Gratis -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:1.2rem; min-height:270px;">
+          <h4 style="margin-top:0; color:var(--text-primary); font-size:0.95rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+            Políticas Generales: Publicar es Gratis
+          </h4>
+          <ul style="font-size:0.8rem; color:var(--text-secondary); line-height:1.6; margin:0; padding-left:1.2rem;">
+            <li>No existe costo por crear una cuenta de vendedor en Geek Collector.</li>
+            <li>No existe costo por publicar artículos o listados de figuras en el catálogo.</li>
+            <li>No existe costo mensual obligatorio para mantener tu tienda en funcionamiento.</li>
+            <li>La comisión solo se descuenta cuando se completa una venta pagada.</li>
+            <li>Los planes especiales o promociones futuras se mostrarán por separado y nunca se activarán sin tu consentimiento.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Envíos y Reembolsos -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem; flex-wrap:wrap; align-items:start;">
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:1.2rem; min-height:240px;">
+          <h4 style="margin-top:0; color:var(--text-primary); font-size:0.95rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+            Envíos y Etiquetas
+          </h4>
+          <p style="font-size:0.8rem; color:var(--text-secondary); line-height:1.5; margin-bottom:0.8rem;">
+            “El comprador puede pagar el costo de envío durante el checkout. Si el vendedor ofrece envío gratis, el costo de la etiqueta se descontará de las ganancias del vendedor.”
+          </p>
+          <div style="font-size:0.75rem; background:rgba(0,0,0,0.1); padding:0.6rem; border-radius:6px; color:var(--text-secondary); line-height:1.5;">
+            <strong>Compra de Etiquetas (Shippo):</strong><br>
+            Al generar una etiqueta, se especificará el transportista (USPS, FedEx, UPS), servicio seleccionado, costo de etiqueta, quién asume la cantidad y el número de rastreo que se enviará al comprador.
+          </div>
+        </div>
+
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:1.2rem; min-height:240px;">
+          <h4 style="margin-top:0; color:var(--text-primary); font-size:0.95rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+            Reembolsos y cancelaciones
+          </h4>
+          <ul style="font-size:0.8rem; color:var(--text-secondary); line-height:1.5; margin:0; padding-left:1.2rem;">
+            <li>Si se cancela la orden antes del envío, se actualizará el balance de la tienda.</li>
+            <li>En reembolsos totales, las ganancias de la venta se retiran de tu balance.</li>
+            <li>En reembolsos parciales, la comisión de Geek Collector se recalcula proporcionalmente.</li>
+            <li>Las tarifas de procesamiento de Stripe podrían no ser reembolsables según las políticas de Stripe.</li>
+            <li>Tendrás acceso al desglose completo de cada ajuste en tu historial.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Disputas y Depósitos -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem; flex-wrap:wrap; align-items:start;">
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:1.2rem; min-height:250px;">
+          <h4 style="margin-top:0; color:var(--text-primary); font-size:0.95rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+            Disputas de pago
+          </h4>
+          <p style="font-size:0.8rem; color:var(--text-secondary); line-height:1.5; margin-bottom:0.8rem;">
+            “Cuando un comprador presenta una disputa o contracargo, Geek Collector puede retener temporalmente los fondos relacionados con la orden mientras se investiga el caso.”
+          </p>
+          <div style="font-size:0.75rem; color:var(--text-secondary);">
+            <strong>Evidencias requeridas en disputas:</strong>
+            <ul style="margin:0.25rem 0 0 0; padding-left:1rem; line-height:1.4;">
+              <li>Número de rastreo y comprobante de envío.</li>
+              <li>Confirmación de entrega y fotos del empaque.</li>
+              <li>Fotos originales del artículo y estado del producto.</li>
+              <li>Mensajes intercambiados en el chat con el comprador.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:1.2rem; min-height:250px;">
+          <h4 style="margin-top:0; color:var(--text-primary); font-size:0.95rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+            Pagos y depósitos
+          </h4>
+          
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.8rem; font-size:0.8rem;">
+            <div style="background:rgba(255,255,255,0.03); padding:0.4rem; border-radius:4px;">
+              <span style="font-size:0.7rem; color:var(--text-muted);">Balance Pendiente:</span><br>
+              <strong>$${pendingBalance.toFixed(2)}</strong>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); padding:0.4rem; border-radius:4px;">
+              <span style="font-size:0.7rem; color:var(--text-muted);">Balance Disponible:</span><br>
+              <strong>$${availableBalance.toFixed(2)}</strong>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); padding:0.4rem; border-radius:4px;">
+              <span style="font-size:0.7rem; color:var(--text-muted);">Próximo Depósito:</span><br>
+              <strong>$${availableBalance > 0 ? availableBalance.toFixed(2) : '0.00'}</strong>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); padding:0.4rem; border-radius:4px;">
+              <span style="font-size:0.7rem; color:var(--text-muted);">Cuenta Conectada:</span><br>
+              <strong style="font-size:0.65rem; word-break:break-all;">${stripeIdStr}</strong>
+            </div>
+          </div>
+
+          <p style="font-size:0.75rem; color:var(--text-secondary); line-height:1.4; margin:0 0 0.5rem 0;">
+            “Las ganancias no necesariamente estarán disponibles inmediatamente después de la compra. El tiempo de disponibilidad puede depender de la confirmación del pago, el envío, posibles periodos de retención, disputas y el calendario de depósitos de Stripe.”
+          </p>
+          <div style="font-size:0.7rem; color:var(--text-muted);">
+            Estado de Stripe Connect: <strong>${stripeStatusStr}</strong> | Próximo pago: <strong>${nextDepositDate}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preguntas Frecuentes -->
+      <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:1.5rem; margin-bottom:2rem;">
+        <h4 style="margin-top:0; color:var(--text-primary); font-size:0.95rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+          Preguntas Frecuentes
+        </h4>
+        <div style="display:flex; flex-direction:column; gap:1rem; margin-top:1rem; font-size:0.8rem; line-height:1.5;">
+          <div>
+            <strong style="color:var(--text-primary);">¿Cuánto cuesta publicar un artículo?</strong>
+            <p style="margin:0.2rem 0 0 0; color:var(--text-secondary);">Publicar es gratis. La comisión se cobra solamente cuando se completa una venta.</p>
+          </div>
+          <div>
+            <strong style="color:var(--text-primary);">¿Cuánto cobra Geek Collector?</strong>
+            <p style="margin:0.2rem 0 0 0; color:var(--text-secondary);">La comisión predeterminada es del ${commPct}% sobre el subtotal de los artículos vendidos.</p>
+          </div>
+          <div>
+            <strong style="color:var(--text-primary);">¿La comisión se cobra sobre el envío?</strong>
+            <p style="margin:0.2rem 0 0 0; color:var(--text-secondary);">No, salvo que la configuración del marketplace cambie por el administrador y seas notificado previamente.</p>
+          </div>
+          <div>
+            <strong style="color:var(--text-primary);">¿El comprador paga la comisión?</strong>
+            <p style="margin:0.2rem 0 0 0; color:var(--text-secondary);">No. La comisión se descuenta de las ganancias del vendedor.</p>
+          </div>
+          <div>
+            <strong style="color:var(--text-primary);">¿Stripe cobra una tarifa adicional?</strong>
+            <p style="margin:0.2rem 0 0 0; color:var(--text-secondary);">Sí. La tarifa real de procesamiento de Stripe se descuenta de la transacción.</p>
+          </div>
+          <div>
+            <strong style="color:var(--text-primary);">¿Cuándo recibo mi pago?</strong>
+            <p style="margin:0.2rem 0 0 0; color:var(--text-secondary);">Depende del estado de la orden, posibles retenciones y el calendario de depósitos de Stripe.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enlace Historial -->
+      <div style="text-align:right;">
+        <a onclick="openPolicyHistoryModal()" style="font-size:0.85rem; color:var(--gold-light); cursor:pointer; font-weight:700; text-decoration:underline;">Ver historial de comisiones</a>
+      </div>
+    </div>
+  `;
+
+  lucide.createIcons();
+}
+
+function runInteractiveCalculator() {
+  const priceInput = document.getElementById('calc-price');
+  const qtyInput = document.getElementById('calc-qty');
+  const discountInput = document.getElementById('calc-discount');
+  const shippingInput = document.getElementById('calc-shipping');
+
+  const outSubtotal = document.getElementById('out-calc-subtotal');
+  const outFee = document.getElementById('out-calc-fee');
+  const outStripe = document.getElementById('out-calc-stripe');
+  const outShipping = document.getElementById('out-calc-shipping');
+  const outNet = document.getElementById('out-calc-net');
+
+  if (!priceInput || !outSubtotal) return;
+
+  const price = parseFloat(priceInput.value) || 0;
+  const qty = parseInt(qtyInput.value) || 1;
+  const discount = parseFloat(discountInput.value) || 0;
+  const shipping = parseFloat(shippingInput.value) || 0;
+
+  const subtotal = Math.max(0, price * qty - discount);
+
+  const settings = db.get('marketplace_settings') || { commission_general: 5 };
+  const commPct = settings.commission_general !== undefined ? settings.commission_general : 5;
+  const platformFee = subtotal * (commPct / 100);
+
+  const stripeFee = subtotal > 0 ? (subtotal * 0.029) + 0.30 : 0;
+  const netEarnings = Math.max(0, subtotal - platformFee - stripeFee - shipping);
+
+  outSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+  outFee.textContent = `-$${platformFee.toFixed(2)}`;
+  outStripe.textContent = `-$${stripeFee.toFixed(2)}`;
+  outShipping.textContent = `-$${shipping.toFixed(2)}`;
+  outNet.textContent = `$${netEarnings.toFixed(2)} USD`;
+}
+
+function openPolicyHistoryModal() {
+  const history = db.get('commission_policy_history') || [];
+  const acceptances = db.get('seller_policy_acceptances') || [];
+  
+  const historyRowsHtml = history.map(h => {
+    const acc = acceptances.find(a => a.sellerId === state.currentUser.id && a.feePolicyVersion === h.version);
+    const acceptDateStr = acc ? new Date(acc.acceptedAt).toLocaleString() : 'PENDIENTE';
+    return `
+      <tr>
+        <td><strong>${h.version}</strong></td>
+        <td>${h.commission_percentage}%</td>
+        <td>${new Date(h.published_at).toLocaleDateString()}</td>
+        <td>${h.status === 'active' ? '<span class="status-tag approved">Vigente</span>' : '<span class="status-tag suspended">Anterior</span>'}</td>
+        <td style="color:${acc ? '#10b981' : '#f59e0b'}; font-weight:600;">${acceptDateStr}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const modalHtml = `
+    <div style="font-family:var(--font-body, sans-serif); color:var(--text-primary);">
+      <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">
+        Historial de versiones y aceptación de políticas de comisiones de Geek Collector para tu cuenta de vendedor.
+      </p>
+      
+      <div class="db-table-card" style="margin-bottom:1.5rem;">
+        <div class="db-table-wrapper">
+          <table class="db-table">
+            <thead>
+              <tr>
+                <th>Versión</th>
+                <th>Comisión</th>
+                <th>Publicación</th>
+                <th>Estado</th>
+                <th>Aceptado el</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${historyRowsHtml}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div style="text-align:right;">
+        <button class="btn-large secondary-btn" style="width:auto; padding:0.5rem 1rem;" onclick="toggleGlobalModal(false)">Cerrar</button>
+      </div>
+    </div>
+  `;
+
+  toggleGlobalModal(true, "Historial de Políticas de Comisiones", modalHtml);
+}
+
+async function submitBlockerGuidelinesAcceptance(version) {
+  const checkbox = document.getElementById('blocker-accept-checkbox');
+  if (!checkbox || !checkbox.checked) {
+    showToast(tr("Debes marcar el encasillado para aceptar las directrices.", "You must check the box to agree to the guidelines."), 'error');
+    return;
+  }
+
+  const lang = localStorage.getItem('cm_language') || 'es';
+  const res = await window.simulatedApiCall('/api/seller/accept-guidelines', 'POST', {
+    policyVersion: version,
+    policyLanguage: lang,
+    source: 'dashboard_blocker'
+  });
+
+  if (res.status === 200) {
+    showToast(tr("¡Reglas para vendedores aceptadas con éxito!", "Seller guidelines accepted successfully!"), 'success');
+    renderSellerDashboard();
+  } else {
+    showToast(res.message || tr("Error al aceptar las reglas.", "Error accepting guidelines."), 'error');
+  }
+}
+
+function toggleGainCalculationDetails() {
+  const container = document.getElementById('gain-calc-details');
+  if (container) {
+    container.style.display = container.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+function verifyGuidelinesAcceptanceFlow(onSuccessCallback) {
+  const currentUser = state.currentUser;
+  if (!currentUser) {
+    showToast(tr("Debes iniciar sesión para publicar.", "You must log in to list an item."), 'error');
+    return;
+  }
+
+  const profiles = db.get('seller_profiles');
+  const sellerProf = profiles.find(p => p.user_id === currentUser.id);
+  if (!sellerProf) {
+    showToast(tr("No tienes un perfil de vendedor activo.", "You do not have an active seller profile."), 'error');
+    return;
+  }
+
+  if (sellerProf.status === 'suspended' || sellerProf.suspended || sellerProf.publishing_suspended) {
+    showToast(tr("Tu cuenta o capacidad de publicación está suspendida por el administrador.", "Your seller account or publishing privileges are suspended by the administrator."), 'error');
+    return;
+  }
+
+  const versions = db.get('seller_guidelines_versions') || [];
+  const activeVer = versions.find(v => v.status === 'active');
+  if (!activeVer) {
+    onSuccessCallback();
+    return;
+  }
+
+  const acceptances = db.get('seller_guidelines_acceptances') || [];
+  const hasAccepted = acceptances.some(a => 
+    a.sellerId === sellerProf.id && 
+    a.policyVersion === activeVer.version && 
+    a.acceptanceStatus === 'accepted'
+  );
+
+  if (hasAccepted && !sellerProf.requiresGuidelinesReacceptance) {
+    onSuccessCallback();
+    return;
+  }
+
+  openGuidelinesModal(activeVer, sellerProf, onSuccessCallback);
+}
+
+function openGuidelinesModal(activeVer, sellerProf, onSuccessCallback) {
+  const title = tr("Antes de publicar tu primer artículo", "Before listing your first item");
+  const description = tr(
+    "Para vender en Geek Collector, debes revisar y aceptar nuestras reglas para vendedores, estructura de comisiones y políticas de pagos.",
+    "To sell on Geek Collector, you must review and accept our Seller Guidelines, fee structure, and payout policies."
+  );
+
+  const lang = localStorage.getItem('cm_language') || 'es';
+  const checkboxText = tr("sellerGuidelines.checkbox");
+  const acceptButtonText = tr("sellerGuidelines.acceptButton");
+
+  const settings = db.get('marketplace_settings') || { commission_general: 5 };
+  const commPct = settings.commission_general;
+  
+  const content = `
+    <div style="font-family:var(--font-body, sans-serif); display:flex; flex-direction:column; gap:1.2rem; color:var(--text-primary);">
+      <p style="font-size:0.9rem; color:var(--text-secondary); line-height:1.5; margin:0;">
+        ${description}
+      </p>
+
+      <div style="background:rgba(255,255,255,0.04); border:1px solid var(--border-color); border-radius:8px; padding:1rem; display:flex; flex-direction:column; gap:0.5rem; font-size:0.8rem;">
+        <div><strong>${tr('Comisión Actual Geek Collector:', 'Current Geek Collector Commission:')}</strong> ${commPct}%</div>
+        <div><strong>${tr('Versión de Políticas:', 'Policy Version:')}</strong> ${activeVer.version}</div>
+        <div><strong>${tr('Fecha de Entrada en Vigor:', 'Effective Date:')}</strong> ${new Date(activeVer.effective_date).toLocaleDateString()}</div>
+      </div>
+
+      <div>
+        <a onclick="viewFullGuidelinesText('${activeVer.version}')" style="color:var(--gold-light); font-weight:700; cursor:pointer; text-decoration:underline; font-size:0.85rem;">
+          ${tr('Ver Reglas Completas para Vendedores', 'View Full Seller Guidelines')}
+        </a>
+      </div>
+
+      <div style="display:flex; align-items:flex-start; gap:0.5rem; background:rgba(0,0,0,0.1); padding:0.8rem; border-radius:6px;">
+        <input type="checkbox" id="modal-guidelines-accept-chk" style="width:1.2rem; height:1.2rem; margin-top:0.1rem; cursor:pointer;" onchange="document.getElementById('modal-guidelines-accept-btn').disabled = !this.checked">
+        <label for="modal-guidelines-accept-chk" style="font-size:0.8rem; color:var(--text-primary); cursor:pointer; line-height:1.4;">
+          ${checkboxText.replace('Reglas para Vendedores', `<a onclick="viewFullGuidelinesText('${activeVer.version}')" style="color:var(--gold-light); cursor:pointer; text-decoration:underline; font-weight:700;">Reglas para Vendedores</a>`).replace('Seller Guidelines', `<a onclick="viewFullGuidelinesText('${activeVer.version}')" style="color:var(--gold-light); cursor:pointer; text-decoration:underline; font-weight:700;">Seller Guidelines</a>`)}
+        </label>
+      </div>
+
+      <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:0.5rem;">
+        <button class="btn-large secondary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="toggleGlobalModal(false)">
+          ${tr('Cancelar', 'Cancel')}
+        </button>
+        <button id="modal-guidelines-accept-btn" class="btn-large primary-btn" style="width:auto; padding:0.5rem 1.2rem;" disabled>
+          ${acceptButtonText}
+        </button>
+      </div>
+    </div>
+  `;
+
+  toggleGlobalModal(true, title, content);
+  
+  const btn = document.getElementById('modal-guidelines-accept-btn');
+  if (btn) {
+    btn.onclick = async () => {
+      const res = await window.simulatedApiCall('/api/seller/accept-guidelines', 'POST', {
+        policyVersion: activeVer.version,
+        policyLanguage: lang,
+        source: 'listing_creation'
+      });
+      
+      if (res.status === 200) {
+        showToast(tr("¡Reglas para vendedores aceptadas con éxito!", "Seller guidelines accepted successfully!"), 'success');
+        toggleGlobalModal(false);
+        onSuccessCallback();
+      } else {
+        showToast(res.message || tr("Error al aceptar las reglas.", "Error accepting guidelines."), 'error');
+      }
+    };
+  }
+}
+
+function viewFullGuidelinesText(version) {
+  const versions = db.get('seller_guidelines_versions') || [];
+  const ver = versions.find(v => v.version === version);
+  if (!ver) return;
+
+  const lang = localStorage.getItem('cm_language') || 'es';
+  const title = lang === 'en' ? ver.title_en : ver.title_es;
+  const content = lang === 'en' ? ver.content_en : ver.content_es;
+
+  const html = `
+    <div style="font-family:var(--font-body, sans-serif); color:var(--text-primary); max-height:400px; overflow-y:auto; padding-right:0.5rem; line-height:1.6; font-size:0.9rem; white-space:pre-wrap; background:rgba(0,0,0,0.15); padding:1rem; border-radius:6px; border:1px solid var(--border-color);">
+      ${content}
+    </div>
+    <div style="text-align:right; margin-top:1.2rem;">
+      <button class="btn-large secondary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="goBackToGuidelinesAcceptanceModal('${version}')">${tr('Atrás', 'Back')}</button>
+    </div>
+  `;
+
+  toggleGlobalModal(true, title, html);
+}
+
+function goBackToGuidelinesAcceptanceModal(version) {
+  const versions = db.get('seller_guidelines_versions') || [];
+  const activeVer = versions.find(v => v.status === 'active');
+  const profiles = db.get('seller_profiles');
+  const sellerProf = profiles.find(p => p.user_id === state.currentUser.id);
+  openGuidelinesModal(activeVer, sellerProf, () => {
+    if (window.activeSellerTab === 'products') {
+      openAddProductModalReal();
+    } else {
+      renderSellerDashboard();
+    }
+  });
+}
+
+
+

@@ -69,6 +69,14 @@ function renderAdminDashboard() {
             <i data-lucide="dollar-sign" style="width:1.05rem;height:1.05rem;"></i>
             ${tr('Ventas y Payouts', 'Sales & Payouts')}
           </a>
+          <a class="db-menu-item ${window.activeAdminTab === 'commissions' ? 'active' : ''}" onclick="setAdminTab('commissions')">
+            <i data-lucide="percent" style="width:1.05rem;height:1.05rem;"></i>
+            ${tr('Comisiones del Marketplace', 'Marketplace Commissions')}
+          </a>
+          <a class="db-menu-item ${window.activeAdminTab === 'guidelines' ? 'active' : ''}" onclick="setAdminTab('guidelines')">
+            <i data-lucide="shield-check" style="width:1.05rem;height:1.05rem;"></i>
+            ${tr('Reglas para Vendedores', 'Seller Guidelines')}
+          </a>
           <a class="db-menu-item ${window.activeAdminTab === 'reviews' ? 'active' : ''}" onclick="setAdminTab('reviews')">
             <i data-lucide="message-square" style="width:1.05rem;height:1.05rem;"></i>
             ${tr('Moderar Reseñas', 'Moderate Reviews')} (${reviews.length})
@@ -696,6 +704,10 @@ function renderAdminSubTab(tab, data) {
     renderAdminComplianceTab(container, data);
   } else if (tab === 'notifications') {
     renderAdminNotificationsTab(container);
+  } else if (tab === 'commissions') {
+    renderAdminCommissionsTab(container);
+  } else if (tab === 'guidelines') {
+    renderAdminGuidelinesTab(container, data);
   }
 }
 
@@ -1335,4 +1347,839 @@ function adminEditStoreCommission(profileId) {
       }
     }
   }
+}
+
+function renderAdminCommissionsTab(container) {
+  const settings = db.get('marketplace_settings') || {
+    commission_general: 5,
+    commission_on_shipping: false,
+    commission_on_taxes: false,
+    min_fee_per_sale: 0,
+    buyer_protection_fee: false,
+    additional_buyer_fee: false,
+    categories_fees: {},
+    sellers_fees: {},
+    pro_discounts: {},
+    history: []
+  };
+
+  const historyHtml = (settings.history || []).reverse().map(h => `
+    <tr>
+      <td style="white-space:nowrap;">${new Date(h.date).toLocaleString()}</td>
+      <td><code>${h.user}</code></td>
+      <td style="color:var(--text-secondary);">${h.description}</td>
+    </tr>
+  `).join('');
+
+  container.innerHTML = `
+    <div>
+      <div style="margin-bottom:1.5rem;">
+        <h3>Comisiones del Marketplace</h3>
+        <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">
+          Define los porcentajes de cobro y los costos de procesamiento del negocio.
+        </p>
+      </div>
+
+      <div class="db-table-card" style="margin-bottom:2rem; padding:1.5rem; background:var(--bg-card); border-radius:8px; border:1px solid var(--border-color);">
+        <h4 style="margin-top:0; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem; color:var(--text-primary);">Configuración General</h4>
+        
+        <div style="display:flex; flex-direction:column; gap:1.2rem; max-width:600px;">
+          <!-- platform commission percentage input -->
+          <div style="display:flex; flex-direction:column; gap:0.4rem;">
+            <label for="commission-general" style="font-size:0.85rem; font-weight:600; color:var(--text-primary);">Comisión general de Geek Collector (%):</label>
+            <input type="number" id="commission-general" value="${settings.commission_general}" min="0" max="100" step="0.1" style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.6rem; color:#000000; width:150px; outline:none;">
+            <span style="font-size:0.75rem; color:var(--text-muted);">Comisión fija cobrada al vendedor en cada transacción. Predeterminado: 5%</span>
+          </div>
+
+          <!-- minimum fee -->
+          <div style="display:flex; flex-direction:column; gap:0.4rem;">
+            <label for="min-fee-per-sale" style="font-size:0.85rem; font-weight:600; color:var(--text-primary);">Tarifa mínima por venta ($):</label>
+            <input type="number" id="min-fee-per-sale" value="${settings.min_fee_per_sale || 0}" min="0" step="0.01" style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.6rem; color:#000000; width:150px; outline:none;">
+            <span style="font-size:0.75rem; color:var(--text-muted);">Tarifa fija mínima si la comisión porcentual es menor. Usar 0 para desactivar.</span>
+          </div>
+
+          <!-- toggles -->
+          <div style="display:flex; flex-direction:column; gap:0.6rem; margin-top:0.5rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <input type="checkbox" id="commission-on-shipping" ${settings.commission_on_shipping ? 'checked' : ''} style="width:1.1rem; height:1.1rem; cursor:pointer;">
+              <label for="commission-on-shipping" style="font-size:0.85rem; color:var(--text-primary); cursor:pointer;">Cobrar comisión sobre el costo de envío</label>
+            </div>
+            
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <input type="checkbox" id="commission-on-taxes" ${settings.commission_on_taxes ? 'checked' : ''} style="width:1.1rem; height:1.1rem; cursor:pointer;">
+              <label for="commission-on-taxes" style="font-size:0.85rem; color:var(--text-primary); cursor:pointer;">${tr('Cobrar comisión sobre impuestos (8% IVA)', 'Charge commission on taxes (8% VAT)')}</label>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:0.5rem; opacity:0.6;">
+              <input type="checkbox" id="buyer-protection-fee" ${settings.buyer_protection_fee ? 'checked' : ''} style="width:1.1rem; height:1.1rem; cursor:pointer;" disabled>
+              <label for="buyer-protection-fee" style="font-size:0.85rem; color:var(--text-primary); cursor:pointer;">${tr('Activar Buyer Protection Fee (Inactivo - Eliminado por el Administrador)', 'Activate Buyer Protection Fee (Inactive - Removed by Administrator)')}</label>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:0.5rem; opacity:0.6;">
+              <input type="checkbox" id="additional-buyer-fee" ${settings.additional_buyer_fee ? 'checked' : ''} style="width:1.1rem; height:1.1rem; cursor:pointer;" disabled>
+              <label for="additional-buyer-fee" style="font-size:0.85rem; color:var(--text-primary); cursor:pointer;">${tr('Activar cargo de protección adicional (Inactivo - Eliminado por el Administrador)', 'Activate additional protection fee (Inactive - Removed by Administrator)')}</label>
+            </div>
+          </div>
+
+          <!-- categories rates & pro discounts MOCK options -->
+          <div style="border-top:1px solid var(--border-color); padding-top:1rem; margin-top:0.5rem; display:flex; flex-direction:column; gap:0.8rem;">
+            <h5 style="margin:0 0 0.4rem 0; color:var(--text-primary); font-size:0.9rem;">${tr('Configuraciones Especiales', 'Special Configurations')}</h5>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+              <div style="display:flex; flex-direction:column; gap:0.25rem;">
+                <label style="font-size:0.8rem; color:var(--text-secondary);">${tr('Tarifas por Categoría:', 'Category Rates:')}</label>
+                <select style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.5rem; color:#000000; outline:none;" disabled>
+                  <option>${tr('Funko Pop (General: 5%)', 'Funko Pop (General: 5%)')}</option>
+                  <option>${tr('Figuras de Acción (General: 5%)', 'Action Figures (General: 5%)')}</option>
+                  <option>${tr('Estatuas y Réplicas (General: 5%)', 'Statues & Replicas (General: 5%)')}</option>
+                </select>
+              </div>
+
+              <div style="display:flex; flex-direction:column; gap:0.25rem;">
+                <label style="font-size:0.8rem; color:var(--text-secondary);">${tr('Descuentos sobre comisiones:', 'Commission Discounts:')}</label>
+                <select style="background:#ffffff; border:1px solid var(--border-color); border-radius:6px; padding:0.5rem; color:#000000; outline:none;" disabled>
+                  <option>${tr('Sin Descuentos (Todos pagan tarifa plana)', 'No Discounts (Flat fee for everyone)')}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:1rem;">
+            <button class="btn-large primary-btn" style="width:auto; padding:0.6rem 1.5rem; font-size:0.85rem;" onclick="saveMarketplaceCommissionsSubmit()">
+              Guardar Configuración
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- History of Audit changes -->
+      <div class="db-table-card">
+        <div class="db-table-header" style="background:var(--bg-lighter);">
+          <h4 style="margin:0; font-size:0.95rem; color:var(--text-primary);">Historial de Auditoría de Comisiones</h4>
+        </div>
+        <div class="db-table-wrapper">
+          <table class="db-table">
+            <thead>
+              <tr>
+                <th>Fecha / Hora</th>
+                <th>Administrador</th>
+                <th>Descripción del Cambio</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${historyHtml ? historyHtml : `
+                <tr>
+                  <td colspan="3" style="text-align:center; padding:2rem; color:var(--text-muted);">No se registran cambios de configuración.</td>
+                </tr>
+              `}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function saveMarketplaceCommissionsSubmit() {
+  const commissionInput = document.getElementById('commission-general');
+  const minFeeInput = document.getElementById('min-fee-per-sale');
+  const shippingCheckbox = document.getElementById('commission-on-shipping');
+  const taxesCheckbox = document.getElementById('commission-on-taxes');
+
+  if (!commissionInput) return;
+
+  const commissionGeneral = parseFloat(commissionInput.value);
+  const minFee = parseFloat(minFeeInput.value || 0);
+  const onShipping = shippingCheckbox.checked;
+  const onTaxes = taxesCheckbox.checked;
+
+  if (isNaN(commissionGeneral) || commissionGeneral < 0 || commissionGeneral > 100) {
+    showToast(tr("Por favor, ingrese un porcentaje de comisión válido (0% - 100%).", "Please enter a valid commission percentage (0% - 100%)."), 'error');
+    return;
+  }
+
+  const settings = db.get('marketplace_settings') || {
+    commission_general: 5,
+    commission_on_shipping: false,
+    commission_on_taxes: false,
+    min_fee_per_sale: 0,
+    buyer_protection_fee: false,
+    additional_buyer_fee: false,
+    categories_fees: {},
+    sellers_fees: {},
+    pro_discounts: {},
+    history: []
+  };
+
+  // Build audit description
+  let changes = [];
+  if (settings.commission_general !== commissionGeneral) {
+    changes.push(`Comisión general ajustada de ${settings.commission_general}% a ${commissionGeneral}%`);
+  }
+  if (settings.min_fee_per_sale !== minFee) {
+    changes.push(`Tarifa mínima por venta cambiada de $${settings.min_fee_per_sale || 0} a $${minFee}`);
+  }
+  if (settings.commission_on_shipping !== onShipping) {
+    changes.push(`Comisión sobre envíos: ${onShipping ? 'activada' : 'desactivada'}`);
+  }
+  if (settings.commission_on_taxes !== onTaxes) {
+    changes.push(`Comisión sobre impuestos: ${onTaxes ? 'activada' : 'desactivada'}`);
+  }
+
+  if (changes.length === 0) {
+    showToast(tr("No se detectaron cambios en la configuración.", "No changes detected in configuration."), 'info');
+    return;
+  }
+
+  const prevRate = settings.commission_general;
+  const isRateChanged = prevRate !== commissionGeneral;
+
+  // Update settings values
+  settings.commission_general = commissionGeneral;
+  settings.min_fee_per_sale = minFee;
+  settings.commission_on_shipping = onShipping;
+  settings.commission_on_taxes = onTaxes;
+
+  // Add history record
+  settings.history.push({
+    date: new Date().toISOString(),
+    user: state.currentUser ? state.currentUser.id : "usr_admin_1",
+    description: changes.join(', ')
+  });
+
+  db.set('marketplace_settings', settings);
+
+  // If commission rate changed, generate new policy version and notify sellers
+  if (isRateChanged) {
+    const historyList = db.get('commission_policy_history') || [];
+    
+    // Archive old active policies
+    historyList.forEach(p => {
+      if (p.status === 'active') p.status = 'archived';
+    });
+
+    const nextVerNum = (historyList.length + 1).toFixed(1);
+    const newVersionStr = `v${nextVerNum}`;
+    
+    const newPolicy = {
+      version: newVersionStr,
+      commission_percentage: commissionGeneral,
+      published_at: new Date().toISOString(),
+      effective_date: new Date().toISOString(),
+      status: "active",
+      description: `Actualización de comisión general del vendedor del ${prevRate}% al ${commissionGeneral}% por el Administrador.`
+    };
+    
+    historyList.push(newPolicy);
+    db.set('commission_policy_history', historyList);
+
+    // Send notifications to all active sellers
+    const users = db.get('users') || [];
+    const notifications = db.get('notifications') || [];
+    
+    users.forEach(u => {
+      if (u.role === 'seller') {
+        notifications.push({
+          id: "not_" + Math.random().toString(36).substr(2, 9),
+          user_id: u.id,
+          title: "Actualización de Política de Comisiones",
+          message: `Geek Collector actualizará su comisión de vendedor al ${commissionGeneral}% a partir de hoy. Debes aceptar los nuevos términos.`,
+          read: false,
+          created_at: new Date().toISOString()
+        });
+      }
+    });
+    db.set('notifications', notifications);
+  }
+
+  showToast(tr("¡Configuración de comisiones guardada exitosamente!", "Commissions configuration saved successfully!"), 'success');
+  
+  // Refresh page tab
+  renderAdminDashboard();
+}
+
+function renderAdminGuidelinesTab(container, data) {
+  const versions = db.get('seller_guidelines_versions') || [];
+  const acceptances = db.get('seller_guidelines_acceptances') || [];
+  const profiles = db.get('seller_profiles') || [];
+  const users = db.get('users') || [];
+
+  // 1. Version History Table Rows
+  const versionRowsHtml = versions.map(v => {
+    const accCount = acceptances.filter(a => a.policyVersion === v.version && a.acceptanceStatus === 'accepted').length;
+    const isLocked = accCount > 0;
+    
+    return `
+      <tr>
+        <td><strong>${v.version}</strong></td>
+        <td>${v.is_material ? `<span style="color:#ef4444; font-weight:700;">${tr('Material', 'Material')}</span>` : `<span style="color:var(--text-secondary);">${tr('Informativo', 'Informative')}</span>`}</td>
+        <td>${new Date(v.effective_date).toLocaleDateString()}</td>
+        <td>
+          ${v.status === 'active' 
+            ? `<span class="status-tag approved">${tr('Vigente', 'Active')}</span>` 
+            : `<span class="status-tag suspended">${tr('Archivada', 'Archived')}</span>`}
+        </td>
+        <td><strong>${accCount}</strong> ${tr('aceptaciones', 'acceptances')}</td>
+        <td>
+          ${isLocked 
+            ? `<button class="action-btn-small" style="background:#4b5563; cursor:not-allowed; opacity:0.6;" disabled title="${tr('Bloqueado: Esta versión ya tiene firmas de aceptación.', 'Locked: This version has already been signed by sellers.')}"><i data-lucide="lock" style="width:0.8rem; height:0.8rem; display:inline-block; vertical-align:middle; margin-right:2px;"></i> ${tr('Bloqueado', 'Locked')}</button>`
+            : `<button class="action-btn-small approve" onclick="openEditGuidelinesVersionModal('${v.version}')"><i data-lucide="edit" style="width:0.8rem; height:0.8rem; display:inline-block; vertical-align:middle; margin-right:2px;"></i> ${tr('Editar', 'Edit')}</button>`}
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // 2. Filters
+  if (!window.adminGuidelinesFilterVersion) window.adminGuidelinesFilterVersion = 'all';
+  if (!window.adminGuidelinesFilterStatus) window.adminGuidelinesFilterStatus = 'all';
+  if (!window.adminGuidelinesSearchQuery) window.adminGuidelinesSearchQuery = '';
+
+  const activeVer = versions.find(v => v.status === 'active') || { version: 'none' };
+
+  // Calculate lists of sellers
+  const sellerRows = profiles.map(prof => {
+    const userObj = users.find(u => u.id === prof.user_id) || { name: 'Desconocido', email: '' };
+    const acc = acceptances.find(a => a.sellerId === prof.id && a.policyVersion === activeVer.version && a.acceptanceStatus === 'accepted');
+    
+    let statusTextHtml = '';
+    let acceptDate = '-';
+    let acceptLang = '-';
+    let acceptIp = '-';
+    let acceptSource = '-';
+    let filterStatusType = 'pending';
+
+    if (acc) {
+      statusTextHtml = `<span class="status-tag approved">${tr('Aceptado', 'Accepted')}</span>`;
+      acceptDate = new Date(acc.acceptedAt).toLocaleString();
+      acceptLang = acc.policyLanguage ? acc.policyLanguage.toUpperCase() : 'ES';
+      acceptIp = acc.ipAddress || '-';
+      acceptSource = acc.acceptanceSource || '-';
+      filterStatusType = 'accepted';
+    } else {
+      if (prof.requiresGuidelinesReacceptance) {
+        statusTextHtml = `<span class="status-tag suspended" style="background:#f59e0b; color:black; font-weight:700;">${tr('Reaceptación Requerida', 'Reacceptance Required')}</span>`;
+        filterStatusType = 'reacceptance';
+      } else {
+        statusTextHtml = `<span class="status-tag suspended">${tr('Falta Aceptar', 'Pending')}</span>`;
+        filterStatusType = 'pending';
+      }
+    }
+
+    const isSuspendedFromPublishing = prof.publishing_suspended === true;
+
+    return {
+      profId: prof.id,
+      storeName: prof.store_name,
+      ownerName: userObj.name,
+      ownerEmail: userObj.email,
+      version: acc ? acc.policyVersion : activeVer.version,
+      statusHtml: statusTextHtml,
+      statusType: filterStatusType,
+      date: acceptDate,
+      lang: acceptLang,
+      ip: acceptIp,
+      source: acceptSource,
+      isSuspended: isSuspendedFromPublishing
+    };
+  });
+
+  // Apply filters
+  const filteredSellers = sellerRows.filter(s => {
+    const matchVersion = window.adminGuidelinesFilterVersion === 'all' || s.version === window.adminGuidelinesFilterVersion;
+    const matchStatus = window.adminGuidelinesFilterStatus === 'all' || s.statusType === window.adminGuidelinesFilterStatus;
+    
+    const query = window.adminGuidelinesSearchQuery.toLowerCase();
+    const matchSearch = s.storeName.toLowerCase().includes(query) || s.ownerName.toLowerCase().includes(query) || s.ownerEmail.toLowerCase().includes(query);
+    
+    return matchVersion && matchStatus && matchSearch;
+  });
+
+  const sellerRowsHtml = filteredSellers.map(s => {
+    const actionBtnHtml = s.isSuspended 
+      ? `<button class="action-btn-small approve" style="background:#10b981; border-color:#10b981;" onclick="toggleSellerPublishingSuspension('${s.profId}', false)">${tr('Reactivar', 'Reinstate')}</button>`
+      : `<button class="action-btn-small reject" style="background:#ef4444; border-color:#ef4444;" onclick="toggleSellerPublishingSuspension('${s.profId}', true)">${tr('Suspender', 'Suspend')}</button>`;
+    
+    return `
+      <tr>
+        <td>
+          <strong>${s.storeName}</strong><br>
+          <span style="font-size:0.75rem; color:var(--text-secondary);">${s.ownerName} (${s.ownerEmail})</span>
+        </td>
+        <td>${s.statusHtml}</td>
+        <td><code>${s.version}</code></td>
+        <td>${s.date}</td>
+        <td><strong style="color:var(--gold-light);">${s.lang}</strong></td>
+        <td>
+          <span style="font-size:0.75rem; color:var(--text-secondary);">${s.source}</span><br>
+          <span style="font-size:0.7rem; color:var(--text-muted);">${s.ip}</span>
+        </td>
+        <td>${actionBtnHtml}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const versionOptions = versions.map(v => `<option value="${v.version}" ${window.adminGuidelinesFilterVersion === v.version ? 'selected' : ''}>${v.version}</option>`).join('');
+
+  container.innerHTML = `
+    <div style="font-family:var(--font-body, sans-serif);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h3>${tr('Gestión de Reglas y Directrices para Vendedores', 'Seller Rules & Guidelines Management')}</h3>
+          <p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.25rem;">
+            ${tr('Controla las políticas del marketplace, crea nuevas versiones materiales e informativas y audita las aceptaciones.', 'Control marketplace guidelines, release material or informative updates, and audit acceptances.')}
+          </p>
+        </div>
+        <button class="btn-large primary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="openCreateGuidelinesVersionModal()">
+          <i data-lucide="plus-circle" style="width:1rem; height:1rem; display:inline-block; vertical-align:middle; margin-right:4px;"></i> ${tr('Crear Nueva Versión', 'Create New Version')}
+        </button>
+      </div>
+
+      <!-- Sección 1: Versiones -->
+      <div class="db-table-card" style="margin-bottom:2rem;">
+        <div class="db-table-header">
+          <h4>${tr('Versiones de Políticas y Reglas', 'Guidelines Versions & Policies')}</h4>
+        </div>
+        <div class="db-table-wrapper">
+          <table class="db-table">
+            <thead>
+              <tr>
+                <th>${tr('Versión', 'Version')}</th>
+                <th>${tr('Tipo de Cambio', 'Change Type')}</th>
+                <th>${tr('Vigente Desde', 'Effective Since')}</th>
+                <th>${tr('Estado', 'Status')}</th>
+                <th>${tr('Firmas Realizadas', 'Signed Acceptances')}</th>
+                <th>${tr('Acciones', 'Actions')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${versionRowsHtml || `<tr><td colspan="6" style="text-align:center;">${tr('No hay versiones cargadas.', 'No versions loaded.')}</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sección 2: Aceptación y Firmas de Vendedores -->
+      <div class="db-table-card">
+        <div class="db-table-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; padding:1.2rem;">
+          <h4 style="margin:0;">${tr('Auditoría de Aceptación de Vendedores', 'Sellers Acceptance Audit Log')}</h4>
+          <button class="btn-large secondary-btn" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem; border-color:var(--border-metallic-yellow);" onclick="exportGuidelinesAcceptancesCSV()">
+            <i data-lucide="download" style="width:0.85rem; height:0.85rem; display:inline-block; vertical-align:middle; margin-right:4px;"></i> ${tr('Exportar a CSV', 'Export to CSV')}
+          </button>
+        </div>
+
+        <!-- Filtros interactivos -->
+        <div style="background:rgba(255,255,255,0.02); border-bottom:1px solid var(--border-color); padding:1rem; display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+          <div style="display:flex; flex-direction:column; gap:0.25rem; min-width:150px;">
+            <label style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">${tr('Filtrar por Versión', 'Filter by Version')}</label>
+            <select id="flt-guide-version" onchange="applyAdminGuidelinesFilter('version', this.value)" style="background:#111; color:white; border:1px solid var(--border-color); border-radius:6px; padding:0.35rem; font-size:0.8rem; outline:none;">
+              <option value="all" ${window.adminGuidelinesFilterVersion === 'all' ? 'selected' : ''}>${tr('Todas', 'All')}</option>
+              ${versionOptions}
+            </select>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:0.25rem; min-width:150px;">
+            <label style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">${tr('Estado Firma', 'Signature Status')}</label>
+            <select id="flt-guide-status" onchange="applyAdminGuidelinesFilter('status', this.value)" style="background:#111; color:white; border:1px solid var(--border-color); border-radius:6px; padding:0.35rem; font-size:0.8rem; outline:none;">
+              <option value="all" ${window.adminGuidelinesFilterStatus === 'all' ? 'selected' : ''}>${tr('Todos los Estados', 'All Statuses')}</option>
+              <option value="accepted" ${window.adminGuidelinesFilterStatus === 'accepted' ? 'selected' : ''}>${tr('Aceptado (Vigente)', 'Accepted (Active)')}</option>
+              <option value="reacceptance" ${window.adminGuidelinesFilterStatus === 'reacceptance' ? 'selected' : ''}>${tr('Reaceptación Requerida', 'Reacceptance Required')}</option>
+              <option value="pending" ${window.adminGuidelinesFilterStatus === 'pending' ? 'selected' : ''}>${tr('Falta Aceptar (Nuevo)', 'Pending Accept (New)')}</option>
+            </select>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:0.25rem; flex:1; min-width:200px;">
+            <label style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">${tr('Buscar Vendedor', 'Search Seller')}</label>
+            <input type="text" id="flt-guide-search" value="${window.adminGuidelinesSearchQuery}" oninput="applyAdminGuidelinesFilter('search', this.value)" placeholder="${tr('Nombre de tienda, usuario o email...', 'Store name, owner, or email...')}" style="background:#111; color:white; border:1px solid var(--border-color); border-radius:6px; padding:0.35rem; font-size:0.8rem; outline:none;">
+          </div>
+        </div>
+
+        <div class="db-table-wrapper">
+          <table class="db-table">
+            <thead>
+              <tr>
+                <th>${tr('Vendedor / Tienda', 'Seller / Store')}</th>
+                <th>${tr('Estado Firma', 'Signature Status')}</th>
+                <th>${tr('Versión Aceptada', 'Accepted Version')}</th>
+                <th>${tr('Fecha Firma', 'Signing Date')}</th>
+                <th>${tr('Idioma', 'Language')}</th>
+                <th>${tr('Origen y Auditoría IP', 'Source & IP Audit')}</th>
+                <th>${tr('Acción Capacidad', 'Publishing Action')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sellerRowsHtml || `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-secondary);">${tr('No se encontraron registros de vendedores para el filtro seleccionado.', 'No seller records found for the selected filter.')}</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  lucide.createIcons();
+}
+
+function applyAdminGuidelinesFilter(filterType, value) {
+  if (filterType === 'version') window.adminGuidelinesFilterVersion = value;
+  else if (filterType === 'status') window.adminGuidelinesFilterStatus = value;
+  else if (filterType === 'search') window.adminGuidelinesSearchQuery = value;
+  renderAdminDashboard();
+}
+
+function toggleSellerPublishingSuspension(profId, doSuspend) {
+  const profiles = db.get('seller_profiles');
+  const prof = profiles.find(p => p.id === profId);
+  if (prof) {
+    prof.publishing_suspended = doSuspend;
+    db.set('seller_profiles', profiles);
+    
+    const userObj = db.get('users').find(u => u.id === prof.user_id);
+    const notifications = db.get('notifications') || [];
+    if (doSuspend) {
+      notifications.push({
+        id: "not_" + Math.random().toString(36).substr(2, 9),
+        user_id: prof.user_id,
+        title: tr("Capacidad de Publicación Suspendida", "Publishing Privileges Suspended"),
+        message: tr(
+          "El Administrador ha suspendido temporalmente tu capacidad para publicar nuevos artículos.",
+          "The Administrator has temporarily suspended your ability to list new products."
+        ),
+        read: false,
+        created_at: new Date().toISOString()
+      });
+      showToast(tr("Publicación del vendedor suspendida.", "Seller publishing suspended."), 'info');
+    } else {
+      notifications.push({
+        id: "not_" + Math.random().toString(36).substr(2, 9),
+        user_id: prof.user_id,
+        title: tr("Capacidad de Publicación Reactivada", "Publishing Privileges Reinstated"),
+        message: tr(
+          "El Administrador ha reactivado tu capacidad para publicar artículos. Asegúrate de cumplir con todas las directrices.",
+          "The Administrator has reinstated your ability to list items. Make sure to adhere to all guidelines."
+        ),
+        read: false,
+        created_at: new Date().toISOString()
+      });
+      showToast(tr("Publicación del vendedor reactivada.", "Seller publishing reinstated."), 'success');
+    }
+    db.set('notifications', notifications);
+    renderAdminDashboard();
+  }
+}
+
+function exportGuidelinesAcceptancesCSV() {
+  const acceptances = db.get('seller_guidelines_acceptances') || [];
+  const profiles = db.get('seller_profiles') || [];
+  const users = db.get('users') || [];
+
+  let csvContent = "data:text/csv;charset=utf-8,";
+  csvContent += "ID Aceptacion,ID Vendedor,Nombre Tienda,Nombre Propietario,Email,Version Politica,Idioma,Porcentaje Comision,Fecha Aceptado,Origen,IP\n";
+
+  acceptances.forEach(a => {
+    const prof = profiles.find(p => p.id === a.sellerId) || { store_name: 'N/A' };
+    const user = users.find(u => u.id === a.userId) || { name: 'N/A', email: 'N/A' };
+    
+    const row = [
+      a.id,
+      a.sellerId,
+      `"${prof.store_name.replace(/"/g, '""')}"`,
+      `"${user.name.replace(/"/g, '""')}"`,
+      user.email,
+      a.policyVersion,
+      a.policyLanguage,
+      a.platformFeePercentage + "%",
+      a.acceptedAt,
+      a.acceptanceSource,
+      a.ipAddress
+    ].join(",");
+    
+    csvContent += row + "\n";
+  });
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `historial_aceptacion_reglas_vendedores_${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  showToast(tr("Historial de aceptaciones exportado en formato CSV.", "Acceptance history exported in CSV format."), 'success');
+}
+
+function openCreateGuidelinesVersionModal() {
+  const versions = db.get('seller_guidelines_versions') || [];
+  let nextVer = "seller-policy-v1.0";
+  if (versions.length > 0) {
+    const lastVer = versions[versions.length - 1].version;
+    const numMatch = lastVer.match(/v(\d+(\.\d+)?)/);
+    if (numMatch) {
+      const nextNum = (parseFloat(numMatch[1]) + 0.1).toFixed(1);
+      nextVer = `seller-policy-v${nextNum}`;
+    }
+  }
+
+  const defaultContentEs = `1. Comisiones: Geek Collector cobra una comisión del 5% sobre el subtotal de artículos vendidos.\n2. Pagos: Tarifas de Stripe (2.9% + $0.30) asumidas por el vendedor.\n3. Envíos y Devoluciones: El vendedor es responsable de enviar el artículo a tiempo utilizando Shippo o su transportista.\n4. Conducta: Está prohibido vender artículos prohibidos, falsificaciones o acosar a los compradores.`;
+  const defaultContentEn = `1. Fees: Geek Collector charges a 5% commission on the items subtotal.\n2. Payouts: Stripe fees (2.9% + $0.30) are assumed by the seller.\n3. Shipping & Refunds: The seller is responsible for timely shipping using Shippo or their carrier.\n4. Conduct: Selling prohibited items, counterfeits, or harassing buyers is forbidden.`;
+
+  const html = `
+    <div style="display:flex; flex-direction:column; gap:1rem; font-family:var(--font-body, sans-serif); color:var(--text-primary); max-height: 500px; overflow-y: auto; padding-right: 0.5rem;">
+      <div class="checkout-input-wrapper">
+        <label>Identificador de Versión</label>
+        <input type="text" id="frm-ver-id" value="${nextVer}" placeholder="Ej: seller-policy-v1.1">
+      </div>
+
+      <div class="checkout-form-group">
+        <div class="checkout-input-wrapper">
+          <label>Título (Español)</label>
+          <input type="text" id="frm-ver-title-es" value="Reglas para Vendedores de Geek Collector" placeholder="Título en español">
+        </div>
+        <div class="checkout-input-wrapper">
+          <label>Título (Inglés)</label>
+          <input type="text" id="frm-ver-title-en" value="Geek Collector Seller Guidelines" placeholder="Título en inglés">
+        </div>
+      </div>
+
+      <div class="checkout-input-wrapper">
+        <label>Contenido del Documento (Español)</label>
+        <textarea id="frm-ver-content-es" style="height:120px; font-size:0.8rem; background:white; color:black; border-radius:6px; padding:0.5rem; outline:none;">${defaultContentEs}</textarea>
+      </div>
+
+      <div class="checkout-input-wrapper">
+        <label>Contenido del Documento (Inglés)</label>
+        <textarea id="frm-ver-content-en" style="height:120px; font-size:0.8rem; background:white; color:black; border-radius:6px; padding:0.5rem; outline:none;">${defaultContentEn}</textarea>
+      </div>
+
+      <div class="checkout-form-group">
+        <div class="checkout-input-wrapper">
+          <label>Fecha de Entrada en Vigor</label>
+          <input type="datetime-local" id="frm-ver-date" value="${new Date().toISOString().slice(0, 16)}">
+        </div>
+        <div class="checkout-input-wrapper">
+          <label>Tipo de Cambio</label>
+          <select id="frm-ver-material">
+            <option value="true">Material (Requiere reaceptación obligatoria)</option>
+            <option value="false">Informativo (Sin bloqueo inmediato)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.25rem;">
+        <input type="checkbox" id="frm-ver-active" checked>
+        <label for="frm-ver-active" style="font-size:0.8rem; cursor:pointer; color:var(--text-secondary);">Marcar como versión vigente (Archivará la versión activa anterior)</label>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1rem;">
+        <button class="btn-large secondary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="toggleGlobalModal(false)">Cancelar</button>
+        <button class="btn-large primary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="submitCreateGuidelinesVersion()">Publicar Versión</button>
+      </div>
+    </div>
+  `;
+
+  toggleGlobalModal(true, "Crear Nueva Versión de Reglas", html);
+  lucide.createIcons();
+}
+
+function submitCreateGuidelinesVersion() {
+  const version = document.getElementById('frm-ver-id').value.trim();
+  const titleEs = document.getElementById('frm-ver-title-es').value.trim();
+  const titleEn = document.getElementById('frm-ver-title-en').value.trim();
+  const contentEs = document.getElementById('frm-ver-content-es').value.trim();
+  const contentEn = document.getElementById('frm-ver-content-en').value.trim();
+  const dateVal = document.getElementById('frm-ver-date').value;
+  const isMaterial = document.getElementById('frm-ver-material').value === 'true';
+  const makeActive = document.getElementById('frm-ver-active').checked;
+
+  if (!version || !titleEs || !titleEn || !contentEs || !contentEn || !dateVal) {
+    showToast("Por favor completa todos los campos para crear la política.", "error");
+    return;
+  }
+
+  const versions = db.get('seller_guidelines_versions') || [];
+  if (versions.some(v => v.version === version)) {
+    showToast(`El identificador de versión "${version}" ya existe. Elige uno diferente.`, "error");
+    return;
+  }
+
+  if (makeActive) {
+    versions.forEach(v => {
+      if (v.status === 'active') v.status = 'archived';
+    });
+  }
+
+  const docHash = "hash_" + Math.random().toString(36).substr(2, 9);
+  const newVer = {
+    version: version,
+    title_es: titleEs,
+    title_en: titleEn,
+    content_es: contentEs,
+    content_en: contentEn,
+    effective_date: new Date(dateVal).toISOString(),
+    is_material: isMaterial,
+    requires_reacceptance: isMaterial,
+    status: makeActive ? "active" : "archived",
+    document_hash: docHash,
+    created_at: new Date().toISOString()
+  };
+
+  versions.push(newVer);
+  db.set('seller_guidelines_versions', versions);
+
+  if (makeActive && isMaterial) {
+    const profiles = db.get('seller_profiles') || [];
+    profiles.forEach(p => {
+      p.requiresGuidelinesReacceptance = true;
+    });
+    db.set('seller_profiles', profiles);
+
+    const users = db.get('users') || [];
+    const notifications = db.get('notifications') || [];
+    
+    users.forEach(u => {
+      if (u.role === 'seller') {
+        notifications.push({
+          id: "not_" + Math.random().toString(36).substr(2, 9),
+          user_id: u.id,
+          title: tr("Actualización de Reglas de Vendedor", "Seller Guidelines Updated"),
+          message: tr(
+            `Hemos actualizado las reglas para vendedores (${version}). Debes revisar y aceptar la nueva versión antes de publicar artículos adicionales.`,
+            `We updated the Seller Guidelines (${version}). You must review and accept the new version before listing additional items.`
+          ),
+          read: false,
+          created_at: new Date().toISOString()
+        });
+      }
+    });
+    db.set('notifications', notifications);
+  }
+
+  const auditLogs = db.get('compliance_audit_logs') || [];
+  auditLogs.push({
+    id: "aud_" + Date.now(),
+    event: "SELLER_GUIDELINES_VERSION_CREATED",
+    userId: state.currentUser ? state.currentUser.id : "usr_admin_1",
+    policyVersion: version,
+    timestamp: new Date().toISOString(),
+    details: `Nueva versión de reglas ${version} publicada (${isMaterial ? 'Material' : 'Informativo'}).`
+  });
+  db.set('compliance_audit_logs', auditLogs);
+
+  toggleGlobalModal(false);
+  showToast(tr("¡Nueva versión de reglas publicada con éxito!", "New guidelines version published successfully!"), "success");
+  renderAdminDashboard();
+}
+
+function openEditGuidelinesVersionModal(version) {
+  const versions = db.get('seller_guidelines_versions') || [];
+  const ver = versions.find(v => v.version === version);
+  if (!ver) return;
+
+  const acceptances = db.get('seller_guidelines_acceptances') || [];
+  const hasAcceptances = acceptances.some(a => a.policyVersion === version && a.acceptanceStatus === 'accepted');
+
+  if (hasAcceptances) {
+    showToast(tr("Esta versión ya tiene aceptaciones y no se puede editar.", "This version has acceptances and cannot be edited."), "error");
+    return;
+  }
+
+  const html = `
+    <div style="display:flex; flex-direction:column; gap:1rem; font-family:var(--font-body, sans-serif); color:var(--text-primary); max-height: 500px; overflow-y: auto; padding-right: 0.5rem;">
+      <div class="checkout-input-wrapper">
+        <label>Identificador de Versión (Bloqueado)</label>
+        <input type="text" id="frm-ver-id" value="${ver.version}" disabled style="background:#ddd; cursor:not-allowed; color:#555;">
+      </div>
+
+      <div class="checkout-form-group">
+        <div class="checkout-input-wrapper">
+          <label>Título (Español)</label>
+          <input type="text" id="frm-ver-title-es" value="${ver.title_es}">
+        </div>
+        <div class="checkout-input-wrapper">
+          <label>Título (Inglés)</label>
+          <input type="text" id="frm-ver-title-en" value="${ver.title_en}">
+        </div>
+      </div>
+
+      <div class="checkout-input-wrapper">
+        <label>Contenido del Documento (Español)</label>
+        <textarea id="frm-ver-content-es" style="height:120px; font-size:0.8rem; background:white; color:black; border-radius:6px; padding:0.5rem; outline:none;">${ver.content_es}</textarea>
+      </div>
+
+      <div class="checkout-input-wrapper">
+        <label>Contenido del Documento (Inglés)</label>
+        <textarea id="frm-ver-content-en" style="height:120px; font-size:0.8rem; background:white; color:black; border-radius:6px; padding:0.5rem; outline:none;">${ver.content_en}</textarea>
+      </div>
+
+      <div class="checkout-form-group">
+        <div class="checkout-input-wrapper">
+          <label>Fecha de Entrada en Vigor</label>
+          <input type="datetime-local" id="frm-ver-date" value="${new Date(ver.effective_date).toISOString().slice(0, 16)}">
+        </div>
+        <div class="checkout-input-wrapper">
+          <label>Tipo de Cambio</label>
+          <select id="frm-ver-material">
+            <option value="true" ${ver.is_material ? 'selected' : ''}>Material (Requiere reaceptación obligatoria)</option>
+            <option value="false" ${!ver.is_material ? 'selected' : ''}>Informativo (Sin bloqueo inmediato)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1rem;">
+        <button class="btn-large secondary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="toggleGlobalModal(false)">Cancelar</button>
+        <button class="btn-large primary-btn" style="width:auto; padding:0.5rem 1.2rem;" onclick="submitEditGuidelinesVersion('${version}')">Guardar Cambios</button>
+      </div>
+    </div>
+  `;
+
+  toggleGlobalModal(true, "Editar Versión de Reglas", html);
+  lucide.createIcons();
+}
+
+function submitEditGuidelinesVersion(version) {
+  const versions = db.get('seller_guidelines_versions') || [];
+  const verIndex = versions.findIndex(v => v.version === version);
+  if (verIndex === -1) return;
+
+  const acceptances = db.get('seller_guidelines_acceptances') || [];
+  const hasAcceptances = acceptances.some(a => a.policyVersion === version && a.acceptanceStatus === 'accepted');
+  if (hasAcceptances) {
+    showToast(tr("Esta versión ya tiene aceptaciones y no se puede editar.", "This version has acceptances and cannot be edited."), "error");
+    return;
+  }
+
+  const titleEs = document.getElementById('frm-ver-title-es').value.trim();
+  const titleEn = document.getElementById('frm-ver-title-en').value.trim();
+  const contentEs = document.getElementById('frm-ver-content-es').value.trim();
+  const contentEn = document.getElementById('frm-ver-content-en').value.trim();
+  const dateVal = document.getElementById('frm-ver-date').value;
+  const isMaterial = document.getElementById('frm-ver-material').value === 'true';
+
+  if (!titleEs || !titleEn || !contentEs || !contentEn || !dateVal) {
+    showToast("Por favor completa todos los campos para editar la política.", "error");
+    return;
+  }
+
+  versions[verIndex].title_es = titleEs;
+  versions[verIndex].title_en = titleEn;
+  versions[verIndex].content_es = contentEs;
+  versions[verIndex].content_en = contentEn;
+  versions[verIndex].effective_date = new Date(dateVal).toISOString();
+  versions[verIndex].is_material = isMaterial;
+  versions[verIndex].requires_reacceptance = isMaterial;
+
+  db.set('seller_guidelines_versions', versions);
+
+  const auditLogs = db.get('compliance_audit_logs') || [];
+  auditLogs.push({
+    id: "aud_" + Date.now(),
+    event: "SELLER_GUIDELINES_VERSION_EDITED",
+    userId: state.currentUser ? state.currentUser.id : "usr_admin_1",
+    policyVersion: version,
+    timestamp: new Date().toISOString(),
+    details: `Edición de reglas versión ${version}.`
+  });
+  db.set('compliance_audit_logs', auditLogs);
+
+  toggleGlobalModal(false);
+  showToast(tr("¡Cambios guardados con éxito!", "Changes saved successfully!"), "success");
+  renderAdminDashboard();
 }

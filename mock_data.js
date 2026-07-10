@@ -22,7 +22,7 @@ const INITIAL_SELLER_PROFILES = [
     store_name: "Geek Collector PR Tienda Oficial",
     description: "Tienda oficial de la plataforma. Artículos exclusivos y garantizados.",
     stripe_connect_id: "acct_admin_mock_123",
-    subscription_plan: "Elite",
+    subscription_plan: "Standard",
     commission_rate: 0.00, // Admin pays 0% commission on sales
     approved: true,
     rating_average: 5.0,

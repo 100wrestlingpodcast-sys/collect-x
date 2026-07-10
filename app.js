@@ -1,8 +1,290 @@
 // collectors-market/app.js
 
+window.sellerGuidelinesTranslations = {
+  es: {
+    "sellerGuidelines.title": "Reglas para vendedores",
+    "sellerGuidelines.checkbox": "He leído y acepto las Reglas para Vendedores, la comisión vigente de Geek Collector, las tarifas de procesamiento de pagos, las políticas de envío, reembolsos, disputas y pagos. Entiendo que no podré publicar ni vender artículos sin aceptar estas condiciones.",
+    "sellerGuidelines.acceptButton": "Aceptar reglas para vendedores",
+    "sellerGuidelines.requiredMessage": "Debes leer y aceptar las reglas para vendedores antes de publicar un artículo.",
+    "sellerGuidelines.currentVersion": "Versión Vigente",
+    "sellerGuidelines.acceptedDate": "Fecha de Aceptación",
+    "sellerGuidelines.viewFullPolicy": "Ver documento aceptado",
+    "sellerGuidelines.newVersionNotice": "Hemos actualizado las reglas para vendedores. Debes revisar y aceptar la nueva versión antes de publicar artículos adicionales."
+  },
+  en: {
+    "sellerGuidelines.title": "Seller Guidelines",
+    "sellerGuidelines.checkbox": "I have read and agree to the Seller Guidelines, Geek Collector’s current marketplace commission, payment processing fees, shipping policies, refunds, disputes, and payout policies. I understand that I cannot list or sell items without accepting these terms.",
+    "sellerGuidelines.acceptButton": "Accept Seller Guidelines",
+    "sellerGuidelines.requiredMessage": "You must read and accept the Seller Guidelines before listing an item.",
+    "sellerGuidelines.currentVersion": "Current Version",
+    "sellerGuidelines.acceptedDate": "Acceptance Date",
+    "sellerGuidelines.viewFullPolicy": "View accepted document",
+    "sellerGuidelines.newVersionNotice": "We updated the Seller Guidelines. You must review and accept the new version before listing additional items."
+  }
+};
+
 window.tr = function(es, en) {
   const lang = localStorage.getItem('cm_language') || 'es';
+  if (typeof es === 'string' && es.startsWith('sellerGuidelines.')) {
+    const dict = window.sellerGuidelinesTranslations || {};
+    const langDict = dict[lang] || dict['es'] || {};
+    return langDict[es] || es;
+  }
   return lang === 'en' ? en : es;
+};
+
+window.simulatedApiCall = async function(route, method, payload) {
+  // Simulate network latency
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  const currentUser = state.currentUser;
+  if (!currentUser) {
+    return {
+      status: 401,
+      error: "UNAUTHORIZED",
+      message: tr("Debes iniciar sesión para realizar esta acción.", "You must log in to perform this action.")
+    };
+  }
+
+  // 1. Accept Seller Guidelines Endpoint
+  if (route === '/api/seller/accept-guidelines' && method === 'POST') {
+    const { policyVersion, policyLanguage, source } = payload;
+    
+    // Safety check: verify identity
+    const profiles = db.get('seller_profiles');
+    const sellerProf = profiles.find(p => p.user_id === currentUser.id);
+    if (!sellerProf) {
+      return {
+        status: 403,
+        error: "FORBIDDEN",
+        message: tr("No tienes un perfil de vendedor activo.", "You do not have an active seller profile.")
+      };
+    }
+    
+    const versions = db.get('seller_guidelines_versions') || [];
+    const activeVer = versions.find(v => v.status === 'active');
+    
+    if (!activeVer || activeVer.version !== policyVersion) {
+      return {
+        status: 400,
+        error: "INVALID_VERSION",
+        message: tr("La versión de política que intentas aceptar no es la versión vigente.", "The policy version you are trying to accept is not the current version.")
+      };
+    }
+
+    // Save acceptance to db
+    const acceptances = db.get('seller_guidelines_acceptances') || [];
+    const newAcceptance = {
+      id: "acc_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
+      sellerId: sellerProf.id,
+      userId: currentUser.id,
+      policyVersion: policyVersion,
+      policyLanguage: policyLanguage || 'es',
+      platformFeePercentage: activeVer.commission_percentage || 5,
+      acceptedAt: new Date().toISOString(),
+      effectiveDate: activeVer.effective_date,
+      acceptanceSource: source || 'seller_dashboard',
+      userAgent: navigator.userAgent,
+      ipAddress: "127.0.0.1 (Audited Backend)",
+      policyDocumentHash: activeVer.document_hash,
+      acceptanceStatus: "accepted"
+    };
+
+    // Also get active platform fee
+    const settings = db.get('marketplace_settings') || { commission_general: 5 };
+    newAcceptance.platformFeePercentage = settings.commission_general;
+
+    acceptances.push(newAcceptance);
+    db.set('seller_guidelines_acceptances', acceptances);
+
+    // Update seller profile status
+    sellerProf.guidelinesAccepted = true;
+    sellerProf.acceptedGuidelinesVersion = policyVersion;
+    sellerProf.guidelinesAcceptedAt = newAcceptance.acceptedAt;
+    sellerProf.guidelinesLanguage = policyLanguage || 'es';
+    sellerProf.requiresGuidelinesReacceptance = false;
+    
+    db.set('seller_profiles', profiles);
+
+    // Write audit log
+    const auditLogs = db.get('compliance_audit_logs') || [];
+    auditLogs.push({
+      id: "aud_" + Date.now(),
+      event: "SELLER_GUIDELINES_ACCEPTED",
+      userId: currentUser.id,
+      sellerId: sellerProf.id,
+      policyVersion: policyVersion,
+      timestamp: new Date().toISOString(),
+      details: `Aceptación de directrices versión ${policyVersion} mediante ${source}.`
+    });
+    db.set('compliance_audit_logs', auditLogs);
+
+    return {
+      status: 200,
+      data: newAcceptance
+    };
+  }
+
+  // 2. Publish Product Endpoint
+  if (route === '/api/products' && method === 'POST') {
+    const { productData, mediaData } = payload;
+    
+    // Safety check
+    const profiles = db.get('seller_profiles');
+    const sellerProf = profiles.find(p => p.user_id === currentUser.id);
+    if (!sellerProf) {
+      return {
+        status: 403,
+        error: "FORBIDDEN",
+        message: tr("No tienes un perfil de vendedor activo.", "You do not have an active seller profile.")
+      };
+    }
+
+    if (sellerProf.status === 'suspended' || sellerProf.suspended || sellerProf.publishing_suspended) {
+      return {
+        status: 403,
+        error: "SELLER_SUSPENDED",
+        message: tr("Tu cuenta o capacidad de publicación está suspendida por el administrador.", "Your seller account or publishing privileges are suspended by the administrator.")
+      };
+    }
+
+    // Backend guidelines acceptance verification
+    const versions = db.get('seller_guidelines_versions') || [];
+    const activeVer = versions.find(v => v.status === 'active');
+    
+    const acceptances = db.get('seller_guidelines_acceptances') || [];
+    const hasAcceptedActive = acceptances.some(a => 
+      a.sellerId === sellerProf.id && 
+      a.policyVersion === activeVer.version && 
+      a.acceptanceStatus === 'accepted'
+    );
+
+    if (!hasAcceptedActive || sellerProf.requiresGuidelinesReacceptance) {
+      const isEn = (localStorage.getItem('cm_language') || 'es') === 'en';
+      return {
+        status: 403,
+        error: "SELLER_GUIDELINES_ACCEPTANCE_REQUIRED",
+        message: isEn 
+          ? "You must accept the current Seller Guidelines before listing items." 
+          : "Debes aceptar la versión vigente de las reglas para vendedores antes de publicar artículos."
+      };
+    }
+
+    // Proceed to create/update listing
+    const products = db.get('products');
+    let isUpdate = false;
+    let newProdId = productData.id;
+    let pIndex = -1;
+
+    if (newProdId) {
+      pIndex = products.findIndex(p => p.id === newProdId);
+      if (pIndex > -1) {
+        isUpdate = true;
+      }
+    }
+
+    if (isUpdate) {
+      products[pIndex] = {
+        ...products[pIndex],
+        ...productData,
+        status: "pending" // Go back to pending
+      };
+      db.set('products', products);
+
+      // Save media
+      const media = db.get('product_media');
+      let updatedMedia = media.filter(m => m.product_id !== newProdId);
+      if (!mediaData || mediaData.length === 0) {
+        updatedMedia.push({
+          id: "med_" + Date.now(),
+          product_id: newProdId,
+          media_url: 'https://images.unsplash.com/photo-1608889174649-414430997ee6?w=600&auto=format&fit=crop&q=80',
+          media_type: 'image'
+        });
+      } else {
+        mediaData.forEach((m, idx) => {
+          updatedMedia.push({
+            id: `med_${Date.now()}_${idx}`,
+            product_id: newProdId,
+            media_url: m.media_url,
+            media_type: m.media_type
+          });
+        });
+      }
+      db.set('product_media', updatedMedia);
+
+      // Audit log
+      const auditLogs = db.get('compliance_audit_logs') || [];
+      auditLogs.push({
+        id: "aud_" + Date.now(),
+        event: "PRODUCT_UPDATED",
+        userId: currentUser.id,
+        productId: newProdId,
+        timestamp: new Date().toISOString()
+      });
+      db.set('compliance_audit_logs', auditLogs);
+
+      return {
+        status: 200,
+        data: products[pIndex]
+      };
+    } else {
+      newProdId = "prod_" + Date.now();
+      const newProd = {
+        ...productData,
+        id: newProdId,
+        seller_id: currentUser.id,
+        status: currentUser.role === 'admin' ? "approved" : "pending",
+        created_at: new Date().toISOString()
+      };
+
+      products.push(newProd);
+      db.set('products', products);
+
+      // Save media
+      const media = db.get('product_media');
+      if (!mediaData || mediaData.length === 0) {
+        media.push({
+          id: "med_" + Date.now(),
+          product_id: newProdId,
+          media_url: 'https://images.unsplash.com/photo-1608889174649-414430997ee6?w=600&auto=format&fit=crop&q=80',
+          media_type: 'image'
+        });
+      } else {
+        mediaData.forEach((m, idx) => {
+          media.push({
+            id: `med_${Date.now()}_${idx}`,
+            product_id: newProdId,
+            media_url: m.media_url,
+            media_type: m.media_type
+          });
+        });
+      }
+      db.set('product_media', media);
+
+      // Audit log
+      const auditLogs = db.get('compliance_audit_logs') || [];
+      auditLogs.push({
+        id: "aud_" + Date.now(),
+        event: "PRODUCT_CREATED",
+        userId: currentUser.id,
+        productId: newProdId,
+        timestamp: new Date().toISOString()
+      });
+      db.set('compliance_audit_logs', auditLogs);
+
+      return {
+        status: 201,
+        data: newProd
+      };
+    }
+  }
+
+  return {
+    status: 404,
+    error: "NOT_FOUND",
+    message: tr("Endpoint no encontrado.", "Endpoint not found.")
+  };
 };
 
 // --- Persistent Database Simulator and Firebase Firestore Sync ---
@@ -47,6 +329,83 @@ const db = {
       localStorage.setItem('cm_favorites', JSON.stringify([]));
       
       localStorage.setItem('cm_initialized_v7', 'true');
+    }
+
+    if (!localStorage.getItem('cm_marketplace_settings')) {
+      localStorage.setItem('cm_marketplace_settings', JSON.stringify({
+        commission_general: 5,
+        commission_on_shipping: false,
+        commission_on_taxes: false,
+        min_fee_per_sale: 0,
+        buyer_protection_fee: false,
+        additional_buyer_fee: false,
+        categories_fees: {},
+        sellers_fees: {},
+        pro_discounts: {},
+        history: [
+          {
+            date: new Date().toISOString(),
+            user: "usr_admin_1",
+            description: "Inicialización de comisiones predeterminadas (5% general, comisiones sobre envío/impuestos inactivas, sin cargos al comprador)"
+          }
+        ]
+      }));
+    }
+
+    if (!localStorage.getItem('cm_commission_policy_history')) {
+      localStorage.setItem('cm_commission_policy_history', JSON.stringify([
+        {
+          version: "v1.0",
+          commission_percentage: 5,
+          published_at: new Date("2026-07-01").toISOString(),
+          effective_date: new Date("2026-07-01").toISOString(),
+          status: "active",
+          description: "Política inicial con comisión del 5% sobre el subtotal de artículos vendidos y tarifas de procesamiento Stripe (2.9% + $0.30) asumidas por el vendedor."
+        }
+      ]));
+    }
+
+    if (!localStorage.getItem('cm_seller_policy_acceptances')) {
+      localStorage.setItem('cm_seller_policy_acceptances', JSON.stringify([]));
+    }
+
+    if (!localStorage.getItem('cm_seller_guidelines_versions')) {
+      localStorage.setItem('cm_seller_guidelines_versions', JSON.stringify([
+        {
+          version: "seller-policy-v1.0",
+          title_es: "Reglas para Vendedores de Geek Collector",
+          title_en: "Geek Collector Seller Guidelines",
+          content_es: "1. Comisiones: Geek Collector cobra una comisión del 5% sobre el subtotal de artículos vendidos.\n2. Pagos: Tarifas de Stripe (2.9% + $0.30) asumidas por el vendedor.\n3. Envíos y Devoluciones: El vendedor es responsable de enviar el artículo a tiempo utilizando Shippo o su transportista.\n4. Conducta: Está prohibido vender artículos prohibidos, falsificaciones o acosar a los compradores.",
+          content_en: "1. Fees: Geek Collector charges a 5% commission on the items subtotal.\n2. Payouts: Stripe fees (2.9% + $0.30) are assumed by the seller.\n3. Shipping & Refunds: The seller is responsible for timely shipping using Shippo or their carrier.\n4. Conduct: Selling prohibited items, counterfeits, or harassing buyers is forbidden.",
+          effective_date: "2026-07-01T00:00:00.000Z",
+          is_material: true,
+          requires_reacceptance: true,
+          status: "active",
+          document_hash: "hash_v1_abc123",
+          created_at: "2026-07-01T00:00:00.000Z"
+        }
+      ]));
+    }
+
+    if (!localStorage.getItem('cm_seller_guidelines_acceptances')) {
+      localStorage.setItem('cm_seller_guidelines_acceptances', JSON.stringify([]));
+    }
+
+    // Backfill seller profiles with new fields if they don't exist
+    const profiles = JSON.parse(localStorage.getItem('cm_seller_profiles')) || [];
+    let updatedProfs = false;
+    profiles.forEach(p => {
+      if (p.guidelinesAccepted === undefined) {
+        p.guidelinesAccepted = false;
+        p.acceptedGuidelinesVersion = "";
+        p.guidelinesAcceptedAt = "";
+        p.guidelinesLanguage = "";
+        p.requiresGuidelinesReacceptance = true;
+        updatedProfs = true;
+      }
+    });
+    if (updatedProfs) {
+      localStorage.setItem('cm_seller_profiles', JSON.stringify(profiles));
     }
 
     // Cloud Synchronization On Load
@@ -616,6 +975,40 @@ function updateBadges() {
 function updateNavBar() {
   const user = state.currentUser;
   
+  // Dynamic translations for navbar and mobile bottom nav
+  const favoritesText = document.querySelector('#nav-btn-favorites .nav-text-desktop');
+  if (favoritesText) favoritesText.textContent = tr('Favoritos', 'Favorites');
+  
+  const cartText = document.querySelector('#nav-btn-cart .nav-text-desktop');
+  if (cartText) cartText.textContent = tr('Carrito', 'Cart');
+  
+  const sellerText = document.querySelector('#nav-btn-seller .nav-text-desktop');
+  if (sellerText) sellerText.textContent = tr('Panel Vendedor', 'Seller Dashboard');
+  
+  const adminText = document.querySelector('#nav-btn-admin .nav-text-desktop');
+  if (adminText) adminText.textContent = tr('Admin Dashboard', 'Admin Dashboard');
+
+  const mobileNavItems = document.querySelectorAll('.mobile-bottom-nav .mobile-nav-item');
+  if (mobileNavItems.length >= 4) {
+    const storeLabel = mobileNavItems[0].querySelector('.nav-text-mobile');
+    if (storeLabel) storeLabel.textContent = tr('Tienda', 'Shop');
+    
+    const favLabel = mobileNavItems[1].querySelector('.nav-text-mobile');
+    if (favLabel) favLabel.textContent = tr('Favoritos', 'Favorites');
+    
+    const cartLabel = mobileNavItems[2].querySelector('.nav-text-mobile');
+    if (cartLabel) cartLabel.textContent = tr('Carrito', 'Cart');
+    
+    const dashLabel = mobileNavItems[3].querySelector('.nav-text-mobile');
+    if (dashLabel) {
+      if (user && user.role !== 'buyer') {
+        dashLabel.textContent = tr('Panel', 'Dashboard');
+      } else {
+        dashLabel.textContent = tr('Perfil', 'Profile');
+      }
+    }
+  }
+
   // Update user profile btn
   const navAvatar = document.getElementById('nav-user-avatar');
   const navName = document.getElementById('nav-user-name');
@@ -983,6 +1376,9 @@ function handleUserLogout() {
 }
 
 function renderRegisterFormModal() {
+  const versions = db.get('seller_guidelines_versions') || [];
+  const activeVer = versions.find(v => v.status === 'active') || { version: 'seller-policy-v1.0' };
+  
   const formHtml = `
     <div style="padding: 0.5rem 0;">
       <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.5rem; text-align:center;">
@@ -1020,6 +1416,12 @@ function renderRegisterFormModal() {
             <label for="reg-store-desc">${tr('Descripción corta', 'Short description')}</label>
             <textarea id="reg-store-desc" placeholder="${tr('¿Qué tipo de coleccionables vendes?', 'What kind of collectibles do you sell?')}" style="height:60px; padding:0.5rem; border-radius:6px; border:1px solid var(--border-color); width:100%; outline:none; background:white; color:var(--text-primary);"></textarea>
           </div>
+          <div style="display:flex; align-items:flex-start; gap:0.5rem; margin-top:0.25rem;">
+            <input type="checkbox" id="reg-accept-fees" style="width:1.15rem; height:1.15rem; margin-top:0.15rem; cursor:pointer;">
+            <label for="reg-accept-fees" style="font-size:0.75rem; color:var(--text-secondary); cursor:pointer; line-height:1.4;">
+              ${tr('sellerGuidelines.checkbox').replace('Reglas para Vendedores', `<a onclick="viewFullGuidelinesText('${activeVer.version}')" style="color:var(--gold-light); cursor:pointer; text-decoration:underline; font-weight:700;">Reglas para Vendedores</a>`).replace('Seller Guidelines', `<a onclick="viewFullGuidelinesText('${activeVer.version}')" style="color:var(--gold-light); cursor:pointer; text-decoration:underline; font-weight:700;">Seller Guidelines</a>`)}
+            </label>
+          </div>
         </div>
 
         <button class="btn-large primary-btn" style="margin-top:1rem; padding:0.9rem;" onclick="handleUserRegisterSubmit()">
@@ -1054,6 +1456,14 @@ function handleUserRegisterSubmit() {
     return;
   }
 
+  if (role === 'seller') {
+    const acceptCheckbox = document.getElementById('reg-accept-fees');
+    if (!acceptCheckbox || !acceptCheckbox.checked) {
+      showToast(tr("Debes aceptar la estructura de comisiones y políticas de pagos para registrarte como vendedor.", "You must accept the commissions structure and payment policies to register as a seller."), 'error');
+      return;
+    }
+  }
+
   // Firebase Auth integration
   if (window.firebaseActive) {
     window.auth.createUserWithEmailAndPassword(email, password)
@@ -1078,9 +1488,13 @@ function handleUserRegisterSubmit() {
           const storeName = document.getElementById('reg-store-name').value.trim() || `${name} Shop`;
           const storeDesc = document.getElementById('reg-store-desc').value.trim() || 'Vendedor de figuras coleccionables.';
           
+          const versions = db.get('seller_guidelines_versions') || [];
+          const activeVer = versions.find(v => v.status === 'active') || { version: 'seller-policy-v1.0', document_hash: 'hash_v1_abc123', effective_date: new Date().toISOString() };
+          
+          const profileId = "prof_" + Date.now();
           const profiles = db.get('seller_profiles');
           profiles.push({
-            id: "prof_" + Date.now(),
+            id: profileId,
             user_id: newUserId,
             store_name: storeName,
             store_desc: storeDesc,
@@ -1089,10 +1503,48 @@ function handleUserRegisterSubmit() {
             total_sales: 0,
             approved: false,
             stripe_connect_id: null,
-            subscription_plan: "Basic",
-            commission_rate: 0.10
+            subscription_plan: "Standard",
+            commission_rate: 0.05,
+            guidelinesAccepted: true,
+            acceptedGuidelinesVersion: activeVer.version,
+            guidelinesAcceptedAt: new Date().toISOString(),
+            guidelinesLanguage: localStorage.getItem('cm_language') || 'es',
+            requiresGuidelinesReacceptance: false
           });
           db.set('seller_profiles', profiles);
+
+          // Save policy acceptance log
+          const acceptances = db.get('seller_policy_acceptances') || [];
+          const activePolicy = db.get('commission_policy_history').find(p => p.status === 'active') || { version: "v1.0", commission_percentage: 5, effective_date: new Date().toISOString() };
+          acceptances.push({
+            id: "acc_" + Date.now(),
+            sellerId: newUserId,
+            feePolicyVersion: activePolicy.version,
+            acceptedAt: new Date().toISOString(),
+            ip: "127.0.0.1 (Auditoría de Registro)",
+            effectiveDate: activePolicy.effective_date,
+            acceptedPercentage: activePolicy.commission_percentage
+          });
+          db.set('seller_policy_acceptances', acceptances);
+
+          // Save guidelines acceptance log
+          const guidelinesAcceptances = db.get('seller_guidelines_acceptances') || [];
+          guidelinesAcceptances.push({
+            id: "acc_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
+            sellerId: profileId,
+            userId: newUserId,
+            policyVersion: activeVer.version,
+            policyLanguage: localStorage.getItem('cm_language') || 'es',
+            platformFeePercentage: activePolicy.commission_percentage,
+            acceptedAt: new Date().toISOString(),
+            effectiveDate: activeVer.effective_date,
+            acceptanceSource: "seller_registration",
+            userAgent: navigator.userAgent,
+            ipAddress: "127.0.0.1 (Auditoría de Registro)",
+            policyDocumentHash: activeVer.document_hash,
+            acceptanceStatus: "accepted"
+          });
+          db.set('seller_guidelines_acceptances', guidelinesAcceptances);
         } else {
           // Create default empty shipping address for buyer
           const addresses = db.get('shipping_addresses');
@@ -1161,9 +1613,13 @@ function handleUserRegisterSubmit() {
     const storeName = document.getElementById('reg-store-name').value.trim() || `${name} Shop`;
     const storeDesc = document.getElementById('reg-store-desc').value.trim() || 'Vendedor de figuras coleccionables.';
     
+    const versions = db.get('seller_guidelines_versions') || [];
+    const activeVer = versions.find(v => v.status === 'active') || { version: 'seller-policy-v1.0', document_hash: 'hash_v1_abc123', effective_date: new Date().toISOString() };
+    
+    const profileId = "prof_" + Date.now();
     const profiles = db.get('seller_profiles');
     profiles.push({
-      id: "prof_" + Date.now(),
+      id: profileId,
       user_id: newUserId,
       store_name: storeName,
       store_desc: storeDesc,
@@ -1172,10 +1628,48 @@ function handleUserRegisterSubmit() {
       total_sales: 0,
       approved: false,
       stripe_connect_id: null,
-      subscription_plan: "Basic",
-      commission_rate: 0.10
+      subscription_plan: "Standard",
+      commission_rate: 0.05,
+      guidelinesAccepted: true,
+      acceptedGuidelinesVersion: activeVer.version,
+      guidelinesAcceptedAt: new Date().toISOString(),
+      guidelinesLanguage: localStorage.getItem('cm_language') || 'es',
+      requiresGuidelinesReacceptance: false
     });
     db.set('seller_profiles', profiles);
+    
+    // Save policy acceptance log
+    const acceptances = db.get('seller_policy_acceptances') || [];
+    const activePolicy = db.get('commission_policy_history').find(p => p.status === 'active') || { version: "v1.0", commission_percentage: 5, effective_date: new Date().toISOString() };
+    acceptances.push({
+      id: "acc_" + Date.now(),
+      sellerId: newUserId,
+      feePolicyVersion: activePolicy.version,
+      acceptedAt: new Date().toISOString(),
+      ip: "127.0.0.1 (Auditoría de Registro)",
+      effectiveDate: activePolicy.effective_date,
+      acceptedPercentage: activePolicy.commission_percentage
+    });
+    db.set('seller_policy_acceptances', acceptances);
+
+    // Save guidelines acceptance log
+    const guidelinesAcceptances = db.get('seller_guidelines_acceptances') || [];
+    guidelinesAcceptances.push({
+      id: "acc_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
+      sellerId: profileId,
+      userId: newUserId,
+      policyVersion: activeVer.version,
+      policyLanguage: localStorage.getItem('cm_language') || 'es',
+      platformFeePercentage: activePolicy.commission_percentage,
+      acceptedAt: new Date().toISOString(),
+      effectiveDate: activeVer.effective_date,
+      acceptanceSource: "seller_registration",
+      userAgent: navigator.userAgent,
+      ipAddress: "127.0.0.1 (Auditoría de Registro)",
+      policyDocumentHash: activeVer.document_hash,
+      acceptanceStatus: "accepted"
+    });
+    db.set('seller_guidelines_acceptances', guidelinesAcceptances);
     
     showToast(tr("¡Registro de vendedor exitoso! Tu perfil está pendiente de aprobación por el Administrador.", "Seller registration successful! Your profile is pending Administrator approval."), 'success');
   } else {

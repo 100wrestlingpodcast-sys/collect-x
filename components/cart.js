@@ -364,20 +364,34 @@ function renderCheckoutView() {
     const sellerSub = items.reduce((sum, i) => sum + (i.product.price * i.qty), 0);
     const sellerAdjustedGross = sellerSub * discountRatio;
     
-    let commRate = 0.10;
+    const settings = db.get('marketplace_settings') || {
+      commission_general: 5,
+      commission_on_shipping: false,
+      commission_on_taxes: false
+    };
+
+    let commRate = sId === 'usr_admin_1' ? 0.00 : (settings.commission_general / 100);
     let sellerName = 'Collectors Shop';
     let stripeAcct = 'Cuenta Principal';
 
     if (sId !== 'usr_admin_1') {
       const prof = profiles.find(p => p.user_id === sId);
       if (prof) {
-        commRate = prof.commission_rate;
+        commRate = prof.commission_rate !== 0.10 ? prof.commission_rate : (settings.commission_general / 100);
         sellerName = prof.store_name;
         stripeAcct = prof.stripe_connect_id || 'acct_Connected';
       }
     }
 
-    const platformFee = sId === 'usr_admin_1' ? 0.00 : sellerAdjustedGross * commRate;
+    let baseForCommission = sellerAdjustedGross;
+    if (settings.commission_on_shipping) {
+      baseForCommission += shippingCost * (sellerAdjustedGross / (subtotal - discount || 1));
+    }
+    if (settings.commission_on_taxes) {
+      baseForCommission += taxesCost * (sellerAdjustedGross / (subtotal - discount || 1));
+    }
+
+    const platformFee = sId === 'usr_admin_1' ? 0.00 : baseForCommission * commRate;
     
     // Add proportional shares
     const stripeShare = stripeProcessingFeeTotal * (sellerAdjustedGross / (subtotal - discount || 1));
@@ -878,6 +892,22 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
   const sellerProfile = sellerId ? profiles.find(p => p.user_id === sellerId) : null;
   const sellerStripeAccountId = sellerProfile ? sellerProfile.stripe_connect_id : null;
 
+  // Calculate items subtotal after coupon discount for application fee validation
+  const subtotal = state.cart.reduce((sum, item) => {
+    const p = products.find(prod => prod.id === item.product_id);
+    return sum + (p ? p.price * item.quantity : 0);
+  }, 0);
+  
+  let discount = 0;
+  if (window.appliedCoupon) {
+    if (window.appliedCoupon.discount_type === 'percentage') {
+      discount = subtotal * (window.appliedCoupon.discount_value / 100);
+    } else {
+      discount = window.appliedCoupon.discount_value;
+    }
+  }
+  const itemsSubtotal = subtotal - discount;
+
   const url = window.firebaseActive ? '/.netlify/functions/create-payment-intent' : null;
 
   if (!url) {
@@ -910,6 +940,7 @@ function processPaymentSubmit(grandTotal, platformFeeTotal, processingFeeTotal, 
     amount: grandTotal,
     applicationFeeAmount: platformFeeTotal,
     sellerStripeAccountId: sellerStripeAccountId,
+    itemsSubtotal: itemsSubtotal,
     description: `Compra en Geek Collector PR: ${firstProduct ? firstProduct.title : 'Artículos Coleccionables'}`
   };
 
@@ -993,39 +1024,79 @@ function completeCheckoutLocal(grandTotal, platformFeeTotal, processingFeeTotal,
     const sellerAdjustedGross = sellerSubtotal * discountRatio;
     
     // Platform fee rate
-    let commRate = 0.10;
+    const settings = db.get('marketplace_settings') || {
+      commission_general: 5,
+      commission_on_shipping: false,
+      commission_on_taxes: false
+    };
+
+    let commRate = sellerId === 'usr_admin_1' ? 0.00 : (settings.commission_general / 100);
     let sellerName = 'Collectors Shop';
     if (sellerId !== 'usr_admin_1') {
       const prof = profiles.find(p => p.user_id === sellerId);
       if (prof) {
-        commRate = prof.commission_rate;
+        commRate = prof.commission_rate !== 0.10 ? prof.commission_rate : (settings.commission_general / 100);
         sellerName = prof.store_name;
       }
     }
 
-    const platformFee = sellerId === 'usr_admin_1' ? 0.00 : sellerAdjustedGross * commRate;
+    let baseForCommission = sellerAdjustedGross;
+    if (settings.commission_on_shipping) {
+      baseForCommission += shippingCost * (sellerAdjustedGross / (subtotal - discount || 1));
+    }
+    if (settings.commission_on_taxes) {
+      baseForCommission += taxesCost * (sellerAdjustedGross / (subtotal - discount || 1));
+    }
+
+    const platformFee = sellerId === 'usr_admin_1' ? 0.00 : baseForCommission * commRate;
     
     // Stripe fee proportional share
     const stripeShare = processingFeeTotal * (sellerAdjustedGross / (subtotal - discount || 1));
     const sellerPayout = sellerAdjustedGross - platformFee;
     const sellerNet = sellerAdjustedGross - platformFee - stripeShare;
 
+    // Calculate seller's proportional share of shipping and taxes
+    const sellerShippingShare = shippingCost * (sellerAdjustedGross / (subtotal - discount || 1));
+    const sellerTaxesShare = taxesCost * (sellerAdjustedGross / (subtotal - discount || 1));
+
     const newOrderId = "ord_" + Math.random().toString(36).substr(2, 9);
     
+    // Create Order Record in Cents (integers)
+    const orderCents = {
+      itemsSubtotal: Math.round(sellerSubtotal * 100),
+      shippingAmount: Math.round(sellerShippingShare * 100),
+      taxAmount: Math.round(sellerTaxesShare * 100),
+      buyerTotal: Math.round((sellerAdjustedGross + sellerShippingShare + sellerTaxesShare) * 100),
+      platformFeePercentage: settings.commission_general,
+      platformFeeAmount: Math.round(platformFee * 100),
+      paymentProcessingFee: Math.round(stripeShare * 100),
+      sellerShippingLabelCost: 0,
+      refundAmount: 0,
+      sellerNetAmount: Math.round(sellerNet * 100),
+      currency: "usd",
+      stripePaymentIntentId: paymentIntentId || ("pi_" + Math.random().toString(36).substr(2, 15)),
+      stripeChargeId: "ch_" + Math.random().toString(36).substr(2, 15),
+      stripeTransferId: "tr_" + Math.random().toString(36).substr(2, 15),
+      stripeConnectedAccountId: sellerId !== 'usr_admin_1' ? (profiles.find(p => p.user_id === sellerId)?.stripe_connect_id || null) : null,
+      paymentStatus: "paid",
+      payoutStatus: "held_in_escrow"
+    };
+
     // Create Order Record
     const newOrder = {
       id: newOrderId,
       buyer_id: state.currentUser.id,
       seller_id: sellerId,
-      total_amount: sellerAdjustedGross + shippingCost + (activeRate.insurance_cost || 0),
+      total_amount: sellerAdjustedGross + sellerShippingShare + sellerTaxesShare,
       platform_fee: platformFee,
       seller_payout: sellerPayout,
       payment_status: "paid",
       order_status: "paid", // Paid status, needs shipment creation
-      stripe_payment_intent_id: paymentIntentId || ("pi_" + Math.random().toString(36).substr(2, 15)),
+      stripe_payment_intent_id: orderCents.stripePaymentIntentId,
       tracking_number: "", // Filled after transaction
       shipping_carrier: "",
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      ...orderCents // Spread exact cents properties requested
     };
     orders.push(newOrder);
 
