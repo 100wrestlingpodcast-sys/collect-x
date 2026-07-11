@@ -3384,8 +3384,6 @@ function renderRegisterFormModal() {
   toggleGlobalModal(true, tr("auth.register_title"), formHtml);
   lucide.createIcons();
 }
-  lucide.createIcons();
-}
 
 function toggleRegisterSellerFields(role) {
   const fields = document.getElementById('reg-seller-fields');
