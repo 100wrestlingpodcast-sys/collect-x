@@ -30,15 +30,10 @@ window.LOCALE_EN = {
   },
   "categories": {
     "Todos": "All",
-    "Funko Pop": "Funko Pop",
     "WWE / Wrestling": "WWE / Wrestling",
-    "NBA / Deportes": "NBA / Sports",
-    "Anime": "Anime",
-    "Marvel / DC": "Marvel / DC",
     "Gaming": "Gaming",
-    "Figuras vintage": "Vintage Figures",
-    "Ediciones limitadas": "Limited Editions",
-    "Autografiados": "Autographed"
+    "Pokémon": "Pokémon",
+    "Cartas Coleccionables": "Trading Cards"
   },
   "search": {
     "placeholder": "Search action figures, Funkos, comics...",
@@ -936,15 +931,10 @@ window.LOCALE_ES = {
   },
   "categories": {
     "Todos": "Todos",
-    "Funko Pop": "Funko Pop",
     "WWE / Wrestling": "WWE / Wrestling",
-    "NBA / Deportes": "NBA / Deportes",
-    "Anime": "Anime",
-    "Marvel / DC": "Marvel / DC",
     "Gaming": "Gaming",
-    "Figuras vintage": "Figuras vintage",
-    "Ediciones limitadas": "Ediciones limitadas",
-    "Autografiados": "Autografiados"
+    "Pokémon": "Pokémon",
+    "Cartas Coleccionables": "Cartas Coleccionables"
   },
   "search": {
     "placeholder": "Buscar figuras de acción, Funko, cómics...",
@@ -2808,15 +2798,10 @@ const router = {
 // --- Dynamic Category Bar ---
 const CATEGORIES = [
   "Todos",
-  "Funko Pop",
   "WWE / Wrestling",
-  "NBA / Deportes",
-  "Anime",
-  "Marvel / DC",
   "Gaming",
-  "Figuras vintage",
-  "Ediciones limitadas",
-  "Autografiados"
+  "Pokémon",
+  "Cartas Coleccionables"
 ];
 
 function renderCategoryTabs() {
@@ -2831,15 +2816,10 @@ function renderCategoryTabs() {
     
     const catTranslations = {
       'Todos': 'All',
-      'Funko Pop': 'Funko Pop',
       'WWE / Wrestling': 'WWE / Wrestling',
-      'NBA / Deportes': 'NBA / Sports',
-      'Anime': 'Anime',
-      'Marvel / DC': 'Marvel / DC',
       'Gaming': 'Gaming',
-      'Figuras vintage': 'Vintage Figures',
-      'Autografiados': 'Autographed',
-      'Ediciones limitadas': 'Limited Editions'
+      'Pokémon': 'Pokémon',
+      'Cartas Coleccionables': 'Trading Cards'
     };
     
     const translatedCat = tr(cat, catTranslations[cat] || cat);

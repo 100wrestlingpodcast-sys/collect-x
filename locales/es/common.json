@@ -29,15 +29,10 @@
   },
   "categories": {
     "Todos": "Todos",
-    "Funko Pop": "Funko Pop",
     "WWE / Wrestling": "WWE / Wrestling",
-    "NBA / Deportes": "NBA / Deportes",
-    "Anime": "Anime",
-    "Marvel / DC": "Marvel / DC",
     "Gaming": "Gaming",
-    "Figuras vintage": "Figuras vintage",
-    "Ediciones limitadas": "Ediciones limitadas",
-    "Autografiados": "Autografiados"
+    "Pokémon": "Pokémon",
+    "Cartas Coleccionables": "Cartas Coleccionables"
   },
   "search": {
     "placeholder": "Buscar figuras de acción, Funko, cómics...",
