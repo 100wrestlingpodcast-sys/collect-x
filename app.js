@@ -2105,7 +2105,7 @@ window.simulatedApiCall = async function(route, method, payload) {
       products[pIndex] = {
         ...products[pIndex],
         ...productData,
-        status: "pending" // Go back to pending
+        status: "approved" // Keep approved on edit
       };
       db.set('products', products);
 
@@ -2152,7 +2152,7 @@ window.simulatedApiCall = async function(route, method, payload) {
         ...productData,
         id: newProdId,
         seller_id: currentUser.id,
-        status: currentUser.role === 'admin' ? "approved" : "pending",
+        status: "approved", // Auto-approved by default
         created_at: new Date().toISOString()
       };
 
@@ -3505,7 +3505,7 @@ function handleUserRegisterSubmit() {
             reliability_score: 1.0,
             active_strikes: 0,
             total_sales: 0,
-            approved: false,
+            approved: true, // Auto-approved by default
             stripe_connect_id: null,
             subscription_plan: "Standard",
             commission_rate: 0.05,
@@ -3630,7 +3630,7 @@ function handleUserRegisterSubmit() {
       reliability_score: 1.0,
       active_strikes: 0,
       total_sales: 0,
-      approved: false,
+      approved: true, // Auto-approved by default
       stripe_connect_id: null,
       subscription_plan: "Standard",
       commission_rate: 0.05,
