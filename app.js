@@ -3751,7 +3751,7 @@ window.addEventListener('hashchange', () => {
 // --- App Booting Initialization ---
 window.addEventListener('DOMContentLoaded', async () => {
   db.init();
-  
+
   // Resolve language selection based on priority
   let lang = localStorage.getItem('cm_language');
   
@@ -3786,6 +3786,38 @@ window.addEventListener('DOMContentLoaded', async () => {
   updateNavBar();
   updateBadges();
   renderCategoryTabs();
+
+  // Listen to Firebase Auth state changes to keep sessions active on refresh
+  if (window.firebaseActive) {
+    window.auth.onAuthStateChanged(async fbUser => {
+      if (fbUser) {
+        const users = db.get('users') || [];
+        let user = users.find(u => u.email.toLowerCase() === fbUser.email.toLowerCase());
+        
+        // Auto-provision profile database log if authenticated in Firebase Auth
+        if (!user) {
+          const isAdmin = fbUser.email.toLowerCase() === "100wrestlingpodcast@gmail.com";
+          user = {
+            id: isAdmin ? "usr_admin_1" : "usr_" + fbUser.uid,
+            name: fbUser.displayName || (isAdmin ? "Administrador Geek Collector PR" : fbUser.email.split('@')[0]),
+            email: fbUser.email.toLowerCase(),
+            role: isAdmin ? "admin" : "buyer",
+            avatar: fbUser.photoURL || window.GUEST_AVATAR,
+            created_at: new Date().toISOString(),
+            status: "active",
+            preferredLanguage: localStorage.getItem('cm_language') || 'es'
+          };
+          users.push(user);
+          db.set('users', users);
+        }
+        
+        db.setCurrentUserId(user.id);
+        state.refresh();
+        updateNavBar();
+        updateBadges();
+      }
+    });
+  }
   
   // Start SPA router
   router.init();
