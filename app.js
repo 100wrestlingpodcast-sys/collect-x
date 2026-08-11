@@ -3268,9 +3268,23 @@ function handleUserLoginSubmit() {
           showToast(tr("auth.profile_not_synced"), 'error');
         }
       })
-      .catch(err => {
+      .catch(async err => {
         console.error("Firebase Login Error:", err);
-        showToast(tr("auth.auth_error"), 'error');
+        // Auto-provision admin user if they try to log in and fail (e.g. first time on this Firebase instance)
+        if (email.toLowerCase() === "100wrestlingpodcast@gmail.com" && password === "admin123@") {
+          showToast("Registrando administrador en tu Firebase...", "info");
+          try {
+            await window.auth.createUserWithEmailAndPassword(email, password);
+            showToast("Administrador creado con éxito. Iniciando sesión...", "success");
+            // Retry login automatically
+            handleUserLoginSubmit();
+          } catch (createErr) {
+            console.error("Firebase auto-provision error:", createErr);
+            showToast(tr("auth.auth_error"), 'error');
+          }
+        } else {
+          showToast(tr("auth.auth_error"), 'error');
+        }
       });
     return;
   }
