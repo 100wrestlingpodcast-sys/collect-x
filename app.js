@@ -3239,8 +3239,51 @@ function handleUserLoginSubmit() {
   if (window.firebaseActive) {
     window.auth.signInWithEmailAndPassword(email, password)
       .then(async userCredential => {
-        const users = db.get('users');
-        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        const users = db.get('users') || [];
+        let user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        
+        // Auto-create database profile for admin if authenticated but not in database table
+        if (!user && email.toLowerCase() === "100wrestlingpodcast@gmail.com") {
+          user = {
+            id: "usr_admin_1",
+            name: "Administrador Geek Collector PR",
+            email: email.toLowerCase(),
+            role: "admin",
+            avatar: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=150&auto=format&fit=crop&q=80",
+            created_at: new Date().toISOString(),
+            status: "active",
+            preferredLanguage: localStorage.getItem('cm_language') || 'es'
+          };
+          users.push(user);
+          db.set('users', users);
+          
+          // Also verify admin seller profile exists
+          const profiles = db.get('seller_profiles') || [];
+          if (!profiles.some(p => p.user_id === user.id)) {
+            profiles.push({
+              id: "sel_prof_admin",
+              user_id: user.id,
+              store_name: "Geek Collector PR Tienda Oficial",
+              description: "Tienda oficial de la plataforma. Artículos exclusivos y garantizados.",
+              stripe_connect_id: "acct_admin_mock_123",
+              subscription_plan: "Standard",
+              commission_rate: 0.00,
+              approved: true,
+              rating_average: 5.0,
+              total_sales: 0.00,
+              total_orders: 0,
+              ontime_orders: 0,
+              delayed_orders: 0,
+              cancelled_orders: 0,
+              disputes_count: 0,
+              active_strikes: 0,
+              reliability_score: 100,
+              avg_dispatch_hours: 0
+            });
+            db.set('seller_profiles', profiles);
+          }
+        }
+
         if (user) {
           db.setCurrentUserId(user.id);
           
