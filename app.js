@@ -2321,9 +2321,27 @@ const db = {
         p.requiresGuidelinesReacceptance = true;
         updatedProfs = true;
       }
+      // Force auto-approval for any old pending seller profiles in storage
+      if (p.approved === false) {
+        p.approved = true;
+        updatedProfs = true;
+      }
     });
     if (updatedProfs) {
       localStorage.setItem('cm_seller_profiles', JSON.stringify(profiles));
+    }
+
+    // Force auto-approval for any old pending products in storage
+    const products = JSON.parse(localStorage.getItem('cm_products')) || [];
+    let updatedProds = false;
+    products.forEach(p => {
+      if (p.status === 'pending') {
+        p.status = 'approved';
+        updatedProds = true;
+      }
+    });
+    if (updatedProds) {
+      localStorage.setItem('cm_products', JSON.stringify(products));
     }
 
     // Cloud Synchronization On Load
